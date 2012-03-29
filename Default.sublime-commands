@@ -1,0 +1,12 @@
+[
+    // Get Selection Scope
+    {
+        "caption": "Scope Hunter: Show Scope Under Cursor(s)",
+        "command": "get_selection_scope"
+    },
+    // Toggle Instant Scoper
+    {
+        "caption": "Scope Hunter: Toggle Instant Scoper",
+        "command": "toggle_selection_scope"
+    }
+]

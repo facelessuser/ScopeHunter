@@ -1,0 +1,22 @@
+{
+    // Show scope in status bar
+    "show_statusbar": false,
+
+    // Show scope in auto-popup panel
+    "show_panel": true,
+
+    // Copy scopes to clipboard
+    "clipboard": false,
+
+    // Allow multi-select scope hunting
+    "multiselect": false,
+
+    // Dump scope output to console
+    "console_log": false,
+
+    // Show scope extent in line/char format
+    "extent_line_char": false,
+
+    // Show scope extent in point format
+    "extent_points": false
+}
