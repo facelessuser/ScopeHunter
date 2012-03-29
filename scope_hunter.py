@@ -13,12 +13,18 @@ sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
 
 
 class Pref:
-    def load(self):
-        Pref.wait_time = 0.12
-        Pref.time = time()
-        Pref.modified = False
-        Pref.ignore_all = False
-        Pref.instant_scoper = False
+    @classmethod
+    def load(cls):
+        cls.wait_time = 0.12
+        cls.time = time()
+        cls.modified = False
+        cls.ignore_all = False
+        cls.instant_scoper = False
+        cls.last_run = ""
+
+    @classmethod
+    def is_enabled(cls, view):
+        return not view.settings().get("is_widget") and not cls.ignore_all
 
 Pref().load()
 
@@ -28,12 +34,12 @@ class GetSelectionScope():
         if self.rowcol or self.points:
             pts = self.view.extract_scope(pt)
             if self.points:
-                self.scope_bfr.append("%-25s (%d, %d)\n" % ("Scope Extent pts:", pts.begin(), pts.end()))
+                self.scope_bfr.append("%-25s (%d, %d)" % ("Scope Extent pts:", pts.begin(), pts.end()))
             if self.rowcol:
                 row1, col1 = self.view.rowcol(pts.begin())
                 row2, col2 = self.view.rowcol(pts.end())
                 self.scope_bfr.append(
-                    "%-25s (line: %d char: %d, line: %d char: %d)\n" % ("Scope Extent row/col:", row1 + 1, col1 + 1, row2 + 1, col2 + 1)
+                    "%-25s (line: %d char: %d, line: %d char: %d)" % ("Scope Extent row/col:", row1 + 1, col1 + 1, row2 + 1, col2 + 1)
                 )
         scope = self.view.scope_name(pt)
 
@@ -44,7 +50,9 @@ class GetSelectionScope():
             self.status = scope
             self.first = False
 
-        self.scope_bfr.append("%-25s %s\n\n" % ("Scope:", self.view.scope_name(pt)))
+        self.scope_bfr.append("%-25s %s" % ("Scope:", self.view.scope_name(pt)))
+        # Divider
+        self.scope_bfr.append("")
 
     def run(self, v):
         self.view = v
@@ -80,22 +88,27 @@ class GetSelectionScope():
 
         # Show panel
         if self.show_panel:
-            self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
             edit = view.begin_edit()
-            view.insert(edit, 0, ''.join(self.scope_bfr))
+            view.insert(edit, 0, '\n'.join(self.scope_bfr))
             view.end_edit(edit)
+            self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
 
-        if self.multiselect:
-            print ''.join(self.scope_bfr)
+        if self.console_log:
+            # Reduce duplicate console entries
+            text = "Scope Hunter: Scope Dump\n" + '\n'.join(self.scope_bfr)
+            if text != Pref.last_run:
+                print text
+                Pref.last_run = text
 
 find_scopes = GetSelectionScope().run
 
 
-class GetSelectionScopeCommand(sublime_plugin.ApplicationCommand):
+class GetSelectionScopeCommand(sublime_plugin.TextCommand):
     def run(self):
-        if Pref.ignore_all:
-            return
         Pref.modified = True
+
+    def is_enabled(self):
+        return Pref.is_enabled(self.view)
 
 
 class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
@@ -105,7 +118,7 @@ class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
 
 class SelectionScopeListener(sublime_plugin.EventListener):
     def on_selection_modified(self, view):
-        if not Pref.instant_scoper or Pref.ignore_all:
+        if not Pref.instant_scoper or not Pref.is_enabled(view):
             return
         now = time()
         if now - Pref.time > Pref.wait_time:
@@ -117,8 +130,8 @@ class SelectionScopeListener(sublime_plugin.EventListener):
 
 # Kick off scoper
 def sh_run():
-    Pref.modified = False
     # Ignore selection inside the routine
+    Pref.modified = False
     Pref.ignore_all = True
     window = sublime.active_window()
     view = None if window == None else window.active_view()
