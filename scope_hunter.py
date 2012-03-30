@@ -20,7 +20,6 @@ class Pref:
         cls.modified = False
         cls.ignore_all = False
         cls.instant_scoper = False
-        cls.last_run = ""
 
     @classmethod
     def is_enabled(cls, view):
@@ -82,6 +81,7 @@ class GetSelectionScope():
         self.multiselect = bool(sh_settings.get("multiselect", False))
         self.rowcol = bool(sh_settings.get("extent_line_char", False))
         self.points = bool(sh_settings.get("extent_points", False))
+        self.console_log = bool(sh_settings.get("console_log", False))
         self.highlight_extent = bool(sh_settings.get("highlight_extent", False))
         self.highlight_scope = sh_settings.get("highlight_scope", 'invalid')
         self.highlight_style = sh_settings.get("highlight_style", 'underline')
@@ -111,6 +111,9 @@ class GetSelectionScope():
             view.insert(edit, 0, '\n'.join(self.scope_bfr))
             view.end_edit(edit)
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
+
+        if self.console_log:
+            print '\n'.join(["Scope Hunter"] + self.scope_bfr)
 
         if self.highlight_extent:
             highlight_style = 0
@@ -156,12 +159,8 @@ class SelectionScopeListener(sublime_plugin.EventListener):
             # clean up dirty highlights
             self.clear_regions(view)
         else:
-            now = time()
-            if now - Pref.time > Pref.wait_time:
-                sublime.set_timeout(lambda: sh_run(), 0)
-            else:
-                Pref.modified = True
-                Pref.time = now
+            Pref.modified = True
+            Pref.time = time()
 
 
 # Kick off scoper
@@ -182,8 +181,9 @@ def sh_run():
 # be ignored and then accounted for with one match by this thread
 def sh_loop():
     while True:
-        if Pref.modified == True and time() - Pref.time > Pref.wait_time:
-            sublime.set_timeout(lambda: sh_run(), 0)
+        if not Pref.ignore_all:
+            if Pref.modified == True and time() - Pref.time > Pref.wait_time:
+                sublime.set_timeout(lambda: sh_run(), 0)
         sleep(0.5)
 
 if not 'running_sh_loop' in globals():
