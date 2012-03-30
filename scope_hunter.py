@@ -104,7 +104,7 @@ find_scopes = GetSelectionScope().run
 
 
 class GetSelectionScopeCommand(sublime_plugin.TextCommand):
-    def run(self):
+    def run(self, edit):
         Pref.modified = True
 
     def is_enabled(self):
