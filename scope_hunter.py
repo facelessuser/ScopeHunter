@@ -26,13 +26,28 @@ class Pref:
     def is_enabled(cls, view):
         return not view.settings().get("is_widget") and not cls.ignore_all
 
-Pref().load()
+Pref.load()
+
+
+def underline(regions):
+    # Convert to empty regions
+    new_regions = []
+    for region in regions:
+        start = region.begin()
+        end = region.end()
+        while start < end:
+            new_regions.append(sublime.Region(start))
+            start += 1
+    return new_regions
 
 
 class GetSelectionScope():
     def get_scope(self, pt):
-        if self.rowcol or self.points:
+        if self.rowcol or self.points or self.highlight_extent:
             pts = self.view.extract_scope(pt)
+            # Scale back the extent by one for true points included
+            if pts.size() < self.highlight_max_size:
+                self.extents.append(sublime.Region(pts.begin(), pts.end()))
             if self.points:
                 self.scope_bfr.append("%-25s (%d, %d)" % ("Scope Extent pts:", pts.begin(), pts.end()))
             if self.rowcol:
@@ -65,10 +80,14 @@ class GetSelectionScope():
         self.show_panel = bool(sh_settings.get("show_panel", False))
         self.clipboard = bool(sh_settings.get("clipboard", False))
         self.multiselect = bool(sh_settings.get("multiselect", False))
-        self.console_log = bool(sh_settings.get("console_log", False))
         self.rowcol = bool(sh_settings.get("extent_line_char", False))
         self.points = bool(sh_settings.get("extent_points", False))
+        self.highlight_extent = bool(sh_settings.get("highlight_extent", False))
+        self.highlight_scope = sh_settings.get("highlight_scope", 'invalid')
+        self.highlight_style = sh_settings.get("highlight_style", 'underline')
+        self.highlight_max_size = int(sh_settings.get("highlight_max_size", 100))
         self.first = True
+        self.extents = []
 
         # Get scope info for each selection wanted
         if len(self.view.sel()):
@@ -93,12 +112,22 @@ class GetSelectionScope():
             view.end_edit(edit)
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
 
-        if self.console_log:
-            # Reduce duplicate console entries
-            text = "Scope Hunter: Scope Dump\n" + '\n'.join(self.scope_bfr)
-            if text != Pref.last_run:
-                print text
-                Pref.last_run = text
+        if self.highlight_extent:
+            highlight_style = 0
+            if self.highlight_style == 'underline':
+                # Use underline if explicity requested,
+                # or if doing a find only when under a selection only (only underline can be seen through a selection)
+                self.extents = underline(self.extents)
+                highlight_style = sublime.DRAW_EMPTY_AS_OVERWRITE
+            elif self.highlight_style == 'outline':
+                highlight_style = sublime.DRAW_OUTLINED
+            self.view.add_regions(
+                'scope_hunter',
+                self.extents,
+                self.highlight_scope,
+                highlight_style
+            )
+
 
 find_scopes = GetSelectionScope().run
 
@@ -117,15 +146,22 @@ class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
 
 
 class SelectionScopeListener(sublime_plugin.EventListener):
+    def clear_regions(self, view):
+        if self.enabled and bool(sh_settings.get("highlight_extent", False)) and len(view.get_regions("scope_hunter")):
+            view.erase_regions("scope_hunter")
+
     def on_selection_modified(self, view):
-        if not Pref.instant_scoper or not Pref.is_enabled(view):
-            return
-        now = time()
-        if now - Pref.time > Pref.wait_time:
-            sublime.set_timeout(lambda: sh_run(), 0)
+        self.enabled = Pref.is_enabled(view)
+        if not Pref.instant_scoper or not self.enabled:
+            # clean up dirty highlights
+            self.clear_regions(view)
         else:
-            Pref.modified = True
-            Pref.time = now
+            now = time()
+            if now - Pref.time > Pref.wait_time:
+                sublime.set_timeout(lambda: sh_run(), 0)
+            else:
+                Pref.modified = True
+                Pref.time = now
 
 
 # Kick off scoper
