@@ -12,7 +12,7 @@ import thread
 sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
 
 
-class Pref:
+class Pref(object):
     @classmethod
     def load(cls):
         cls.wait_time = 0.12
@@ -40,7 +40,7 @@ def underline(regions):
     return new_regions
 
 
-class GetSelectionScope():
+class GetSelectionScope(object):
     def get_scope(self, pt):
         if self.rowcol or self.points or self.highlight_extent:
             pts = self.view.extract_scope(pt)
