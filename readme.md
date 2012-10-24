@@ -5,7 +5,7 @@ This is a simple plugin get the scope under the cursor(s) in Sublime Text.  This
 All commands are accessible via the command palatte.
 
 ## Scope Hunter: Show Scope Under Cursor
-Show scope under curor or cursors (depending whether multi-select is enabled)
+Show scope under cursor or cursors (depending whether multi-select is enabled)
 
 ## Scope Hunter: Toggle Instant Scoper
 Toggle scoping under cursor constantly.
