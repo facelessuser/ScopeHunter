@@ -1,8 +1,8 @@
-'''
+"""
 Scope Hunter
 Licensed under MIT
 Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
-'''
+"""
 
 import sublime
 import sublime_plugin
@@ -11,7 +11,10 @@ import _thread as thread
 
 
 def underline(regions):
-    # Convert to empty regions
+    """
+    Convert to empty regions
+    """
+
     new_regions = []
     for region in regions:
         start = region.begin()
@@ -178,8 +181,11 @@ class SelectionScopeListener(sublime_plugin.EventListener):
             ScopeThreadManager.time = time()
 
 
-# Kick off scoper
 def sh_run():
+    """
+    Kick off scoper
+    """
+
     # Ignore selection inside the routine
     ScopeThreadManager.modified = False
     ScopeThreadManager.ignore_all = True
@@ -191,10 +197,13 @@ def sh_run():
     ScopeThreadManager.time = time()
 
 
-# Start thread that will ensure scope hunting happens after a barage of events
-# Initial hunt is instant, but subsequent events in close succession will
-# be ignored and then accounted for with one match by this thread
 def sh_loop():
+    """
+    Start thread that will ensure scope hunting happens after a barage of events
+    Initial hunt is instant, but subsequent events in close succession will
+    be ignored and then accounted for with one match by this thread
+    """
+
     while True:
         if not ScopeThreadManager.ignore_all:
             if ScopeThreadManager.modified == True and time() - ScopeThreadManager.time > ScopeThreadManager.wait_time:
