@@ -7,25 +7,7 @@ Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
 import sublime
 import sublime_plugin
 from time import time, sleep
-import thread
-
-sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
-
-
-class Pref(object):
-    @classmethod
-    def load(cls):
-        cls.wait_time = 0.12
-        cls.time = time()
-        cls.modified = False
-        cls.ignore_all = False
-        cls.instant_scoper = False
-
-    @classmethod
-    def is_enabled(cls, view):
-        return not view.settings().get("is_widget") and not cls.ignore_all
-
-Pref.load()
+import _thread as thread
 
 
 def underline(regions):
@@ -38,6 +20,37 @@ def underline(regions):
             new_regions.append(sublime.Region(start))
             start += 1
     return new_regions
+
+
+class ScopeThreadManager(object):
+    @classmethod
+    def load(cls):
+        cls.wait_time = 0.12
+        cls.time = time()
+        cls.modified = False
+        cls.ignore_all = False
+        cls.instant_scoper = False
+
+    @classmethod
+    def is_enabled(cls, view):
+        return not view.settings().get("is_widget") and not cls.ignore_all
+
+ScopeThreadManager.load()
+
+
+class ScopeGlobals(object):
+    bfr = None
+    pt = None
+
+    @classmethod
+    def clear(cls):
+        cls.bfr = None
+        cls.pt = None
+
+
+class ScopeHunterInsertCommand(sublime_plugin.TextCommand):
+    def run(self, edit):
+        self.view.insert(edit, ScopeGlobals.pt, ScopeGlobals.bfr)
 
 
 class GetSelectionScope(object):
@@ -107,13 +120,14 @@ class GetSelectionScope(object):
 
         # Show panel
         if self.show_panel:
-            edit = view.begin_edit()
-            view.insert(edit, 0, '\n'.join(self.scope_bfr))
-            view.end_edit(edit)
+            ScopeGlobals.bfr = '\n'.join(self.scope_bfr)
+            ScopeGlobals.pt = 0 
+            view.run_command('scope_hunter_insert')
+            ScopeGlobals.clear()
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
 
         if self.console_log:
-            print '\n'.join(["Scope Hunter"] + self.scope_bfr)
+            print('\n'.join(["Scope Hunter"] + self.scope_bfr))
 
         if self.highlight_extent:
             highlight_style = 0
@@ -128,6 +142,7 @@ class GetSelectionScope(object):
                 'scope_hunter',
                 self.extents,
                 self.highlight_scope,
+                '',
                 highlight_style
             )
 
@@ -137,15 +152,15 @@ find_scopes = GetSelectionScope().run
 
 class GetSelectionScopeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        Pref.modified = True
+        ScopeThreadManager.modified = True
 
     def is_enabled(self):
-        return Pref.is_enabled(self.view)
+        return ScopeThreadManager.is_enabled(self.view)
 
 
 class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
     def run(self):
-        Pref.instant_scoper = False if Pref.instant_scoper else True
+        ScopeThreadManager.instant_scoper = False if ScopeThreadManager.instant_scoper else True
 
 
 class SelectionScopeListener(sublime_plugin.EventListener):
@@ -154,26 +169,26 @@ class SelectionScopeListener(sublime_plugin.EventListener):
             view.erase_regions("scope_hunter")
 
     def on_selection_modified(self, view):
-        self.enabled = Pref.is_enabled(view)
-        if not Pref.instant_scoper or not self.enabled:
+        self.enabled = ScopeThreadManager.is_enabled(view)
+        if not ScopeThreadManager.instant_scoper or not self.enabled:
             # clean up dirty highlights
             self.clear_regions(view)
         else:
-            Pref.modified = True
-            Pref.time = time()
+            ScopeThreadManager.modified = True
+            ScopeThreadManager.time = time()
 
 
 # Kick off scoper
 def sh_run():
     # Ignore selection inside the routine
-    Pref.modified = False
-    Pref.ignore_all = True
+    ScopeThreadManager.modified = False
+    ScopeThreadManager.ignore_all = True
     window = sublime.active_window()
     view = None if window == None else window.active_view()
     if view != None:
         find_scopes(view)
-    Pref.ignore_all = False
-    Pref.time = time()
+    ScopeThreadManager.ignore_all = False
+    ScopeThreadManager.time = time()
 
 
 # Start thread that will ensure scope hunting happens after a barage of events
@@ -181,11 +196,18 @@ def sh_run():
 # be ignored and then accounted for with one match by this thread
 def sh_loop():
     while True:
-        if not Pref.ignore_all:
-            if Pref.modified == True and time() - Pref.time > Pref.wait_time:
+        if not ScopeThreadManager.ignore_all:
+            if ScopeThreadManager.modified == True and time() - ScopeThreadManager.time > ScopeThreadManager.wait_time:
                 sublime.set_timeout(lambda: sh_run(), 0)
         sleep(0.5)
 
-if not 'running_sh_loop' in globals():
-    running_sh_loop = True
-    thread.start_new_thread(sh_loop, ())
+
+def plugin_loaded():
+    global sh_settings
+    sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
+
+    if not 'running_sh_loop' in globals():
+        global running_sh_loop
+        running_sh_loop = True
+        thread.start_new_thread(sh_loop, ())
+
