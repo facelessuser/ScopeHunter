@@ -8,6 +8,7 @@ import sublime
 import sublime_plugin
 from time import time, sleep
 import _thread as thread
+from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 
 
 def underline(regions):
@@ -81,6 +82,21 @@ class GetSelectionScope(object):
             self.first = False
 
         self.scope_bfr.append("%-25s %s" % ("Scope:", self.view.scope_name(pt)))
+
+        if self.show_selectors:
+            color, style, bgcolor, color_selector, bg_selector, style_selectors = scheme_matcher.guess_color(self.view, pt, scope)
+            scheme_file = scheme_matcher.color_scheme
+            self.scope_bfr.append("%-25s %s" % ("Scheme File:", scheme_file))
+            self.scope_bfr.append("%-25s %s" % ("foreground:", color))
+            self.scope_bfr.append("%-25s %s" % ("foreground selector:", color_selector))
+            self.scope_bfr.append("%-25s %s" % ("background:", bgcolor))
+            self.scope_bfr.append("%-25s %s" % ("background selector:", bg_selector))
+            self.scope_bfr.append("%-25s %s" % ("style:", style))
+            if style_selectors["bold"] != "":
+                self.scope_bfr.append("%-25s %s" % ("bold selector:", style_selectors["bold"]))
+            if style_selectors["italic"] != "":
+                self.scope_bfr.append("%-25s %s" % ("italic selector:", style_selectors["italic"]))
+
         # Divider
         self.scope_bfr.append("")
 
@@ -102,6 +118,7 @@ class GetSelectionScope(object):
         self.highlight_scope = sh_settings.get("highlight_scope", 'invalid')
         self.highlight_style = sh_settings.get("highlight_style", 'underline')
         self.highlight_max_size = int(sh_settings.get("highlight_max_size", 100))
+        self.show_selectors = bool(sh_settings.get("show_color_scheme_info", False))
         self.first = True
         self.extents = []
 
@@ -124,7 +141,7 @@ class GetSelectionScope(object):
         # Show panel
         if self.show_panel:
             ScopeGlobals.bfr = '\n'.join(self.scope_bfr)
-            ScopeGlobals.pt = 0 
+            ScopeGlobals.pt = 0
             view.run_command('scope_hunter_insert')
             ScopeGlobals.clear()
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
@@ -211,12 +228,23 @@ def sh_loop():
         sleep(0.5)
 
 
+def init_color_scheme():
+    global pref_settings
+    global scheme_matcher
+    pref_settings = sublime.load_settings('Preferences.sublime-settings')
+    scheme_file = pref_settings.get('color_scheme')
+    scheme_matcher = scheme_matcher = ColorSchemeMatcher(scheme_file)
+    pref_settings.clear_on_change('reload')
+    pref_settings.add_on_change('reload', init_color_scheme)
+
+
 def plugin_loaded():
     global sh_settings
     sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
+
+    init_color_scheme()
 
     if not 'running_sh_loop' in globals():
         global running_sh_loop
         running_sh_loop = True
         thread.start_new_thread(sh_loop, ())
-
