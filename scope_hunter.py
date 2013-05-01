@@ -11,6 +11,10 @@ import _thread as thread
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 
 
+def log(msg):
+    print("ScopeHunter: %s" % msg)
+
+
 def underline(regions):
     """
     Convert to empty regions
@@ -83,19 +87,23 @@ class GetSelectionScope(object):
 
         self.scope_bfr.append("%-25s %s" % ("Scope:", self.view.scope_name(pt)))
 
-        if self.show_selectors:
-            color, style, bgcolor, color_selector, bg_selector, style_selectors = scheme_matcher.guess_color(self.view, pt, scope)
-            scheme_file = scheme_matcher.color_scheme
-            self.scope_bfr.append("%-25s %s" % ("Scheme File:", scheme_file))
-            self.scope_bfr.append("%-25s %s" % ("foreground:", color))
-            self.scope_bfr.append("%-25s %s" % ("foreground selector:", color_selector))
-            self.scope_bfr.append("%-25s %s" % ("background:", bgcolor))
-            self.scope_bfr.append("%-25s %s" % ("background selector:", bg_selector))
-            self.scope_bfr.append("%-25s %s" % ("style:", style))
-            if style_selectors["bold"] != "":
-                self.scope_bfr.append("%-25s %s" % ("bold selector:", style_selectors["bold"]))
-            if style_selectors["italic"] != "":
-                self.scope_bfr.append("%-25s %s" % ("italic selector:", style_selectors["italic"]))
+        if self.show_selectors and scheme_matcher is not None:
+            try:
+                color, style, bgcolor, color_selector, bg_selector, style_selectors = scheme_matcher.guess_color(self.view, pt, scope)
+                scheme_file = scheme_matcher.color_scheme
+                self.scope_bfr.append("%-25s %s" % ("Scheme File:", scheme_file))
+                self.scope_bfr.append("%-25s %s" % ("foreground:", color))
+                self.scope_bfr.append("%-25s %s" % ("foreground selector:", color_selector))
+                self.scope_bfr.append("%-25s %s" % ("background:", bgcolor))
+                self.scope_bfr.append("%-25s %s" % ("background selector:", bg_selector))
+                self.scope_bfr.append("%-25s %s" % ("style:", style))
+                if style_selectors["bold"] != "":
+                    self.scope_bfr.append("%-25s %s" % ("bold selector:", style_selectors["bold"]))
+                if style_selectors["italic"] != "":
+                    self.scope_bfr.append("%-25s %s" % ("italic selector:", style_selectors["italic"]))
+            except Exception as e:
+                log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(e))
+                self.show_selectors = False
 
         # Divider
         self.scope_bfr.append("")
@@ -181,6 +189,20 @@ class GetSelectionScopeCommand(sublime_plugin.TextCommand):
 class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
     def run(self):
         ScopeThreadManager.instant_scoper = False if ScopeThreadManager.instant_scoper else True
+        if ScopeThreadManager.instant_scoper:
+            ScopeThreadManager.modified = True
+            ScopeThreadManager.time = time()
+        else:
+            win = sublime.active_window()
+            if win is not None:
+                view = win.active_view()
+                if (
+                    view is not None and
+                    ScopeThreadManager.is_enabled(view) and
+                    bool(sh_settings.get("highlight_extent", False)) and
+                    len(view.get_regions("scope_hunter"))
+                ):
+                    view.erase_regions("scope_hunter")
 
 
 class SelectionScopeListener(sublime_plugin.EventListener):
@@ -233,7 +255,11 @@ def init_color_scheme():
     global scheme_matcher
     pref_settings = sublime.load_settings('Preferences.sublime-settings')
     scheme_file = pref_settings.get('color_scheme')
-    scheme_matcher = scheme_matcher = ColorSchemeMatcher(scheme_file)
+    try:
+        scheme_matcher = ColorSchemeMatcher(scheme_file)
+    except Exception as e:
+        scheme_matcher = None
+        log("Theme parsing failed!  Ingoring theme related info.\n%s" % str(e))
     pref_settings.clear_on_change('reload')
     pref_settings.add_on_change('reload', init_color_scheme)
 
