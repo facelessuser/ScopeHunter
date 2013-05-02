@@ -10,6 +10,9 @@ Show scope under cursor or cursors (depending whether multi-select is enabled)
 ## Scope Hunter: Toggle Instant Scoper
 Toggle scoping under cursor constantly.
 
+## Scope Hunter: User Settings
+In order to change the standard settings of Scope Hunter, please go to `Preferences -> Package Settings -> Scope Hunter` and click on `Settings - User`.  Repeat that for `Settings - Default`, copy all the settings from the default file to the user settings file, which you would like to change.
+
 # Features
 All features are configurable via the settings file
 
