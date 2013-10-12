@@ -19,26 +19,34 @@ def sublime_format_path(pth):
 
 
 class ColorSchemeMatcher(object):
-    def __init__(self, scheme_file, strip_trans=False):
+    def __init__(self, scheme_file, strip_trans=False, ignore_gutter=False, track_dark_background=False, filter=None):
+        if filter is None:
+            filter = self.filter
         self.color_scheme = path.normpath(scheme_file)
         self.scheme_file = path.basename(self.color_scheme)
-        self.plist_file = readPlistFromBytes(sublime.load_binary_resource(sublime_format_path(self.color_scheme)))
+        self.plist_file = filter(readPlistFromBytes(sublime.load_binary_resource(sublime_format_path(self.color_scheme))))
         self.scheme_file = scheme_file
         self.strip_trans = strip_trans
+        self.ignore_gutter = ignore_gutter
+        self.track_dark_background = track_dark_background
+        self.dark_lumens = None
         self.matched = {}
 
         self.parse_scheme()
+
+    def filter(self, plist):
+        return plist
 
     def parse_scheme(self):
         color_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
-        self.bground = self.strip_transparency(color_settings.get("background", '#FFFFFF'), simple_strip=True)
-        self.fground = self.strip_transparency(color_settings.get("foreground", '#000000'))
-        self.sbground = self.strip_transparency(color_settings.get("selection", self.fground))
-        self.sfground = self.strip_transparency(color_settings.get("selectionForeground", None))
-        self.gbground = self.strip_transparency(color_settings.get("gutter", self.bground))
-        self.gfground = self.strip_transparency(color_settings.get("gutterForeground", self.fground))
+        self.bground = self.strip_color(color_settings.get("background", '#FFFFFF'), simple_strip=True)
+        self.fground = self.strip_color(color_settings.get("foreground", '#000000'))
+        self.sbground = self.strip_color(color_settings.get("selection", self.fground))
+        self.sfground = self.strip_color(color_settings.get("selectionForeground", None))
+        self.gbground = self.strip_color(color_settings.get("gutter", self.bground)) if not self.ignore_gutter else self.bground
+        self.gfground = self.strip_color(color_settings.get("gutterForeground", self.fground)) if not self.ignore_gutter else self.fground
 
         # Create scope colors mapping from color scheme file
         self.colors = {}
@@ -58,21 +66,36 @@ class ColorSchemeMatcher(object):
             if scope != None and name != None and (color != None or bgcolor != None):
                 self.colors[scope] = {
                     "name": name,
-                    "color": self.strip_transparency(color),
-                    "bgcolor": self.strip_transparency(bgcolor),
+                    "color": self.strip_color(color),
+                    "bgcolor": self.strip_color(bgcolor),
                     "style": style
                 }
 
-    def strip_transparency(self, color, simple_strip=False):
+    def strip_color(self, color, simple_strip=False):
         if color is None:
             return color
         elif not self.strip_trans:
             return color.replace(" ", "")
-        ba = "AA"
         rgba = RGBA(color.replace(" ", ""))
         if not simple_strip:
-            rgba.apply_alpha(self.bground + ba if self.bground != "" else "#FFFFFF%s" % ba)
+            rgba.apply_alpha(self.bground if self.bground != "" else "#FFFFFF")
+        if self.track_dark_background:
+            lumens = rgba.luminance()
+            if self.dark_lumens is None or lumens < self.dark_lumens:
+                self.dark_lumens = lumens
         return rgba.get_rgb()
+
+    def get_general_colors(self):
+        return self.bground, self.fground, self.sbground, self.sfground, self.gbground, self.gfground
+
+    def get_darkest_lumen(self):
+        return self.dark_lumens
+
+    def get_plist_file(self):
+        return self.plist_file
+
+    def get_scheme_file(self):
+        return self.scheme_file
 
     def guess_color(self, view, pt, scope_key):
         color = self.fground
@@ -122,3 +145,27 @@ class ColorSchemeMatcher(object):
         else:
             style = ' '.join(style)
         return color, style, bgcolor, color_selector, bg_selector, style_selectors
+
+    def shift_background_brightness(self, lumens_limit):
+        dlumen = self.get_darkest_lumen()
+        if dlumen is not None and dlumen < lumens_limit:
+            factor = 1 + ((lumens_limit - dlumen) / 255.0)
+            for k, v in self.colors.items():
+                fg, bg = v["color"], v["bgcolor"]
+                if v["color"] is not None:
+                    self.colors[k]["color"] = self.apply_brightness(v["color"], factor)
+                if v["bgcolor"] is not None:
+                    self.colors[k]["bgcolor"] = self.apply_brightness(v["bgcolor"], factor)
+            self.bground = self.apply_brightness(self.bground, factor)
+            self.fground = self.apply_brightness(self.fground, factor)
+            self.sbground = self.apply_brightness(self.sbground, factor)
+            if self.sfground is not None:
+                self.sfground = self.apply_brightness(self.sfground, factor)
+            self.gbground = self.apply_brightness(self.gbground, factor)
+            self.gfground = self.apply_brightness(self.gfground, factor)
+
+    def apply_brightness(self, color, shift_factor):
+        rgba = RGBA(color)
+        if shift_factor is not None:
+            rgba.brightness(shift_factor)
+        return rgba.get_rgb()
