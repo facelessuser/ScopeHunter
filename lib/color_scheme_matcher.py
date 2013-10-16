@@ -3,11 +3,15 @@ Color Scheme Matcher (for sublime text)
 Licensed under MIT
 Copyright (c) 2013 Isaac Muse <isaacmuse@gmail.com>
 """
-
-from .rgba import RGBA
+from __future__ import absolute_import
 import sublime
 import re
-from plistlib import readPlistFromBytes
+ST3 = int(sublime.version()) >= 3000
+if not ST3:
+    from plistlib import readPlist
+else:
+    from plistlib import readPlistFromBytes
+from .rgba import RGBA
 from os import path
 
 
@@ -24,7 +28,10 @@ class ColorSchemeMatcher(object):
             filter = self.filter
         self.color_scheme = path.normpath(scheme_file)
         self.scheme_file = path.basename(self.color_scheme)
-        self.plist_file = filter(readPlistFromBytes(sublime.load_binary_resource(sublime_format_path(self.color_scheme))))
+        if ST3:
+            self.plist_file = filter(readPlistFromBytes(sublime.load_binary_resource(sublime_format_path(self.color_scheme))))
+        else:
+            self.plist_file = filter(readPlist(sublime.packages_path() + self.color_scheme.replace('Packages', '')))
         self.scheme_file = scheme_file
         self.strip_trans = strip_trans
         self.ignore_gutter = ignore_gutter
