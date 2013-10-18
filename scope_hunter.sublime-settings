@@ -30,7 +30,7 @@
 
     // Show color scheme info: colors, style, and theme selectors
     // responsible for the colors and style
-    "show_color_scheme_info": true,
+    "show_color_scheme_info": false,
 
     // Max region to size to highlight
     "highlight_max_size": 100
