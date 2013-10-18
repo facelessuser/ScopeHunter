@@ -1,18 +1,39 @@
-'''
+"""
 Scope Hunter
 Licensed under MIT
 Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
-'''
+"""
 
 import sublime
 import sublime_plugin
 from time import time, sleep
 import thread
+try:
+    from ScopeHunterLib.color_scheme_matcher import ColorSchemeMatcher
+except:
+    ColorSchemeMatcher = None
 
-sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
+
+def log(msg):
+    print("ScopeHunter: %s" % msg)
 
 
-class Pref(object):
+def underline(regions):
+    """
+    Convert to empty regions
+    """
+
+    new_regions = []
+    for region in regions:
+        start = region.begin()
+        end = region.end()
+        while start < end:
+            new_regions.append(sublime.Region(start))
+            start += 1
+    return new_regions
+
+
+class ScopeThreadManager(object):
     @classmethod
     def load(cls):
         cls.wait_time = 0.12
@@ -25,23 +46,12 @@ class Pref(object):
     def is_enabled(cls, view):
         return not view.settings().get("is_widget") and not cls.ignore_all
 
-Pref.load()
-
-
-def underline(regions):
-    # Convert to empty regions
-    new_regions = []
-    for region in regions:
-        start = region.begin()
-        end = region.end()
-        while start < end:
-            new_regions.append(sublime.Region(start))
-            start += 1
-    return new_regions
+ScopeThreadManager.load()
 
 
 class GetSelectionScope(object):
     def get_scope(self, pt):
+        global initialized
         if self.rowcol or self.points or self.highlight_extent:
             pts = self.view.extract_scope(pt)
             # Scale back the extent by one for true points included
@@ -65,6 +75,29 @@ class GetSelectionScope(object):
             self.first = False
 
         self.scope_bfr.append("%-25s %s" % ("Scope:", self.view.scope_name(pt)))
+
+        if not initialized:
+            init_color_scheme()
+            initialized = True
+
+        if self.show_selectors and scheme_matcher is not None:
+            try:
+                color, style, bgcolor, color_selector, bg_selector, style_selectors = scheme_matcher.guess_color(self.view, pt, scope)
+                scheme_file = scheme_matcher.color_scheme
+                self.scope_bfr.append("%-25s %s" % ("Scheme File:", scheme_file))
+                self.scope_bfr.append("%-25s %s" % ("foreground:", color))
+                self.scope_bfr.append("%-25s %s" % ("foreground selector:", color_selector))
+                self.scope_bfr.append("%-25s %s" % ("background:", bgcolor))
+                self.scope_bfr.append("%-25s %s" % ("background selector:", bg_selector))
+                self.scope_bfr.append("%-25s %s" % ("style:", style))
+                if style_selectors["bold"] != "":
+                    self.scope_bfr.append("%-25s %s" % ("bold selector:", style_selectors["bold"]))
+                if style_selectors["italic"] != "":
+                    self.scope_bfr.append("%-25s %s" % ("italic selector:", style_selectors["italic"]))
+            except Exception as e:
+                log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(e))
+                self.show_selectors = False
+
         # Divider
         self.scope_bfr.append("")
 
@@ -86,6 +119,7 @@ class GetSelectionScope(object):
         self.highlight_scope = sh_settings.get("highlight_scope", 'invalid')
         self.highlight_style = sh_settings.get("highlight_style", 'underline')
         self.highlight_max_size = int(sh_settings.get("highlight_max_size", 100))
+        self.show_selectors = bool(sh_settings.get("show_color_scheme_info", False))
         self.first = True
         self.extents = []
 
@@ -137,16 +171,29 @@ find_scopes = GetSelectionScope().run
 
 class GetSelectionScopeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        Pref.modified = True
+        ScopeThreadManager.modified = True
 
     def is_enabled(self):
-        return Pref.is_enabled(self.view)
+        return ScopeThreadManager.is_enabled(self.view)
 
 
 class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
     def run(self):
-        Pref.instant_scoper = False if Pref.instant_scoper else True
-
+        ScopeThreadManager.instant_scoper = False if ScopeThreadManager.instant_scoper else True
+        if ScopeThreadManager.instant_scoper:
+            ScopeThreadManager.modified = True
+            ScopeThreadManager.time = time()
+        else:
+            win = sublime.active_window()
+            if win is not None:
+                view = win.active_view()
+                if (
+                    view is not None and
+                    ScopeThreadManager.is_enabled(view) and
+                    bool(sh_settings.get("highlight_extent", False)) and
+                    len(view.get_regions("scope_hunter"))
+                ):
+                    view.erase_regions("scope_hunter")
 
 class SelectionScopeListener(sublime_plugin.EventListener):
     def clear_regions(self, view):
@@ -154,37 +201,68 @@ class SelectionScopeListener(sublime_plugin.EventListener):
             view.erase_regions("scope_hunter")
 
     def on_selection_modified(self, view):
-        self.enabled = Pref.is_enabled(view)
-        if not Pref.instant_scoper or not self.enabled:
+        self.enabled = ScopeThreadManager.is_enabled(view)
+        if not ScopeThreadManager.instant_scoper or not self.enabled:
             # clean up dirty highlights
             self.clear_regions(view)
         else:
-            Pref.modified = True
-            Pref.time = time()
+            ScopeThreadManager.modified = True
+            ScopeThreadManager.time = time()
 
 
-# Kick off scoper
 def sh_run():
+    """
+    Kick off scoper
+    """
+
     # Ignore selection inside the routine
-    Pref.modified = False
-    Pref.ignore_all = True
+    ScopeThreadManager.modified = False
+    ScopeThreadManager.ignore_all = True
     window = sublime.active_window()
     view = None if window == None else window.active_view()
     if view != None:
         find_scopes(view)
-    Pref.ignore_all = False
-    Pref.time = time()
+    ScopeThreadManager.ignore_all = False
+    ScopeThreadManager.time = time()
 
 
-# Start thread that will ensure scope hunting happens after a barage of events
-# Initial hunt is instant, but subsequent events in close succession will
-# be ignored and then accounted for with one match by this thread
 def sh_loop():
+    """
+    Start thread that will ensure scope hunting happens after a barage of events
+    Initial hunt is instant, but subsequent events in close succession will
+    be ignored and then accounted for with one match by this thread
+    """
+
     while True:
-        if not Pref.ignore_all:
-            if Pref.modified == True and time() - Pref.time > Pref.wait_time:
+        if not ScopeThreadManager.ignore_all:
+            if ScopeThreadManager.modified == True and time() - ScopeThreadManager.time > ScopeThreadManager.wait_time:
                 sublime.set_timeout(lambda: sh_run(), 0)
         sleep(0.5)
+
+
+def init_color_scheme():
+    global pref_settings
+    global scheme_matcher
+    if ColorSchemeMatcher is None:
+        # Linux might fail, so disable color matching
+        log("ColorSchemeMatcher is not loaded!")
+        pref_settings = None
+        scheme_matcher = None
+    else:
+        pref_settings = sublime.load_settings('Preferences.sublime-settings')
+        scheme_file = pref_settings.get('color_scheme')
+        try:
+            scheme_matcher = ColorSchemeMatcher(scheme_file)
+        except Exception as e:
+            scheme_matcher = None
+            log("Theme parsing failed!  Ingoring theme related info.\n%s" % str(e))
+        pref_settings.clear_on_change('reload')
+        pref_settings.add_on_change('reload', init_color_scheme)
+
+
+sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
+
+initialized = False
 
 if not 'running_sh_loop' in globals():
     running_sh_loop = True
