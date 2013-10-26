@@ -1,8 +1,8 @@
-"""
+'''
 RGBA
 Licensed under MIT
 Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
-"""
+'''
 
 import re
 from colorsys import rgb_to_hls, hls_to_rgb, rgb_to_hsv, hsv_to_rgb
@@ -44,9 +44,9 @@ class RGBA(object):
     def get_rgb(self):
         return "#%02X%02X%02X" % (self.r, self.g, self.b)
 
-    def apply_alpha(self, background="#000000AA"):
+    def apply_alpha(self, background="#000000FF"):
         def tx_alpha(cf, af, cb, ab):
-            return abs(cf * af + cb * ab * (1 - af)) & 0xFF
+            return int(abs(cf * (af / 255.0) + cb * (ab / 255.0) * (1 - (af / 255.0)))) & 0xFF
 
         if self.a < 0xFF:
             r, g, b, a = self._split_channels(background)
@@ -149,10 +149,10 @@ class RGBA(object):
         channels = ["r", "g", "b"]
         total_lumes = clamp(self.luminance() + (255.0 * factor) - 255.0, 0.0, 255.0)
 
-        if total_lumes == 255:
+        if total_lumes == 255.0:
             # white
             self.r, self.g, self.b = 0xFF, 0xFF, 0xFF
-        elif total_lumes == 0:
+        elif total_lumes == 0.0:
             # black
             self.r, self.g, self.b = 0x00, 0x00, 0x00
         else:
@@ -168,6 +168,6 @@ class RGBA(object):
                     components = list(distribute_overage(components, overage, slots))
                 count += 1
 
-            self.r = int(round(components[0])) & 0xFF
-            self.g = int(round(components[1])) & 0xFF
-            self.b = int(round(components[2])) & 0xFF
+            self.r = clamp(int(round(components[0])), 0, 255) & 0xFF
+            self.g = clamp(int(round(components[1])), 0, 255) & 0xFF
+            self.b = clamp(int(round(components[2])), 0, 255) & 0xFF
