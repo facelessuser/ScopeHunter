@@ -142,12 +142,12 @@ class GetSelectionScope(object):
         # Show panel
         if self.show_panel:
             edit = view.begin_edit()
-            view.insert(edit, 0, '\n'.join(self.scope_bfr))
+            view.insert(edit, 0, unicode('\n'.join(self.scope_bfr)))
             view.end_edit(edit)
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
 
         if self.console_log:
-            print '\n'.join(["Scope Hunter"] + self.scope_bfr)
+            print unicode('\n'.join(["Scope Hunter"] + self.scope_bfr)).encode("utf-8")
 
         if self.highlight_extent:
             highlight_style = 0
