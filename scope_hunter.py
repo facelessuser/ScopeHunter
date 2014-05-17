@@ -10,6 +10,10 @@ from time import time, sleep
 import _thread as thread
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 
+pref_settings = {}
+scheme_matcher = None
+sh_settings = {}
+
 
 def log(msg):
     print("ScopeHunter: %s" % msg)
@@ -229,8 +233,8 @@ def sh_run():
     ScopeThreadManager.modified = False
     ScopeThreadManager.ignore_all = True
     window = sublime.active_window()
-    view = None if window == None else window.active_view()
-    if view != None:
+    view = None if window is None else window.active_view()
+    if view is not None:
         find_scopes(view)
     ScopeThreadManager.ignore_all = False
     ScopeThreadManager.time = time()
@@ -245,7 +249,7 @@ def sh_loop():
 
     while True:
         if not ScopeThreadManager.ignore_all:
-            if ScopeThreadManager.modified == True and time() - ScopeThreadManager.time > ScopeThreadManager.wait_time:
+            if ScopeThreadManager.modified is True and time() - ScopeThreadManager.time > ScopeThreadManager.wait_time:
                 sublime.set_timeout(lambda: sh_run(), 0)
         sleep(0.5)
 
@@ -270,7 +274,7 @@ def plugin_loaded():
 
     init_color_scheme()
 
-    if not 'running_sh_loop' in globals():
+    if 'running_sh_loop' not in globals():
         global running_sh_loop
         running_sh_loop = True
         thread.start_new_thread(sh_loop, ())

@@ -17,7 +17,7 @@ from os import path
 
 def sublime_format_path(pth):
     m = re.match(r"^([A-Za-z]{1}):(?:/|\\)(.*)", pth)
-    if sublime.platform() == "windows" and m != None:
+    if sublime.platform() == "windows" and m is not None:
         pth = m.group(1) + "/" + m.group(2)
     return pth.replace("\\", "/")
 
@@ -70,7 +70,7 @@ class ColorSchemeMatcher(object):
                         if s == "bold" or s == "italic":  # or s == "underline":
                             style.append(s)
 
-            if scope != None and name != None and (color != None or bgcolor != None):
+            if scope is not None and name is not None and (color is not None or bgcolor is not None):
                 self.colors[scope] = {
                     "name": name,
                     "color": self.strip_color(color),
@@ -159,10 +159,10 @@ class ColorSchemeMatcher(object):
             factor = 1 + ((lumens_limit - dlumen) / 255.0)
             for k, v in self.colors.items():
                 fg, bg = v["color"], v["bgcolor"]
-                if v["color"] is not None:
-                    self.colors[k]["color"] = self.apply_brightness(v["color"], factor)
-                if v["bgcolor"] is not None:
-                    self.colors[k]["bgcolor"] = self.apply_brightness(v["bgcolor"], factor)
+                if fg is not None:
+                    self.colors[k]["color"] = self.apply_brightness(fg, factor)
+                if bg is not None:
+                    self.colors[k]["bgcolor"] = self.apply_brightness(bg, factor)
             self.bground = self.apply_brightness(self.bground, factor)
             self.fground = self.apply_brightness(self.fground, factor)
             self.sbground = self.apply_brightness(self.sbground, factor)
