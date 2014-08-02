@@ -79,8 +79,8 @@ class ColorSchemeMatcher(object):
                 }
 
     def strip_color(self, color, simple_strip=False):
-        if color is None:
-            return color
+        if color is None or color.strip() == "":
+            return None
         elif not self.strip_trans:
             return color.replace(" ", "")
         rgba = RGBA(color.replace(" ", ""))
