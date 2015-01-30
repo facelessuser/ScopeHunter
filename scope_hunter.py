@@ -74,7 +74,10 @@ class GetSelectionScope(object):
             self.status = scope
             self.first = False
 
-        self.scope_bfr.append("%-25s %s" % ("Scope:", self.view.scope_name(pt)))
+        if self.multiline_scope:
+            self.scope_bfr.append("Scope:\n    " + self.view.scope_name(pt).strip().replace(" ", "\n    "))
+        else:
+            self.scope_bfr.append("%-25s %s" % ("Scope:", self.view.scope_name(pt)))
 
         if not initialized:
             init_color_scheme()
@@ -120,6 +123,7 @@ class GetSelectionScope(object):
         self.highlight_style = sh_settings.get("highlight_style", 'underline')
         self.highlight_max_size = int(sh_settings.get("highlight_max_size", 100))
         self.show_selectors = bool(sh_settings.get("show_color_scheme_info", False))
+        self.multiline_scope = bool(sh_settings.get("multiline_scope", False))
         self.first = True
         self.extents = []
 
