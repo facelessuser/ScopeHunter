@@ -89,7 +89,7 @@ class GetSelectionScope(object):
             self.status = scope
             self.first = False
 
-        self.scope_bfr.append("%-25s %s" % ("Scope:", self.view.scope_name(pt)))
+        self.scope_bfr.append("Scope:\n    " + self.view.scope_name(pt).strip().replace(" ", "\n    "))
 
         if self.show_selectors and scheme_matcher is not None:
             try:
