@@ -12,6 +12,7 @@ from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 
 pref_settings = {}
 scheme_matcher = None
+scheme_matcher_simulated = None
 sh_settings = {}
 
 
@@ -69,17 +70,29 @@ class GetSelectionScope(object):
     def get_scope(self, pt):
         if self.rowcol or self.points or self.highlight_extent:
             pts = self.view.extract_scope(pt)
+            row1, col1 = self.view.rowcol(pts.begin())
+            row2, col2 = self.view.rowcol(pts.end())
             # Scale back the extent by one for true points included
             if pts.size() < self.highlight_max_size:
                 self.extents.append(sublime.Region(pts.begin(), pts.end()))
-            if self.points:
-                self.scope_bfr.append("%-25s (%d, %d)" % ("Scope Extent pts:", pts.begin(), pts.end()))
-            if self.rowcol:
-                row1, col1 = self.view.rowcol(pts.begin())
-                row2, col2 = self.view.rowcol(pts.end())
-                self.scope_bfr.append(
-                    "%-25s (line: %d char: %d, line: %d char: %d)" % ("Scope Extent row/col:", row1 + 1, col1 + 1, row2 + 1, col2 + 1)
-                )
+
+            if self.points or self.rowcol:
+                extents = []
+                if self.points:
+                    extents.append("(%d, %d)" % (pts.begin(), pts.end()))
+                if self.rowcol:
+                    extents.append("(line: %d char: %d, line: %d char: %d)" % (row1 + 1, col1 + 1, row2 + 1, col2 + 1))
+                self.scope_bfr.append("%-30s %s" % ("Scope Extents:", ('\n' + (" " * 31)).join(extents)))
+
+                if self.show_popup:
+                    self.scope_bfr_tool.append("<h3>Scope Extent</h3><p>")
+                    if self.points:
+                        self.scope_bfr_tool.append("(%d, %d)" % (pts.begin(), pts.end()))
+                        if self.rowcol:
+                            self.scope_bfr_tool.append("<br>")
+                    if self.rowcol:
+                        self.scope_bfr_tool.append("(<b>Line:</b> %d <b>Char:</b> %d, <b>Line:</b> %d <b>Char:</b> %d)" % (row1 + 1, col1 + 1, row2 + 1, col2 + 1))
+                    self.scope_bfr_tool.append("</p>")
         scope = self.view.scope_name(pt)
 
         if self.clipboard:
@@ -89,22 +102,41 @@ class GetSelectionScope(object):
             self.status = scope
             self.first = False
 
-        self.scope_bfr.append("Scope:\n    " + self.view.scope_name(pt).strip().replace(" ", "\n    "))
+        self.scope_bfr.append("%-30s %s" % ("Scope:", self.view.scope_name(pt).strip().replace(" ", "\n" + (" " * 31))))
+        if self.show_popup:
+            self.scope_bfr_tool.append("<h3>Scope:</h3><p>%s</p>" % self.view.scope_name(pt).strip())
 
-        if self.show_selectors and scheme_matcher is not None:
+        if self.show_selectors and scheme_matcher is not None and scheme_matcher_simulated is not None:
             try:
+                color_sim, style_sim, bgcolor_sim, color_selector_sim, bg_selector_sim, style_selectors_sim = scheme_matcher.guess_color(self.view, pt, scope)
                 color, style, bgcolor, color_selector, bg_selector, style_selectors = scheme_matcher.guess_color(self.view, pt, scope)
                 scheme_file = scheme_matcher.color_scheme
-                self.scope_bfr.append("%-25s %s" % ("Scheme File:", scheme_file))
-                self.scope_bfr.append("%-25s %s" % ("foreground:", color))
-                self.scope_bfr.append("%-25s %s" % ("foreground selector:", color_selector))
-                self.scope_bfr.append("%-25s %s" % ("background:", bgcolor))
-                self.scope_bfr.append("%-25s %s" % ("background selector:", bg_selector))
-                self.scope_bfr.append("%-25s %s" % ("style:", style))
+                self.scope_bfr.append("%-30s %s" % ("Scheme File:", scheme_file))
+                self.scope_bfr.append("%-30s %s" % ("foreground:", color))
+                self.scope_bfr.append("%-30s %s" % ("foreground (simulated trans):", color_sim))
+                self.scope_bfr.append("%-30s %s" % ("foreground selector:", color_selector))
+                self.scope_bfr.append("%-30s %s" % ("background:", bgcolor))
+                self.scope_bfr.append("%-30s %s" % ("background (simulated trans):", bgcolor_sim))
+                self.scope_bfr.append("%-30s %s" % ("background selector:", bg_selector))
+                self.scope_bfr.append("%-30s %s" % ("style:", style))
                 if style_selectors["bold"] != "":
-                    self.scope_bfr.append("%-25s %s" % ("bold selector:", style_selectors["bold"]))
+                    self.scope_bfr.append("%-30s %s" % ("bold selector:", style_selectors["bold"]))
                 if style_selectors["italic"] != "":
-                    self.scope_bfr.append("%-25s %s" % ("italic selector:", style_selectors["italic"]))
+                    self.scope_bfr.append("%-30s %s" % ("italic selector:", style_selectors["italic"]))
+
+                if self.show_popup:
+                    self.scope_bfr_tool.append('<h3>%s</h3><p><a href="scheme">%s</a></p>' % ("Scheme File", scheme_file))
+                    self.scope_bfr_tool.append('<h3>%s</h3><p>' % "Color and Style")
+                    self.scope_bfr_tool.append('<b>foreground:</b> %s<br><b>foreground (simulated trans):</b> %s<br>' % (color, color_sim))
+                    self.scope_bfr_tool.append('<b>foreground selector:</b> %s<br>' % color_selector)
+                    self.scope_bfr_tool.append('<b>background:</b> %s<br><b>background (simulated trans):</b> %s<br>' % (bgcolor, bgcolor_sim))
+                    self.scope_bfr_tool.append('<b>background selector:</b> %s<br>' % bg_selector)
+                    self.scope_bfr_tool.append('<b>style:</b> %s' % style)
+                    if style_selectors["bold"] != "":
+                        self.scope_bfr_tool.append('<br><b>bold selector:</b> %s' % style_selectors["bold"])
+                    if style_selectors["italic"] != "":
+                        self.scope_bfr_tool.append('<br><b>italic selector:</b> %s' % style_selectors["italic"])
+
             except Exception as e:
                 log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(e))
                 self.show_selectors = False
@@ -112,15 +144,21 @@ class GetSelectionScope(object):
         # Divider
         self.scope_bfr.append("")
 
+    def on_navigate(self, href):
+        if href == 'copy':
+            sublime.set_clipboard('\n'.join(self.scope_bfr))
+
     def run(self, v):
         self.view = v
         self.window = self.view.window()
         view = self.window.get_output_panel('scope_viewer')
         self.scope_bfr = []
+        self.scope_bfr_tool = []
         self.clips = []
         self.status = ""
         self.show_statusbar = bool(sh_settings.get("show_statusbar", False))
         self.show_panel = bool(sh_settings.get("show_panel", False))
+        self.show_popup = bool(sh_settings.get("show_popup", False))
         self.clipboard = bool(sh_settings.get("clipboard", False))
         self.multiselect = bool(sh_settings.get("multiselect", False))
         self.rowcol = bool(sh_settings.get("extent_line_char", False))
@@ -157,6 +195,9 @@ class GetSelectionScope(object):
             view.run_command('scope_hunter_insert')
             ScopeGlobals.clear()
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
+
+        if self.show_popup:
+            self.view.show_popup(''.join(self.scope_bfr_tool) + '<br><br><a href="copy">Copy to Clipboard</a>', location=-1, max_width=600, on_navigate=self.on_navigate)
 
         if self.console_log:
             print('\n'.join(["Scope Hunter"] + self.scope_bfr))
@@ -257,11 +298,14 @@ def sh_loop():
 def init_color_scheme():
     global pref_settings
     global scheme_matcher
+    global scheme_matcher_simulated
     pref_settings = sublime.load_settings('Preferences.sublime-settings')
     scheme_file = pref_settings.get('color_scheme')
     try:
+        scheme_matcher_simulated = ColorSchemeMatcher(scheme_file, strip_trans=True)
         scheme_matcher = ColorSchemeMatcher(scheme_file)
     except Exception as e:
+        scheme_matcher_simulated = None
         scheme_matcher = None
         log("Theme parsing failed!  Ingoring theme related info.\n%s" % str(e))
     pref_settings.clear_on_change('reload')
