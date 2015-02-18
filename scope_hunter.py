@@ -156,13 +156,13 @@ class GetSelectionScope(object):
             window = self.view.window()
             window.run_command(
                 'open_file',
-                {"file": "${packages}/%s" % self.scheme_file.replace('Packages/', '', 1)}
+                {"file": "${packages}/%s" % self.scheme_file.replace('\\', '/').replace('Packages/', '', 1)}
             )
         elif href == 'syntax' and self.syntax_file is not None:
             window = self.view.window()
             window.run_command(
                 'open_file',
-                {"file": "${packages}/%s" % self.syntax_file.replace('Packages/', '', 1)}
+                {"file": "${packages}/%s" % self.syntax_file.replace('\\', '/').replace('Packages/', '', 1)}
             )
 
     def run(self, v):
@@ -172,7 +172,7 @@ class GetSelectionScope(object):
         self.window = self.view.window()
         view = self.window.get_output_panel('scope_viewer')
         self.scope_bfr = []
-        self.scope_bfr_tool = ['<style>%s</style>' % css]
+        self.scope_bfr_tool = ['<style>%s</style>' % (css if css is not None else '')]
         self.clips = []
         self.status = ""
         self.scheme_file = None
@@ -326,7 +326,7 @@ def init_css():
     css_file = 'Packages/' + sh_settings.get('css_file', "ScopeHunter/css/default.css")
 
     try:
-        css = sublime.load_resource(css_file)
+        css = sublime.load_resource(css_file).replace('\r', '\n')
     except:
         css = None
     sh_settings.clear_on_change('reload')
