@@ -19,6 +19,7 @@ All features are configurable via the settings file
 - Dump scope to status bar (no multi-select support)
 - Dump scope extent in line/char format and/or point format
 - Dump output to auto-popup panel and/or console
+- Show output in tooltip (stylesheet is configurable)
 - Copy scope(s) to clipboard
 - Multi-select support for all output except status bar
 - Highlight scope extent

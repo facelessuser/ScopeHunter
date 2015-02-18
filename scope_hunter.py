@@ -14,6 +14,7 @@ pref_settings = {}
 scheme_matcher = None
 scheme_matcher_simulated = None
 sh_settings = {}
+css = None
 
 
 def log(msg):
@@ -85,7 +86,7 @@ class GetSelectionScope(object):
                 self.scope_bfr.append("%-30s %s" % ("Scope Extents:", ('\n' + (" " * 31)).join(extents)))
 
                 if self.show_popup:
-                    self.scope_bfr_tool.append("<h3>Scope Extent</h3><p>")
+                    self.scope_bfr_tool.append("<h1>Scope Extent</h1><p>")
                     if self.points:
                         self.scope_bfr_tool.append("(%d, %d)" % (pts.begin(), pts.end()))
                         if self.rowcol:
@@ -104,14 +105,16 @@ class GetSelectionScope(object):
 
         self.scope_bfr.append("%-30s %s" % ("Scope:", self.view.scope_name(pt).strip().replace(" ", "\n" + (" " * 31))))
         if self.show_popup:
-            self.scope_bfr_tool.append("<h3>Scope:</h3><p>%s</p>" % self.view.scope_name(pt).strip())
+            self.scope_bfr_tool.append("<h1>Scope:</h1><p>%s</p>" % self.view.scope_name(pt).strip())
 
         if self.show_selectors and scheme_matcher is not None and scheme_matcher_simulated is not None:
             try:
                 color_sim, style_sim, bgcolor_sim, color_selector_sim, bg_selector_sim, style_selectors_sim = scheme_matcher.guess_color(self.view, pt, scope)
                 color, style, bgcolor, color_selector, bg_selector, style_selectors = scheme_matcher.guess_color(self.view, pt, scope)
-                scheme_file = scheme_matcher.color_scheme
-                self.scope_bfr.append("%-30s %s" % ("Scheme File:", scheme_file))
+                self.scheme_file = scheme_matcher.color_scheme
+                self.syntax_file = self.view.settings().get('syntax')
+                self.scope_bfr.append("%-30s %s" % ("Scheme File:", self.scheme_file))
+                self.scope_bfr.append("%-30s %s" % ("Syntax File:", self.syntax_file))
                 self.scope_bfr.append("%-30s %s" % ("foreground:", color))
                 self.scope_bfr.append("%-30s %s" % ("foreground (simulated trans):", color_sim))
                 self.scope_bfr.append("%-30s %s" % ("foreground selector:", color_selector))
@@ -125,8 +128,9 @@ class GetSelectionScope(object):
                     self.scope_bfr.append("%-30s %s" % ("italic selector:", style_selectors["italic"]))
 
                 if self.show_popup:
-                    self.scope_bfr_tool.append('<h3>%s</h3><p><a href="scheme">%s</a></p>' % ("Scheme File", scheme_file))
-                    self.scope_bfr_tool.append('<h3>%s</h3><p>' % "Color and Style")
+                    self.scope_bfr_tool.append('<h1>%s</h1><p><a href="scheme">%s</a></p>' % ("Scheme File", self.scheme_file))
+                    self.scope_bfr_tool.append('<h1>%s</h1><p><a href="syntax">%s</a></p>' % ("Syntax File", self.syntax_file))
+                    self.scope_bfr_tool.append('<h1>%s</h1><p>' % "Color and Style")
                     self.scope_bfr_tool.append('<b>foreground:</b> %s<br><b>foreground (simulated trans):</b> %s<br>' % (color, color_sim))
                     self.scope_bfr_tool.append('<b>foreground selector:</b> %s<br>' % color_selector)
                     self.scope_bfr_tool.append('<b>background:</b> %s<br><b>background (simulated trans):</b> %s<br>' % (bgcolor, bgcolor_sim))
@@ -147,18 +151,38 @@ class GetSelectionScope(object):
     def on_navigate(self, href):
         if href == 'copy':
             sublime.set_clipboard('\n'.join(self.scope_bfr))
+            self.view.hide_popup()
+        elif href == 'scheme' and self.scheme_file is not None:
+            window = self.view.window()
+            window.run_command(
+                'open_file',
+                {"file": "${packages}/%s" % self.scheme_file.replace('Packages/', '', 1)}
+            )
+        elif href == 'syntax' and self.syntax_file is not None:
+            window = self.view.window()
+            window.run_command(
+                'open_file',
+                {"file": "${packages}/%s" % self.syntax_file.replace('Packages/', '', 1)}
+            )
 
     def run(self, v):
+        global css
+
         self.view = v
         self.window = self.view.window()
         view = self.window.get_output_panel('scope_viewer')
         self.scope_bfr = []
-        self.scope_bfr_tool = []
+        self.scope_bfr_tool = ['<style>%s</style>' % css]
         self.clips = []
         self.status = ""
+        self.scheme_file = None
+        self.syntax_file = None
         self.show_statusbar = bool(sh_settings.get("show_statusbar", False))
         self.show_panel = bool(sh_settings.get("show_panel", False))
-        self.show_popup = bool(sh_settings.get("show_popup", False))
+        if int(sublime.version()) >= 3070:
+            self.show_popup = bool(sh_settings.get("show_popup", False))
+        else:
+            self.show_popup = False
         self.clipboard = bool(sh_settings.get("clipboard", False))
         self.multiselect = bool(sh_settings.get("multiselect", False))
         self.rowcol = bool(sh_settings.get("extent_line_char", False))
@@ -295,6 +319,20 @@ def sh_loop():
         sleep(0.5)
 
 
+def init_css():
+    global sh_settings
+    global css
+
+    css_file = 'Packages/' + sh_settings.get('css_file', "ScopeHunter/css/default.css")
+
+    try:
+        css = sublime.load_resource(css_file)
+    except:
+        css = None
+    sh_settings.clear_on_change('reload')
+    sh_settings.add_on_change('reload', init_css)
+
+
 def init_color_scheme():
     global pref_settings
     global scheme_matcher
@@ -317,6 +355,7 @@ def plugin_loaded():
     sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
 
     init_color_scheme()
+    init_css()
 
     if 'running_sh_loop' not in globals():
         global running_sh_loop
