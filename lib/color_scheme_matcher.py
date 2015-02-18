@@ -37,7 +37,9 @@ class ColorSchemeMatcher(object):
         self.ignore_gutter = ignore_gutter
         self.track_dark_background = track_dark_background
         self.dark_lumens = None
+        self.lumens = None
         self.matched = {}
+        self.is_dark_theme = False
 
         self.parse_scheme()
 
@@ -48,11 +50,13 @@ class ColorSchemeMatcher(object):
         color_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
-        self.bground = self.strip_color(color_settings.get("background", '#FFFFFF'), simple_strip=True)
+        self.bground = self.strip_color(color_settings.get("background", '#FFFFFF'), simple_strip=True, bg=True)
+        if self.lumens <= 127:
+            self.is_dark_theme = True
         self.fground = self.strip_color(color_settings.get("foreground", '#000000'))
-        self.sbground = self.strip_color(color_settings.get("selection", self.fground))
+        self.sbground = self.strip_color(color_settings.get("selection", self.fground), bg=True)
         self.sfground = self.strip_color(color_settings.get("selectionForeground", None))
-        self.gbground = self.strip_color(color_settings.get("gutter", self.bground)) if not self.ignore_gutter else self.bground
+        self.gbground = self.strip_color(color_settings.get("gutter", self.bground), bg=True) if not self.ignore_gutter else self.bground
         self.gfground = self.strip_color(color_settings.get("gutterForeground", self.fground)) if not self.ignore_gutter else self.fground
 
         # Create scope colors mapping from color scheme file
@@ -74,23 +78,24 @@ class ColorSchemeMatcher(object):
                 self.colors[scope] = {
                     "name": name,
                     "color": self.strip_color(color),
-                    "bgcolor": self.strip_color(bgcolor),
+                    "bgcolor": self.strip_color(bgcolor, bg=True),
                     "style": style
                 }
 
-    def strip_color(self, color, simple_strip=False):
+    def strip_color(self, color, simple_strip=False, bg=False):
         if color is None or color.strip() == "":
             return None
-        elif not self.strip_trans:
-            return color.replace(" ", "")
+
         rgba = RGBA(color.replace(" ", ""))
         if not simple_strip:
             rgba.apply_alpha(self.bground if self.bground != "" else "#FFFFFF")
-        if self.track_dark_background:
-            lumens = rgba.luminance()
-            if self.dark_lumens is None or lumens < self.dark_lumens:
-                self.dark_lumens = lumens
-        return rgba.get_rgb()
+
+        self.lumens = rgba.luminance()
+        if self.track_dark_background and bg:
+            if self.dark_lumens is None or self.lumens < self.dark_lumens:
+                self.dark_lumens = self.lumens
+
+        return rgba.get_rgb() if self.strip_trans else color
 
     def get_general_colors(self):
         return self.bground, self.fground, self.sbground, self.sfground, self.gbground, self.gfground

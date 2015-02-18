@@ -322,8 +322,16 @@ def sh_loop():
 def init_css():
     global sh_settings
     global css
+    global scheme_matcher
 
-    css_file = 'Packages/' + sh_settings.get('css_file', "ScopeHunter/css/default.css")
+    css_file = sh_settings.get('css_file', None)
+    if css_file is None:
+        if scheme_matcher.is_dark_theme:
+            css_file = 'Packages/' + sh_settings.get('dark_css_override', 'Packages/ScopeHunter/css/dark.css')
+        else:
+            css_file = 'Packages/' + sh_settings.get('light_css_override', 'Packages/ScopeHunter/css/light.css')
+    else:
+        css_file = 'Packages/' + css_file
 
     try:
         css = sublime.load_resource(css_file).replace('\r', '\n')
@@ -348,6 +356,7 @@ def init_color_scheme():
         log("Theme parsing failed!  Ingoring theme related info.\n%s" % str(e))
     pref_settings.clear_on_change('reload')
     pref_settings.add_on_change('reload', init_color_scheme)
+    init_css()
 
 
 def plugin_loaded():
@@ -355,7 +364,6 @@ def plugin_loaded():
     sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
 
     init_color_scheme()
-    init_css()
 
     if 'running_sh_loop' not in globals():
         global running_sh_loop
