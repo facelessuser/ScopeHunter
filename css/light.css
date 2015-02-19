@@ -1,9 +1,11 @@
 html {
-    background-color: #FAFDFF;
+    background-color: #e6f5ff;
     color: #4d4d4c;
 }
 
 body {
+    background-color: #FAFDFF;
+    margin: 1px;
     font-size: 12px;
 }
 
