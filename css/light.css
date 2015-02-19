@@ -7,15 +7,36 @@ body {
     font-size: 12px;
 }
 
-a {
+h1, h2, h3, h4, h5, h6 {
+    font-size: 14px;
+}
+
+.control-link, .file-link {
     color: #3e999f;
 }
 
-b {
+.key {
     color: #8959a8;
+    font-weight: bold;
 }
 
-h1 {
+.header {
     color: #718c00;
-    font-size: 14px;
+}
+
+.color-box-light {
+    color: #FAFDFF;
+}
+
+.color-box-dark {
+    color: #4d4d4c;
+}
+
+.color-box-frame {
+    margin: 10px 0 0 0;
+    background-color: #4d4d4c;
+}
+
+.color-box {
+    margin: 1px;
 }

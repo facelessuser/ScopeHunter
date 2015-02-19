@@ -9,6 +9,7 @@ import sublime_plugin
 from time import time, sleep
 import _thread as thread
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
+from ScopeHunter.lib.rgba import RGBA
 
 pref_settings = {}
 scheme_matcher = None
@@ -34,6 +35,14 @@ def underline(regions):
             new_regions.append(sublime.Region(start))
             start += 1
     return new_regions
+
+
+def color_box(color, caption):
+    rgba = RGBA(color)
+    display_color = rgba.get_rgb()
+    display_text = rgba.get_rgba().upper()
+    font_class = 'color-box-light' if rgba.luminance() <= 127 else 'color-box-dark'
+    return '<div class="color-box-frame"><div class="color-box %s" style="background-color: %s;">%s</div></div><span>%s</span>' % (font_class, display_color, display_text, caption)
 
 
 class ScopeThreadManager(object):
@@ -86,13 +95,13 @@ class GetSelectionScope(object):
                 self.scope_bfr.append("%-30s %s" % ("Scope Extents:", ('\n' + (" " * 31)).join(extents)))
 
                 if self.show_popup:
-                    self.scope_bfr_tool.append("<h1>Scope Extent</h1><p>")
+                    self.scope_bfr_tool.append('<h1 class="header">Scope Extent</h1><p>')
                     if self.points:
                         self.scope_bfr_tool.append("(%d, %d)" % (pts.begin(), pts.end()))
                         if self.rowcol:
                             self.scope_bfr_tool.append("<br>")
                     if self.rowcol:
-                        self.scope_bfr_tool.append("(<b>Line:</b> %d <b>Char:</b> %d, <b>Line:</b> %d <b>Char:</b> %d)" % (row1 + 1, col1 + 1, row2 + 1, col2 + 1))
+                        self.scope_bfr_tool.append('(<span class="key">Line:</span> %d <span class="key">Char:</span> %d, <span class="key">Line:</span> %d <span class="key">Char:</span> %d)' % (row1 + 1, col1 + 1, row2 + 1, col2 + 1))
                     self.scope_bfr_tool.append("</p>")
         scope = self.view.scope_name(pt)
 
@@ -105,7 +114,7 @@ class GetSelectionScope(object):
 
         self.scope_bfr.append("%-30s %s" % ("Scope:", self.view.scope_name(pt).strip().replace(" ", "\n" + (" " * 31))))
         if self.show_popup:
-            self.scope_bfr_tool.append("<h1>Scope:</h1><p>%s</p>" % self.view.scope_name(pt).strip())
+            self.scope_bfr_tool.append('<h1 class="header">Scope:</h1><p>%s</p>' % self.view.scope_name(pt).strip())
 
         if self.show_selectors and scheme_matcher is not None and scheme_matcher_simulated is not None:
             try:
@@ -130,22 +139,33 @@ class GetSelectionScope(object):
                     self.scope_bfr.append("%-30s %s" % ("italic selector:", style_selectors["italic"]))
 
                 if self.show_popup:
-                    self.scope_bfr_tool.append('<h1>%s</h1><p><a href="scheme">%s</a></p>' % ("Scheme File", self.scheme_file))
-                    self.scope_bfr_tool.append('<h1>%s</h1><p><a href="syntax">%s</a></p>' % ("Syntax File", self.syntax_file))
-                    self.scope_bfr_tool.append('<h1>%s</h1><p>' % "Color and Style")
-                    self.scope_bfr_tool.append('<b>foreground:</b> %s<br>' % color)
+                    self.scope_bfr_tool.append('<h1 class="header">%s</h1><p><a class="file-link" href="scheme">%s</a></p>' % ("Scheme File", self.scheme_file))
+                    self.scope_bfr_tool.append('<h1 class="header">%s</h1><p><a class="file-link" href="syntax">%s</a></p>' % ("Syntax File", self.syntax_file))
+                    self.scope_bfr_tool.append('<h1 class="header">%s</h1>' % "Color")
+                    self.scope_bfr_tool.append(color_box(color, 'foreground'))
+                    # self.scope_bfr_tool.append('<span class="key">foreground:</span> %s<br>' % color)
                     if len(color) == 9 and not color.lower().endswith('ff'):
-                        self.scope_bfr_tool.append('<b>foreground (simulated trans):</b> %s<br>' % color_sim)
-                    self.scope_bfr_tool.append('<b>foreground selector:</b> %s<br>' % color_selector)
-                    self.scope_bfr_tool.append('<b>background:</b> %s<br>' % bgcolor)
+                        self.scope_bfr_tool.append(color_box(color_sim, 'foreground (simulated transparency)'))
+                    self.scope_bfr_tool.append(color_box(bgcolor, 'background'))
                     if len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
-                        self.scope_bfr_tool.append('<b>background (simulated trans):</b> %s<br>' % bgcolor_sim)
-                    self.scope_bfr_tool.append('<b>background selector:</b> %s<br>' % bg_selector)
-                    self.scope_bfr_tool.append('<b>style:</b> %s' % style)
+                        self.scope_bfr_tool.append(color_box(bgcolor_sim, 'background (simulated transparency)'))
+                    self.scope_bfr_tool.append('<h1 class="header">%s</h1>' % "Style")
+                    if style == "bold":
+                        tag = "b"
+                    elif style == "italic":
+                        tag = "i"
+                    elif style == "underline":
+                        tag = "u"
+                    else:
+                        tag = "span"
+                    self.scope_bfr_tool.append('<p><%(tag)s>%(type)s</%(tag)s></p>' % {"type": style, "tag": tag})
+                    self.scope_bfr_tool.append('<h1 class="header">%s</h1><p>' % "Selectors")
+                    self.scope_bfr_tool.append('<span class="key">foreground selector:</span> %s<br>' % color_selector)
+                    self.scope_bfr_tool.append('<span class="key">background selector:</span> %s<br>' % bg_selector)
                     if style_selectors["bold"] != "":
-                        self.scope_bfr_tool.append('<br><b>bold selector:</b> %s' % style_selectors["bold"])
+                        self.scope_bfr_tool.append('<br><span class="key">bold selector:</span> %s' % style_selectors["bold"])
                     if style_selectors["italic"] != "":
-                        self.scope_bfr_tool.append('<br><b>italic selector:</b> %s' % style_selectors["italic"])
+                        self.scope_bfr_tool.append('<br><span class="key">italic selector:</span> %s' % style_selectors["italic"])
 
             except Exception as e:
                 log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(e))
@@ -227,7 +247,7 @@ class GetSelectionScope(object):
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
 
         if self.show_popup:
-            self.view.show_popup(''.join(self.scope_bfr_tool) + '<br><br><a href="copy">Copy to Clipboard</a>', location=-1, max_width=600, on_navigate=self.on_navigate)
+            self.view.show_popup(''.join(self.scope_bfr_tool) + '<br><br><a class="control-link" href="copy">Copy to Clipboard</a>', location=-1, max_width=600, on_navigate=self.on_navigate)
 
         if self.console_log:
             print('\n'.join(["Scope Hunter"] + self.scope_bfr))
