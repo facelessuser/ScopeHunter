@@ -109,17 +109,19 @@ class GetSelectionScope(object):
 
         if self.show_selectors and scheme_matcher is not None and scheme_matcher_simulated is not None:
             try:
-                color_sim, style_sim, bgcolor_sim, color_selector_sim, bg_selector_sim, style_selectors_sim = scheme_matcher.guess_color(self.view, pt, scope)
+                color_sim, style_sim, bgcolor_sim, color_selector_sim, bg_selector_sim, style_selectors_sim = scheme_matcher_simulated.guess_color(self.view, pt, scope)
                 color, style, bgcolor, color_selector, bg_selector, style_selectors = scheme_matcher.guess_color(self.view, pt, scope)
                 self.scheme_file = scheme_matcher.color_scheme
                 self.syntax_file = self.view.settings().get('syntax')
                 self.scope_bfr.append("%-30s %s" % ("Scheme File:", self.scheme_file))
                 self.scope_bfr.append("%-30s %s" % ("Syntax File:", self.syntax_file))
                 self.scope_bfr.append("%-30s %s" % ("foreground:", color))
-                self.scope_bfr.append("%-30s %s" % ("foreground (simulated trans):", color_sim))
+                if len(color) == 8 and not color.lower().endswith('ff'):
+                    self.scope_bfr.append("%-30s %s" % ("foreground (simulated trans):", color_sim))
                 self.scope_bfr.append("%-30s %s" % ("foreground selector:", color_selector))
                 self.scope_bfr.append("%-30s %s" % ("background:", bgcolor))
-                self.scope_bfr.append("%-30s %s" % ("background (simulated trans):", bgcolor_sim))
+                if len(bgcolor) == 8 and not bgcolor.lower().endswith('ff'):
+                    self.scope_bfr.append("%-30s %s" % ("background (simulated trans):", bgcolor_sim))
                 self.scope_bfr.append("%-30s %s" % ("background selector:", bg_selector))
                 self.scope_bfr.append("%-30s %s" % ("style:", style))
                 if style_selectors["bold"] != "":
@@ -131,9 +133,13 @@ class GetSelectionScope(object):
                     self.scope_bfr_tool.append('<h1>%s</h1><p><a href="scheme">%s</a></p>' % ("Scheme File", self.scheme_file))
                     self.scope_bfr_tool.append('<h1>%s</h1><p><a href="syntax">%s</a></p>' % ("Syntax File", self.syntax_file))
                     self.scope_bfr_tool.append('<h1>%s</h1><p>' % "Color and Style")
-                    self.scope_bfr_tool.append('<b>foreground:</b> %s<br><b>foreground (simulated trans):</b> %s<br>' % (color, color_sim))
+                    self.scope_bfr_tool.append('<b>foreground:</b> %s<br>' % color)
+                    if len(color) == 9 and not color.lower().endswith('ff'):
+                        self.scope_bfr_tool.append('<b>foreground (simulated trans):</b> %s<br>' % color_sim)
                     self.scope_bfr_tool.append('<b>foreground selector:</b> %s<br>' % color_selector)
-                    self.scope_bfr_tool.append('<b>background:</b> %s<br><b>background (simulated trans):</b> %s<br>' % (bgcolor, bgcolor_sim))
+                    self.scope_bfr_tool.append('<b>background:</b> %s<br>' % bgcolor)
+                    if len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
+                        self.scope_bfr_tool.append('<b>background (simulated trans):</b> %s<br>' % bgcolor_sim)
                     self.scope_bfr_tool.append('<b>background selector:</b> %s<br>' % bg_selector)
                     self.scope_bfr_tool.append('<b>style:</b> %s' % style)
                     if style_selectors["bold"] != "":
