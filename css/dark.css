@@ -6,15 +6,15 @@ html {
 body {
     background-color: #232628;
     margin: 1px;
-    font-size: 12px;
+    font-size: 1em;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-size: 14px;
+    font-size: 1.2em;
 }
 
 .content {
-    margin: 10px;
+    margin: 1em;
 }
 
 .control-link, .file-link {
@@ -39,7 +39,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .color-box-frame {
-    margin: 2px 0;
+    margin: 0.5em 0;
     background-color: #CCCCCC;
 }
 

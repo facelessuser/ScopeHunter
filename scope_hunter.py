@@ -42,7 +42,7 @@ def color_box(color, caption):
     display_color = rgba.get_rgb()
     display_text = rgba.get_rgba().upper()
     font_class = 'color-box-light' if rgba.luminance() <= 127 else 'color-box-dark'
-    return '<div class="color-box-frame"><div class="color-box %s" style="background-color: %s;">%s</div></div><span>%s</span>' % (font_class, display_color, display_text, caption)
+    return '<p><span class="key">%s:</span><div class="color-box-frame"><div class="color-box %s" style="background-color: %s;">%s</div></div></p>' % (caption, font_class, display_color, display_text)
 
 
 class ScopeThreadManager(object):
@@ -145,19 +145,17 @@ class GetSelectionScope(object):
             )
 
         if self.show_popup:
-            colors = []
-            self.scope_bfr_tool.append('<h1 class="header">%s</h1><p>' % "Color")
-            colors.append(color_box(color, 'foreground'))
+            self.scope_bfr_tool.append('<h1 class="header">%s</h1>' % "Color")
+            self.scope_bfr_tool.append(color_box(color, 'foreground'))
             if len(color) == 9 and not color.lower().endswith('ff'):
                 self.scope_bfr_tool.append(
                     color_box(color_sim, 'foreground (simulated transparency)')
                 )
-            colors.append(color_box(bgcolor, 'background'))
+            self.scope_bfr_tool.append(color_box(bgcolor, 'background'))
             if len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
-                colors.append(
+                self.scope_bfr_tool.append(
                     color_box(bgcolor_sim, 'background (simulated transparency)')
                 )
-            self.scope_bfr_tool.append('<br><br>'.join(colors) + '</p>')
 
     def get_scheme_syntax(self):
         global scheme_matcher
