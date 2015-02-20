@@ -212,18 +212,31 @@ class GetSelectionScope(object):
     def get_selectors(self, color_selector, bg_selector, style_selectors):
         """ Get the selectors used to determine color and/or style """
         self.scope_bfr.append(
-            "%-30s %s" % ("foreground selector:", color_selector)
+            "%-30s %s" % ("foreground selector name:", color_selector.name)
         )
         self.scope_bfr.append(
-            "%-30s %s" % ("background selector:", bg_selector)
+            "%-30s %s" % ("foreground selector scope:", color_selector.scope)
         )
-        if style_selectors["bold"] != "":
+        self.scope_bfr.append(
+            "%-30s %s" % ("background selector name:", bg_selector.name)
+        )
+        self.scope_bfr.append(
+            "%-30s %s" % ("background selector scope:", bg_selector.scope)
+        )
+        if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
             self.scope_bfr.append(
-                "%-30s %s" % ("bold selector:", style_selectors["bold"])
+                "%-30s %s" % ("bold selector name:", style_selectors["bold"].name)
             )
-        if style_selectors["italic"] != "":
             self.scope_bfr.append(
-                "%-30s %s" % ("italic selector:", style_selectors["italic"])
+                "%-30s %s" % ("bold selector scope:", style_selectors["bold"].scope)
+            )
+
+        if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
+            self.scope_bfr.append(
+                "%-30s %s" % ("italic selector name:", style_selectors["italic"].name)
+            )
+            self.scope_bfr.append(
+                "%-30s %s" % ("italic selector scope:", style_selectors["italic"].scope)
             )
 
         if self.show_popup:
@@ -231,18 +244,30 @@ class GetSelectionScope(object):
                 '<h1 class="header">%s</h1><p>' % "Selectors"
             )
             self.scope_bfr_tool.append(
-                '<span class="key">foreground selector:</span> %s<br>' % color_selector
+                '<span class="key">foreground selector name:</span> %s' % color_selector.name
             )
             self.scope_bfr_tool.append(
-                '<span class="key">background selector:</span> %s<br>' % bg_selector
+                '<br><span class="key">foreground selector scope:</span> %s' % color_selector.scope
             )
-            if style_selectors["bold"] != "":
+            self.scope_bfr_tool.append(
+                '<br><br><span class="key">background selector name:</span> %s' % bg_selector.name
+            )
+            self.scope_bfr_tool.append(
+                '<br><span class="key">background selector scope:</span> %s' % bg_selector.scope
+            )
+            if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
                 self.scope_bfr_tool.append(
-                    '<br><span class="key">bold selector:</span> %s' % style_selectors["bold"]
+                    '<br><br><span class="key">bold selector name:</span> %s' % style_selectors["bold"].name
                 )
-            if style_selectors["italic"] != "":
                 self.scope_bfr_tool.append(
-                    '<br><span class="key">italic selector:</span> %s' % style_selectors["italic"]
+                    '<br><span class="key">bold selector scope:</span> %s' % style_selectors["bold"].scope
+                )
+            if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
+                self.scope_bfr_tool.append(
+                    '<br><br><span class="key">italic selector name:</span> %s' % style_selectors["italic"].name
+                )
+                self.scope_bfr_tool.append(
+                    '<br><span class="key">italic selector scope:</span> %s' % style_selectors["italic"].scope
                 )
 
     def get_info(self, pt):

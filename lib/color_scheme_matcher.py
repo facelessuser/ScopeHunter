@@ -24,6 +24,14 @@ class SchemeColors(namedtuple('SchemeColors', ['fg', 'fg_simulated', 'bg', "bg_s
     pass
 
 
+class SchemeSelectors(namedtuple('SchemeSelectors', ['name', 'scope'], verbose=False)):
+    """
+    SchemeSelectors
+    """
+
+    pass
+
+
 def sublime_format_path(pth):
     m = re.match(r"^([A-Za-z]{1}):(?:/|\\)(.*)", pth)
     if sublime.platform() == "windows" and m is not None:
@@ -90,6 +98,7 @@ class ColorSchemeMatcher(object):
                 bg, bg_sim = self.strip_color(bgcolor, bg=True)
                 self.colors[scope] = {
                     "name": name,
+                    "scope": scope,
                     "color": fg,
                     "color_simulated": fg_sim,
                     "bgcolor": bg,
@@ -133,9 +142,9 @@ class ColorSchemeMatcher(object):
         bgcolor = self.bground
         bgcolor_sim = self.bground_sim
         style = set([])
-        color_selector = "foreground"
-        style_selectors = {"bold": "", "italic": ""}
-        bg_selector = "background"
+        color_selector = SchemeSelectors("foreground", "foreground")
+        bg_selector = SchemeSelectors("background", "background")
+        style_selectors = {"bold": SchemeSelectors("", ""), "italic": SchemeSelectors("", "")}
         if scope_key in self.matched:
             color = self.matched[scope_key]["color"]
             color_sim = self.matched[scope_key]["color_simulated"]
@@ -154,26 +163,27 @@ class ColorSchemeMatcher(object):
                     best_match_fg = match
                     color = self.colors[key]["color"]
                     color_sim = self.colors[key]["color_simulated"]
-                    color_selector = self.colors[key]["name"]
+                    color_selector = SchemeSelectors(self.colors[key]["name"], self.colors[key]["scope"])
                 if self.colors[key]["style"] is not None and match > best_match_style:
                     best_match_style = match
                     for s in self.colors[key]["style"]:
                         style.add(s)
                         if s == "bold":
-                            style_selectors["bold"] = self.colors[key]["name"]
+                            style_selectors["bold"] = SchemeSelectors(self.colors[key]["name"], self.colors[key]["scope"])
                         elif s == "italic":
-                            style_selectors["italic"] = self.colors[key]["name"]
+                            style_selectors["italic"] = SchemeSelectors(self.colors[key]["name"], self.colors[key]["scope"])
                 if self.colors[key]["bgcolor"] is not None and match > best_match_bg:
                     best_match_bg = match
                     bgcolor = self.colors[key]["bgcolor"]
                     bgcolor_sim = self.colors[key]["bgcolor_simulated"]
-                    bg_selector = self.colors[key]["name"]
+                    bg_selector = SchemeSelectors(self.colors[key]["name"], self.colors[key]["scope"])
             self.matched[scope_key] = {
                 "color": color,
                 "bgcolor": bgcolor,
                 "color_simulated": color_sim,
                 "bgcolor_simulated": bgcolor_sim,
-                "style": style, "selectors": {
+                "style": style,
+                "selectors": {
                     "color": color_selector,
                     "background": bg_selector,
                     "style": style_selectors
