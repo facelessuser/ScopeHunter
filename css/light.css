@@ -13,6 +13,10 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 14px;
 }
 
+.content {
+    margin: 10px;
+}
+
 .control-link, .file-link {
     color: #3e999f;
 }
@@ -35,7 +39,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .color-box-frame {
-    margin: 10px 0 0 0;
+    margin: 0;
     background-color: #4d4d4c;
 }
 

@@ -77,33 +77,38 @@ class ScopeHunterInsertCommand(sublime_plugin.TextCommand):
 
 
 class GetSelectionScope(object):
-    def get_scope(self, pt):
-        if self.rowcol or self.points or self.highlight_extent:
-            pts = self.view.extract_scope(pt)
-            row1, col1 = self.view.rowcol(pts.begin())
-            row2, col2 = self.view.rowcol(pts.end())
-            # Scale back the extent by one for true points included
-            if pts.size() < self.highlight_max_size:
-                self.extents.append(sublime.Region(pts.begin(), pts.end()))
+    def get_extents(self, pt):
+        pts = self.view.extract_scope(pt)
+        row1, col1 = self.view.rowcol(pts.begin())
+        row2, col2 = self.view.rowcol(pts.end())
 
-            if self.points or self.rowcol:
-                extents = []
+        # Scale back the extent by one for true points included
+        if pts.size() < self.highlight_max_size:
+            self.extents.append(sublime.Region(pts.begin(), pts.end()))
+
+        if self.points or self.rowcol:
+            extents = []
+            if self.points:
+                extents.append("(%d, %d)" % (pts.begin(), pts.end()))
+            if self.rowcol:
+                extents.append("(line: %d char: %d, line: %d char: %d)" % (row1 + 1, col1 + 1, row2 + 1, col2 + 1))
+            self.scope_bfr.append("%-30s %s" % ("Scope Extents:", ('\n' + (" " * 31)).join(extents)))
+
+            if self.show_popup:
+                self.scope_bfr_tool.append('<h1 class="header">Scope Extent</h1><p>')
                 if self.points:
-                    extents.append("(%d, %d)" % (pts.begin(), pts.end()))
-                if self.rowcol:
-                    extents.append("(line: %d char: %d, line: %d char: %d)" % (row1 + 1, col1 + 1, row2 + 1, col2 + 1))
-                self.scope_bfr.append("%-30s %s" % ("Scope Extents:", ('\n' + (" " * 31)).join(extents)))
-
-                if self.show_popup:
-                    self.scope_bfr_tool.append('<h1 class="header">Scope Extent</h1><p>')
-                    if self.points:
-                        self.scope_bfr_tool.append("(%d, %d)" % (pts.begin(), pts.end()))
-                        if self.rowcol:
-                            self.scope_bfr_tool.append("<br>")
+                    self.scope_bfr_tool.append("(%d, %d)" % (pts.begin(), pts.end()))
                     if self.rowcol:
-                        self.scope_bfr_tool.append('(<span class="key">Line:</span> %d <span class="key">Char:</span> %d, <span class="key">Line:</span> %d <span class="key">Char:</span> %d)' % (row1 + 1, col1 + 1, row2 + 1, col2 + 1))
-                    self.scope_bfr_tool.append("</p>")
+                        self.scope_bfr_tool.append("<br>")
+                if self.rowcol:
+                    self.scope_bfr_tool.append(
+                        '(<span class="key">Line:</span> %d <span class="key">Char:</span> %d, <span class="key">Line:</span> %d <span class="key">Char:</span> %d)' % (row1 + 1, col1 + 1, row2 + 1, col2 + 1)
+                    )
+                self.scope_bfr_tool.append("</p>")
+
+    def get_scope(self, pt):
         scope = self.view.scope_name(pt)
+        spacing = "\n" + (" " * 31)
 
         if self.clipboard:
             self.clips.append(scope)
@@ -112,64 +117,148 @@ class GetSelectionScope(object):
             self.status = scope
             self.first = False
 
-        self.scope_bfr.append("%-30s %s" % ("Scope:", self.view.scope_name(pt).strip().replace(" ", "\n" + (" " * 31))))
+        self.scope_bfr.append(
+            "%-30s %s" % (
+                "Scope:",
+                self.view.scope_name(pt).strip().replace(" ", spacing)
+            )
+        )
+
         if self.show_popup:
-            self.scope_bfr_tool.append('<h1 class="header">Scope:</h1><p>%s</p>' % self.view.scope_name(pt).strip())
+            self.scope_bfr_tool.append(
+                '<h1 class="header">Scope:</h1><p>%s</p>' % self.view.scope_name(pt).strip()
+            )
 
-        if self.show_selectors and scheme_matcher is not None and scheme_matcher_simulated is not None:
+        return scope
+
+    def get_colors(self, color, color_sim, bgcolor, bgcolor_sim):
+        self.scope_bfr.append("%-30s %s" % ("foreground:", color))
+        if len(color) == 8 and not color.lower().endswith('ff'):
+            self.scope_bfr.append(
+                "%-30s %s" % ("foreground (simulated trans):", color_sim)
+            )
+
+        self.scope_bfr.append("%-30s %s" % ("background:", bgcolor))
+        if len(bgcolor) == 8 and not bgcolor.lower().endswith('ff'):
+            self.scope_bfr.append(
+                "%-30s %s" % ("background (simulated trans):", bgcolor_sim)
+            )
+
+        if self.show_popup:
+            colors = []
+            self.scope_bfr_tool.append('<h1 class="header">%s</h1><p>' % "Color")
+            colors.append(color_box(color, 'foreground'))
+            if len(color) == 9 and not color.lower().endswith('ff'):
+                self.scope_bfr_tool.append(
+                    color_box(color_sim, 'foreground (simulated transparency)')
+                )
+            colors.append(color_box(bgcolor, 'background'))
+            if len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
+                colors.append(
+                    color_box(bgcolor_sim, 'background (simulated transparency)')
+                )
+            self.scope_bfr_tool.append('<br><br>'.join(colors) + '</p>')
+
+    def get_scheme_syntax(self):
+        global scheme_matcher
+        global scheme_matcher_simulated
+
+        self.scheme_file = scheme_matcher.color_scheme
+        self.syntax_file = self.view.settings().get('syntax')
+        self.scope_bfr.append("%-30s %s" % ("Scheme File:", self.scheme_file))
+        self.scope_bfr.append("%-30s %s" % ("Syntax File:", self.syntax_file))
+
+        if self.show_popup:
+            self.scope_bfr_tool.append(
+                '<h1 class="header">%s</h1><p><a class="file-link" href="scheme">%s</a></p>' % ("Scheme File", self.scheme_file)
+            )
+            self.scope_bfr_tool.append(
+                '<h1 class="header">%s</h1><p><a class="file-link" href="syntax">%s</a></p>' % ("Syntax File", self.syntax_file)
+            )
+
+    def get_style(self, style):
+        self.scope_bfr.append("%-30s %s" % ("style:", style))
+        if self.show_popup:
+            self.scope_bfr_tool.append('<h1 class="header">%s</h1>' % "Style")
+            if style == "bold":
+                tag = "b"
+            elif style == "italic":
+                tag = "i"
+            elif style == "underline":
+                tag = "u"
+            else:
+                tag = "span"
+            self.scope_bfr_tool.append(
+                '<p><%(tag)s>%(type)s</%(tag)s></p>' % {"type": style, "tag": tag}
+            )
+
+    def get_selectors(self, color_selector, bg_selector, style_selectors):
+        self.scope_bfr.append(
+            "%-30s %s" % ("foreground selector:", color_selector)
+        )
+        self.scope_bfr.append(
+            "%-30s %s" % ("background selector:", bg_selector)
+        )
+        if style_selectors["bold"] != "":
+            self.scope_bfr.append(
+                "%-30s %s" % ("bold selector:", style_selectors["bold"])
+            )
+        if style_selectors["italic"] != "":
+            self.scope_bfr.append(
+                "%-30s %s" % ("italic selector:", style_selectors["italic"])
+            )
+
+        if self.show_popup:
+            self.scope_bfr_tool.append(
+                '<h1 class="header">%s</h1><p>' % "Selectors"
+            )
+            self.scope_bfr_tool.append(
+                '<span class="key">foreground selector:</span> %s<br>' % color_selector
+            )
+            self.scope_bfr_tool.append(
+                '<span class="key">background selector:</span> %s<br>' % bg_selector
+            )
+            if style_selectors["bold"] != "":
+                self.scope_bfr_tool.append(
+                    '<br><span class="key">bold selector:</span> %s' % style_selectors["bold"]
+                )
+            if style_selectors["italic"] != "":
+                self.scope_bfr_tool.append(
+                    '<br><span class="key">italic selector:</span> %s' % style_selectors["italic"]
+                )
+
+    def get_info(self, pt):
+        global scheme_matcher
+        global scheme_matcher_simulated
+
+        scope = self.get_scope(pt)
+
+        if self.rowcol or self.points or self.highlight_extent:
+            self.get_extents(pt)
+
+        if (
+            self.scheme_info and
+            scheme_matcher is not None and
+            scheme_matcher_simulated is not None
+        ):
             try:
-                color_sim, style_sim, bgcolor_sim, color_selector_sim, bg_selector_sim, style_selectors_sim = scheme_matcher_simulated.guess_color(self.view, pt, scope)
-                color, style, bgcolor, color_selector, bg_selector, style_selectors = scheme_matcher.guess_color(self.view, pt, scope)
-                self.scheme_file = scheme_matcher.color_scheme
-                self.syntax_file = self.view.settings().get('syntax')
-                self.scope_bfr.append("%-30s %s" % ("Scheme File:", self.scheme_file))
-                self.scope_bfr.append("%-30s %s" % ("Syntax File:", self.syntax_file))
-                self.scope_bfr.append("%-30s %s" % ("foreground:", color))
-                if len(color) == 8 and not color.lower().endswith('ff'):
-                    self.scope_bfr.append("%-30s %s" % ("foreground (simulated trans):", color_sim))
-                self.scope_bfr.append("%-30s %s" % ("foreground selector:", color_selector))
-                self.scope_bfr.append("%-30s %s" % ("background:", bgcolor))
-                if len(bgcolor) == 8 and not bgcolor.lower().endswith('ff'):
-                    self.scope_bfr.append("%-30s %s" % ("background (simulated trans):", bgcolor_sim))
-                self.scope_bfr.append("%-30s %s" % ("background selector:", bg_selector))
-                self.scope_bfr.append("%-30s %s" % ("style:", style))
-                if style_selectors["bold"] != "":
-                    self.scope_bfr.append("%-30s %s" % ("bold selector:", style_selectors["bold"]))
-                if style_selectors["italic"] != "":
-                    self.scope_bfr.append("%-30s %s" % ("italic selector:", style_selectors["italic"]))
+                (
+                    color_sim, style_sim, bgcolor_sim,
+                    color_selector_sim, bg_selector_sim,
+                    style_selectors_sim
+                ) = scheme_matcher_simulated.guess_color(self.view, pt, scope)
+                (
+                    color, style, bgcolor, color_selector,
+                    bg_selector, style_selectors
+                ) = scheme_matcher.guess_color(self.view, pt, scope)
 
-                if self.show_popup:
-                    self.scope_bfr_tool.append('<h1 class="header">%s</h1><p><a class="file-link" href="scheme">%s</a></p>' % ("Scheme File", self.scheme_file))
-                    self.scope_bfr_tool.append('<h1 class="header">%s</h1><p><a class="file-link" href="syntax">%s</a></p>' % ("Syntax File", self.syntax_file))
-                    self.scope_bfr_tool.append('<h1 class="header">%s</h1>' % "Color")
-                    self.scope_bfr_tool.append(color_box(color, 'foreground'))
-                    # self.scope_bfr_tool.append('<span class="key">foreground:</span> %s<br>' % color)
-                    if len(color) == 9 and not color.lower().endswith('ff'):
-                        self.scope_bfr_tool.append(color_box(color_sim, 'foreground (simulated transparency)'))
-                    self.scope_bfr_tool.append(color_box(bgcolor, 'background'))
-                    if len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
-                        self.scope_bfr_tool.append(color_box(bgcolor_sim, 'background (simulated transparency)'))
-                    self.scope_bfr_tool.append('<h1 class="header">%s</h1>' % "Style")
-                    if style == "bold":
-                        tag = "b"
-                    elif style == "italic":
-                        tag = "i"
-                    elif style == "underline":
-                        tag = "u"
-                    else:
-                        tag = "span"
-                    self.scope_bfr_tool.append('<p><%(tag)s>%(type)s</%(tag)s></p>' % {"type": style, "tag": tag})
-                    self.scope_bfr_tool.append('<h1 class="header">%s</h1><p>' % "Selectors")
-                    self.scope_bfr_tool.append('<span class="key">foreground selector:</span> %s<br>' % color_selector)
-                    self.scope_bfr_tool.append('<span class="key">background selector:</span> %s<br>' % bg_selector)
-                    if style_selectors["bold"] != "":
-                        self.scope_bfr_tool.append('<br><span class="key">bold selector:</span> %s' % style_selectors["bold"])
-                    if style_selectors["italic"] != "":
-                        self.scope_bfr_tool.append('<br><span class="key">italic selector:</span> %s' % style_selectors["italic"])
-
+                self.get_colors(color, color_sim, bgcolor, bgcolor_sim)
+                self.get_style(style)
+                self.get_selectors(color_selector, bg_selector, style_selectors)
+                self.get_scheme_syntax()
             except Exception as e:
                 log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(e))
-                self.show_selectors = False
+                self.scheme_info = False
 
         # Divider
         self.scope_bfr.append("")
@@ -182,13 +271,21 @@ class GetSelectionScope(object):
             window = self.view.window()
             window.run_command(
                 'open_file',
-                {"file": "${packages}/%s" % self.scheme_file.replace('\\', '/').replace('Packages/', '', 1)}
+                {
+                    "file": "${packages}/%s" % self.scheme_file.replace(
+                        '\\', '/'
+                    ).replace('Packages/', '', 1)
+                }
             )
         elif href == 'syntax' and self.syntax_file is not None:
             window = self.view.window()
             window.run_command(
                 'open_file',
-                {"file": "${packages}/%s" % self.syntax_file.replace('\\', '/').replace('Packages/', '', 1)}
+                {
+                    "file": "${packages}/%s" % self.syntax_file.replace(
+                        '\\', '/'
+                    ).replace('Packages/', '', 1)
+                }
             )
 
     def run(self, v):
@@ -218,7 +315,7 @@ class GetSelectionScope(object):
         self.highlight_scope = sh_settings.get("highlight_scope", 'invalid')
         self.highlight_style = sh_settings.get("highlight_style", 'underline')
         self.highlight_max_size = int(sh_settings.get("highlight_max_size", 100))
-        self.show_selectors = bool(sh_settings.get("show_color_scheme_info", False))
+        self.scheme_info = bool(sh_settings.get("show_color_scheme_info", False))
         self.first = True
         self.extents = []
 
@@ -226,9 +323,9 @@ class GetSelectionScope(object):
         if len(self.view.sel()):
             if self.multiselect:
                 for sel in self.view.sel():
-                    self.get_scope(sel.b)
+                    self.get_info(sel.b)
             else:
-                self.get_scope(self.view.sel()[0].b)
+                self.get_info(self.view.sel()[0].b)
 
         # Copy scopes to clipboard
         if self.clipboard:
@@ -247,7 +344,10 @@ class GetSelectionScope(object):
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
 
         if self.show_popup:
-            self.view.show_popup(''.join(self.scope_bfr_tool) + '<br><br><a class="control-link" href="copy">Copy to Clipboard</a>', location=-1, max_width=600, on_navigate=self.on_navigate)
+            self.view.show_popup(
+                '<div class="content">' + ''.join(self.scope_bfr_tool) + '<br><br><a class="control-link" href="copy">Copy to Clipboard</a></div>',
+                location=-1, max_width=600, on_navigate=self.on_navigate
+            )
 
         if self.console_log:
             print('\n'.join(["Scope Hunter"] + self.scope_bfr))
@@ -256,7 +356,8 @@ class GetSelectionScope(object):
             highlight_style = 0
             if self.highlight_style == 'underline':
                 # Use underline if explicity requested,
-                # or if doing a find only when under a selection only (only underline can be seen through a selection)
+                # or if doing a find only when under a selection only
+                # (only underline can be seen through a selection)
                 self.extents = underline(self.extents)
                 highlight_style = sublime.DRAW_EMPTY_AS_OVERWRITE
             elif self.highlight_style == 'outline':
@@ -268,7 +369,6 @@ class GetSelectionScope(object):
                 '',
                 highlight_style
             )
-
 
 find_scopes = GetSelectionScope().run
 
@@ -302,7 +402,11 @@ class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
 
 class SelectionScopeListener(sublime_plugin.EventListener):
     def clear_regions(self, view):
-        if self.enabled and bool(sh_settings.get("highlight_extent", False)) and len(view.get_regions("scope_hunter")):
+        if (
+            self.enabled and
+            bool(sh_settings.get("highlight_extent", False)) and
+            len(view.get_regions("scope_hunter"))
+        ):
             view.erase_regions("scope_hunter")
 
     def on_selection_modified(self, view):
@@ -340,7 +444,10 @@ def sh_loop():
 
     while True:
         if not ScopeThreadManager.ignore_all:
-            if ScopeThreadManager.modified is True and time() - ScopeThreadManager.time > ScopeThreadManager.wait_time:
+            if (
+                ScopeThreadManager.modified is True and
+                time() - ScopeThreadManager.time > ScopeThreadManager.wait_time
+            ):
                 sublime.set_timeout(lambda: sh_run(), 0)
         sleep(0.5)
 
@@ -353,9 +460,15 @@ def init_css():
     css_file = sh_settings.get('css_file', None)
     if css_file is None:
         if scheme_matcher.is_dark_theme:
-            css_file = 'Packages/' + sh_settings.get('dark_css_override', 'Packages/ScopeHunter/css/dark.css')
+            css_file = 'Packages/' + sh_settings.get(
+                'dark_css_override',
+                'Packages/ScopeHunter/css/dark.css'
+            )
         else:
-            css_file = 'Packages/' + sh_settings.get('light_css_override', 'Packages/ScopeHunter/css/light.css')
+            css_file = 'Packages/' + sh_settings.get(
+                'light_css_override',
+                'Packages/ScopeHunter/css/light.css'
+            )
     else:
         css_file = 'Packages/' + css_file
 
