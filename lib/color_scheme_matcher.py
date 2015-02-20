@@ -13,6 +13,15 @@ else:
     from plistlib import readPlistFromBytes
 from .rgba import RGBA
 from os import path
+from collections import namedtuple
+
+
+class SchemeColors(namedtuple('SchemeColors', ['fg', 'fg_simulated', 'bg', "bg_simulated", "style", "fg_selector", "bg_selector", "style_selectors"], verbose=False)):
+    """
+    SchemeColors
+    """
+
+    pass
 
 
 def sublime_format_path(pth):
@@ -23,7 +32,7 @@ def sublime_format_path(pth):
 
 
 class ColorSchemeMatcher(object):
-    def __init__(self, scheme_file, strip_trans=False, ignore_gutter=False, track_dark_background=False, filter=None):
+    def __init__(self, scheme_file, ignore_gutter=False, track_dark_background=False, filter=None):
         if filter is None:
             filter = self.filter
         self.color_scheme = path.normpath(scheme_file)
@@ -33,7 +42,6 @@ class ColorSchemeMatcher(object):
         else:
             self.plist_file = filter(readPlist(sublime.packages_path() + self.color_scheme.replace('Packages', '')))
         self.scheme_file = scheme_file
-        self.strip_trans = strip_trans
         self.ignore_gutter = ignore_gutter
         self.track_dark_background = track_dark_background
         self.dark_lumens = None
@@ -50,14 +58,17 @@ class ColorSchemeMatcher(object):
         color_settings = self.plist_file["settings"][0]["settings"]
 
         # Get general theme colors from color scheme file
-        self.bground = self.strip_color(color_settings.get("background", '#FFFFFF'), simple_strip=True, bg=True)
+        self.bground, self.bground_sim = self.strip_color(color_settings.get("background", '#FFFFFF'), simple_strip=True, bg=True)
         if self.lumens <= 127:
             self.is_dark_theme = True
-        self.fground = self.strip_color(color_settings.get("foreground", '#000000'))
-        self.sbground = self.strip_color(color_settings.get("selection", self.fground), bg=True)
-        self.sfground = self.strip_color(color_settings.get("selectionForeground", None))
-        self.gbground = self.strip_color(color_settings.get("gutter", self.bground), bg=True) if not self.ignore_gutter else self.bground
-        self.gfground = self.strip_color(color_settings.get("gutterForeground", self.fground)) if not self.ignore_gutter else self.fground
+        self.fground, self.fground_sim = self.strip_color(color_settings.get("foreground", '#000000'))
+        self.sbground = self.strip_color(color_settings.get("selection", self.fground), bg=True)[0]
+        self.sbground_sim = self.strip_color(color_settings.get("selection", self.fground_sim), bg=True)[1]
+        self.sfground, self.sfground_sim = self.strip_color(color_settings.get("selectionForeground", None))
+        self.gbground = self.strip_color(color_settings.get("gutter", self.bground), bg=True)[0] if not self.ignore_gutter else self.bground
+        self.gbground_sim = self.strip_color(color_settings.get("gutter", self.bground_sim), bg=True)[1] if not self.ignore_gutter else self.bground_sim
+        self.gfground = self.strip_color(color_settings.get("gutterForeground", self.fground))[0] if not self.ignore_gutter else self.fground
+        self.gfground_sim = self.strip_color(color_settings.get("gutterForeground", self.fground_sim))[1] if not self.ignore_gutter else self.fground_sim
 
         # Create scope colors mapping from color scheme file
         self.colors = {}
@@ -75,30 +86,37 @@ class ColorSchemeMatcher(object):
                             style.append(s)
 
             if scope is not None and name is not None and (color is not None or bgcolor is not None):
+                fg, fg_sim = self.strip_color(color)
+                bg, bg_sim = self.strip_color(bgcolor, bg=True)
                 self.colors[scope] = {
                     "name": name,
-                    "color": self.strip_color(color),
-                    "bgcolor": self.strip_color(bgcolor, bg=True),
+                    "color": fg,
+                    "color_simulated": fg_sim,
+                    "bgcolor": bg,
+                    "bgcolor_simulated": bg_sim,
                     "style": style
                 }
 
     def strip_color(self, color, simple_strip=False, bg=False):
         if color is None or color.strip() == "":
-            return None
+            return None, None
 
         rgba = RGBA(color.replace(" ", ""))
         if not simple_strip:
-            rgba.apply_alpha(self.bground if self.bground != "" else "#FFFFFF")
+            rgba.apply_alpha(self.bground_sim if self.bground_sim != "" else "#FFFFFF")
 
         self.lumens = rgba.luminance()
         if self.track_dark_background and bg:
             if self.dark_lumens is None or self.lumens < self.dark_lumens:
                 self.dark_lumens = self.lumens
 
-        return rgba.get_rgb() if self.strip_trans else color
+        return color, rgba.get_rgb()
 
-    def get_general_colors(self):
-        return self.bground, self.fground, self.sbground, self.sfground, self.gbground, self.gfground
+    def get_general_colors(self, simulate_transparency=False):
+        if simulate_transparency:
+            return self.bground_sim, self.fground_sim, self.sbground_sim, self.sfground_sim, self.gbground_sim, self.gfground_sim
+        else:
+            return self.bground, self.fground, self.sbground, self.sfground, self.gbground, self.gfground
 
     def get_darkest_lumen(self):
         return self.dark_lumens
@@ -111,15 +129,19 @@ class ColorSchemeMatcher(object):
 
     def guess_color(self, view, pt, scope_key):
         color = self.fground
+        color_sim = self.fground_sim
         bgcolor = self.bground
+        bgcolor_sim = self.bground_sim
         style = set([])
         color_selector = "foreground"
         style_selectors = {"bold": "", "italic": ""}
         bg_selector = "background"
         if scope_key in self.matched:
             color = self.matched[scope_key]["color"]
+            color_sim = self.matched[scope_key]["color_simulated"]
             style = self.matched[scope_key]["style"]
             bgcolor = self.matched[scope_key]["bgcolor"]
+            bgcolor_sim = self.matched[scope_key]["bgcolor_simulated"]
             selectors = self.matched[scope_key]["selectors"]
             color_selector, bg_selector, style_selectors = selectors["color"], selectors["background"], selectors["style"]
         else:
@@ -131,6 +153,7 @@ class ColorSchemeMatcher(object):
                 if self.colors[key]["color"] is not None and match > best_match_fg:
                     best_match_fg = match
                     color = self.colors[key]["color"]
+                    color_sim = self.colors[key]["color_simulated"]
                     color_selector = self.colors[key]["name"]
                 if self.colors[key]["style"] is not None and match > best_match_style:
                     best_match_style = match
@@ -143,9 +166,13 @@ class ColorSchemeMatcher(object):
                 if self.colors[key]["bgcolor"] is not None and match > best_match_bg:
                     best_match_bg = match
                     bgcolor = self.colors[key]["bgcolor"]
+                    bgcolor_sim = self.colors[key]["bgcolor_simulated"]
                     bg_selector = self.colors[key]["name"]
             self.matched[scope_key] = {
-                "color": color, "bgcolor": bgcolor,
+                "color": color,
+                "bgcolor": bgcolor,
+                "color_simulated": color_sim,
+                "bgcolor_simulated": bgcolor_sim,
                 "style": style, "selectors": {
                     "color": color_selector,
                     "background": bg_selector,
@@ -156,7 +183,10 @@ class ColorSchemeMatcher(object):
             style = "normal"
         else:
             style = ' '.join(style)
-        return color, style, bgcolor, color_selector, bg_selector, style_selectors
+        return SchemeColors(
+            color, color_sim, bgcolor, bgcolor_sim, style,
+            color_selector, bg_selector, style_selectors
+        )
 
     def shift_background_brightness(self, lumens_limit):
         dlumen = self.get_darkest_lumen()
@@ -164,17 +194,27 @@ class ColorSchemeMatcher(object):
             factor = 1 + ((lumens_limit - dlumen) / 255.0)
             for k, v in self.colors.items():
                 fg, bg = v["color"], v["bgcolor"]
+                fg_sim, bg_sim = v["color_simulated"], v["bgcolor_simulated"]
                 if fg is not None:
                     self.colors[k]["color"] = self.apply_brightness(fg, factor)
+                    self.colors[k]["color_simulated"] = self.apply_brightness(fg_sim, factor)
                 if bg is not None:
                     self.colors[k]["bgcolor"] = self.apply_brightness(bg, factor)
+                    self.colors[k]["bgcolor_simulated"] = self.apply_brightness(bg_sim, factor)
             self.bground = self.apply_brightness(self.bground, factor)
+            self.bground_sim = self.apply_brightness(self.bground_sim, factor)
             self.fground = self.apply_brightness(self.fground, factor)
+            self.fground_sim = self.apply_brightness(self.fground_sim, factor)
             self.sbground = self.apply_brightness(self.sbground, factor)
+            self.sbground_sim = self.apply_brightness(self.sbground_sim, factor)
             if self.sfground is not None:
                 self.sfground = self.apply_brightness(self.sfground, factor)
+                self.sfground_sim = self.apply_brightness(self.sfground_sim, factor)
+
             self.gbground = self.apply_brightness(self.gbground, factor)
+            self.gbground_sim = self.apply_brightness(self.gbground_sim, factor)
             self.gfground = self.apply_brightness(self.gfground, factor)
+            self.gfground_sim = self.apply_brightness(self.gfground_sim, factor)
 
     def apply_brightness(self, color, shift_factor):
         rgba = RGBA(color)

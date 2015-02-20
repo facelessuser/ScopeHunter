@@ -10,22 +10,21 @@ from time import time, sleep
 import _thread as thread
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.lib.rgba import RGBA
+import traceback
 
 pref_settings = {}
 scheme_matcher = None
-scheme_matcher_simulated = None
 sh_settings = {}
 css = None
 
 
 def log(msg):
+    """ Logging """
     print("ScopeHunter: %s" % msg)
 
 
 def underline(regions):
-    """
-    Convert to empty regions
-    """
+    """ Convert to empty regions """
 
     new_regions = []
     for region in regions:
@@ -38,16 +37,23 @@ def underline(regions):
 
 
 def color_box(color, caption):
+    """ Display an HTML color box using the given color """
     rgba = RGBA(color)
     display_color = rgba.get_rgb()
     display_text = rgba.get_rgba().upper()
     font_class = 'color-box-light' if rgba.luminance() <= 127 else 'color-box-dark'
-    return '<p><span class="key">%s:</span><div class="color-box-frame"><div class="color-box %s" style="background-color: %s;">%s</div></div></p>' % (caption, font_class, display_color, display_text)
+    return (
+        '<p><span class="key">%s:</span>'
+        '<div class="color-box-frame">'
+        '<div class="color-box %s" style="background-color: %s;">%s'
+        '</div></div></p>' % (caption, font_class, display_color, display_text)
+    )
 
 
 class ScopeThreadManager(object):
     @classmethod
     def load(cls):
+        """ Load up defaults """
         cls.wait_time = 0.12
         cls.time = time()
         cls.modified = False
@@ -56,6 +62,7 @@ class ScopeThreadManager(object):
 
     @classmethod
     def is_enabled(cls, view):
+        """ Check if we can execute """
         return not view.settings().get("is_widget") and not cls.ignore_all
 
 ScopeThreadManager.load()
@@ -67,17 +74,20 @@ class ScopeGlobals(object):
 
     @classmethod
     def clear(cls):
+        """ Clear edit buffer """
         cls.bfr = None
         cls.pt = None
 
 
 class ScopeHunterInsertCommand(sublime_plugin.TextCommand):
     def run(self, edit):
+        """ Insert text into buffer """
         self.view.insert(edit, ScopeGlobals.pt, ScopeGlobals.bfr)
 
 
 class GetSelectionScope(object):
     def get_extents(self, pt):
+        """ Get the scope extent via the sublime API """
         pts = self.view.extract_scope(pt)
         row1, col1 = self.view.rowcol(pts.begin())
         row2, col2 = self.view.rowcol(pts.end())
@@ -102,11 +112,15 @@ class GetSelectionScope(object):
                         self.scope_bfr_tool.append("<br>")
                 if self.rowcol:
                     self.scope_bfr_tool.append(
-                        '(<span class="key">Line:</span> %d <span class="key">Char:</span> %d, <span class="key">Line:</span> %d <span class="key">Char:</span> %d)' % (row1 + 1, col1 + 1, row2 + 1, col2 + 1)
+                        '(<span class="key">Line:</span> %d '
+                        '<span class="key">Char:</span> %d, '
+                        '<span class="key">Line:</span> %d '
+                        '<span class="key">Char:</span> %d)' % (row1 + 1, col1 + 1, row2 + 1, col2 + 1)
                     )
                 self.scope_bfr_tool.append("</p>")
 
     def get_scope(self, pt):
+        """ Get the scope at the cursor """
         scope = self.view.scope_name(pt)
         spacing = "\n" + (" " * 31)
 
@@ -132,6 +146,7 @@ class GetSelectionScope(object):
         return scope
 
     def get_colors(self, color, color_sim, bgcolor, bgcolor_sim):
+        """ Get colors of foreground, background, and simulated transparency colors """
         self.scope_bfr.append("%-30s %s" % ("foreground:", color))
         if len(color) == 8 and not color.lower().endswith('ff'):
             self.scope_bfr.append(
@@ -158,23 +173,27 @@ class GetSelectionScope(object):
                 )
 
     def get_scheme_syntax(self):
+        """ Get color scheme and syntax file path """
         global scheme_matcher
         global scheme_matcher_simulated
 
-        self.scheme_file = scheme_matcher.color_scheme
+        self.scheme_file = scheme_matcher.color_scheme.replace('\\', '/')
         self.syntax_file = self.view.settings().get('syntax')
         self.scope_bfr.append("%-30s %s" % ("Scheme File:", self.scheme_file))
         self.scope_bfr.append("%-30s %s" % ("Syntax File:", self.syntax_file))
 
         if self.show_popup:
             self.scope_bfr_tool.append(
-                '<h1 class="header">%s</h1><p><a class="file-link" href="scheme">%s</a></p>' % ("Scheme File", self.scheme_file)
+                '<h1 class="header">%s</h1><p>'
+                '<a class="file-link" href="scheme">%s</a></p>' % ("Scheme File", self.scheme_file)
             )
             self.scope_bfr_tool.append(
-                '<h1 class="header">%s</h1><p><a class="file-link" href="syntax">%s</a></p>' % ("Syntax File", self.syntax_file)
+                '<h1 class="header">%s</h1><p>'
+                '<a class="file-link" href="syntax">%s</a></p>' % ("Syntax File", self.syntax_file)
             )
 
     def get_style(self, style):
+        """ Get the font style """
         self.scope_bfr.append("%-30s %s" % ("style:", style))
         if self.show_popup:
             self.scope_bfr_tool.append('<h1 class="header">%s</h1>' % "Style")
@@ -191,6 +210,7 @@ class GetSelectionScope(object):
             )
 
     def get_selectors(self, color_selector, bg_selector, style_selectors):
+        """ Get the selectors used to determine color and/or style """
         self.scope_bfr.append(
             "%-30s %s" % ("foreground selector:", color_selector)
         )
@@ -226,42 +246,39 @@ class GetSelectionScope(object):
                 )
 
     def get_info(self, pt):
+        """ Get scope related info """
         global scheme_matcher
-        global scheme_matcher_simulated
 
         scope = self.get_scope(pt)
 
         if self.rowcol or self.points or self.highlight_extent:
             self.get_extents(pt)
 
-        if (
-            self.scheme_info and
-            scheme_matcher is not None and
-            scheme_matcher_simulated is not None
-        ):
+        if self.scheme_info and scheme_matcher is not None:
             try:
-                (
-                    color_sim, style_sim, bgcolor_sim,
-                    color_selector_sim, bg_selector_sim,
-                    style_selectors_sim
-                ) = scheme_matcher_simulated.guess_color(self.view, pt, scope)
-                (
-                    color, style, bgcolor, color_selector,
-                    bg_selector, style_selectors
-                ) = scheme_matcher.guess_color(self.view, pt, scope)
+                match = scheme_matcher.guess_color(self.view, pt, scope)
+                color = match.fg
+                bgcolor = match.bg
+                color_sim = match.fg_simulated
+                bgcolor_sim = match.bg_simulated
+                style = match.style
+                bg_selector = match.bg_selector
+                color_selector = match.fg_selector
+                style_selectors = match.style_selectors
 
                 self.get_colors(color, color_sim, bgcolor, bgcolor_sim)
                 self.get_style(style)
                 self.get_selectors(color_selector, bg_selector, style_selectors)
                 self.get_scheme_syntax()
-            except Exception as e:
-                log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(e))
+            except:
+                log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(traceback.format_exc()))
                 self.scheme_info = False
 
         # Divider
         self.scope_bfr.append("")
 
     def on_navigate(self, href):
+        """ Exceute link callback """
         if href == 'copy':
             sublime.set_clipboard('\n'.join(self.scope_bfr))
             self.view.hide_popup()
@@ -287,6 +304,7 @@ class GetSelectionScope(object):
             )
 
     def run(self, v):
+        """ Run ScopeHunter and display in the approriate way """
         global css
 
         self.view = v
@@ -343,7 +361,9 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             self.view.show_popup(
-                '<div class="content">' + ''.join(self.scope_bfr_tool) + '<br><br><a class="control-link" href="copy">Copy to Clipboard</a></div>',
+                '<div class="content">' +
+                ''.join(self.scope_bfr_tool) +
+                '<br><br><a class="control-link" href="copy">Copy to Clipboard</a></div>',
                 location=-1, max_width=600, on_navigate=self.on_navigate
             )
 
@@ -481,16 +501,13 @@ def init_css():
 def init_color_scheme():
     global pref_settings
     global scheme_matcher
-    global scheme_matcher_simulated
     pref_settings = sublime.load_settings('Preferences.sublime-settings')
     scheme_file = pref_settings.get('color_scheme')
     try:
-        scheme_matcher_simulated = ColorSchemeMatcher(scheme_file, strip_trans=True)
         scheme_matcher = ColorSchemeMatcher(scheme_file)
-    except Exception as e:
-        scheme_matcher_simulated = None
+    except:
         scheme_matcher = None
-        log("Theme parsing failed!  Ingoring theme related info.\n%s" % str(e))
+        log("Theme parsing failed!  Ingoring theme related info.\n%s" % str(traceback.format_exc()))
     pref_settings.clear_on_change('reload')
     pref_settings.add_on_change('reload', init_color_scheme)
     init_css()
