@@ -10,6 +10,7 @@ from time import time, sleep
 import _thread as thread
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.lib.rgba import RGBA
+from RegReplace.rr_notify import notify
 import re
 import traceback
 
@@ -40,10 +41,12 @@ def underline(regions):
 def copy_data(bfr, label, format=None):
     """ Copy data to clipboard from buffer """
     for line in bfr:
-        m = re.match(r'%s:(.*)' % label, line, re.DOTALL)
-        if m:
-            text = format(m.group(1)).strip() if format is not None else m.group(1).strip()
+        if line.startswith(label + ':'):
+            text = line.replace(label + ':', '', 1).strip()
+            if format is not None:
+                text = format(text)
             sublime.set_clipboard(text)
+            notify("Copied: %s" % label)
             break
 
 
@@ -354,7 +357,7 @@ class GetSelectionScope(object):
         """ Exceute link callback """
         if href == 'copy-all':
             sublime.set_clipboard('\n'.join(self.scope_bfr))
-            self.view.hide_popup()
+            notify('Copied: All')
         elif href == 'copy-scope':
             copy_data(
                 self.scope_bfr,
@@ -362,39 +365,39 @@ class GetSelectionScope(object):
                 format=lambda x: x.replace('\n' + ' ' * 31, ' ')
             )
         elif href == 'copy-points':
-            copy_data(self.scope_bfr, r'Scope Extents \(Pts\)')
+            copy_data(self.scope_bfr, 'Scope Extents (Pts)')
         elif href == 'copy-line-row':
-            copy_data(self.scope_bfr, r'Scope Extents \(Line/Char\)')
+            copy_data(self.scope_bfr, 'Scope Extents (Line/Char)')
         elif href == 'copy-fg':
-            copy_data(self.scope_bfr, r'Foreground')
+            copy_data(self.scope_bfr, 'Foreground')
         elif href == 'copy-fg-sim':
-            copy_data(self.scope_bfr, r'Foreground \(Simulated Trans\)')
+            copy_data(self.scope_bfr, 'Foreground (Simulated Trans)')
         elif href == 'copy-bg':
-            copy_data(self.scope_bfr, r'Background')
+            copy_data(self.scope_bfr, 'Background')
         elif href == 'copy-bg-sim':
-            copy_data(self.scope_bfr, r'Background \(Simulated Trans\)')
+            copy_data(self.scope_bfr, 'Background (Simulated Trans)')
         elif href == 'copy-style':
-            copy_data(self.scope_bfr, r'Style')
+            copy_data(self.scope_bfr, 'Style')
         elif href == 'copy-fg-sel-name':
-            copy_data(self.scope_bfr, r'Foreground Selector Name')
+            copy_data(self.scope_bfr, 'Foreground Selector Name')
         elif href == 'copy-fg-sel-scope':
-            copy_data(self.scope_bfr, r'Foreground Selector Scope')
+            copy_data(self.scope_bfr, 'Foreground Selector Scope')
         elif href == 'copy-bg-sel-name':
-            copy_data(self.scope_bfr, r'Background Selector Name')
+            copy_data(self.scope_bfr, 'Background Selector Name')
         elif href == 'copy-bg-sel-scope':
-            copy_data(self.scope_bfr, r'Background Selector Scope')
+            copy_data(self.scope_bfr, 'Background Selector Scope')
         elif href == 'copy-bold-sel-name':
-            copy_data(self.scope_bfr, r'Bold Selector Name')
+            copy_data(self.scope_bfr, 'Bold Selector Name')
         elif href == 'copy-bold-sel-scope':
-            copy_data(self.scope_bfr, r'Bold Selector Scope')
+            copy_data(self.scope_bfr, 'Bold Selector Scope')
         elif href == 'copy-italic-sel-name':
-            copy_data(self.scope_bfr, r'Italic Selector Name')
+            copy_data(self.scope_bfr, 'Italic Selector Name')
         elif href == 'copy-italic-sel-scope':
-            copy_data(self.scope_bfr, r'Italic Selector Scope')
+            copy_data(self.scope_bfr, 'Italic Selector Scope')
         elif href == 'copy-scheme':
-            copy_data(self.scope_bfr, r'Scheme File')
+            copy_data(self.scope_bfr, 'Scheme File')
         elif href == 'copy-syntax':
-            copy_data(self.scope_bfr, r'Syntax File')
+            copy_data(self.scope_bfr, 'Syntax File')
         elif href == 'scheme' and self.scheme_file is not None:
             window = self.view.window()
             window.run_command(
