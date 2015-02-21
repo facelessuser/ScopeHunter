@@ -1,6 +1,8 @@
 # About
 This is a simple plugin get the scope under the cursor(s) in Sublime Text.  This is useful for plugin development.
 
+![Tooltip](https://dl.dropboxusercontent.com/u/342698/ScopeHunter/tooltip-copy.png)
+
 # Usage
 All commands are accessible via the command palatte.
 
@@ -16,10 +18,10 @@ In order to change the standard settings of Scope Hunter, please go to `Preferen
 # Features
 All features are configurable via the settings file
 
+- Show output in tooltip (stylesheet is configurable)
 - Dump scope to status bar (no multi-select support)
 - Dump scope extent in line/char format and/or point format
 - Dump output to auto-popup panel and/or console
-- Show output in tooltip (stylesheet is configurable)
 - Copy scope(s) to clipboard
 - Multi-select support for all output except status bar
 - Highlight scope extent
