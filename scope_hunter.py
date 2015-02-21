@@ -10,7 +10,7 @@ from time import time, sleep
 import _thread as thread
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.lib.rgba import RGBA
-from RegReplace.rr_notify import notify
+from ScopeHunter.scope_hunter_notify import notify, error
 import re
 import traceback
 
@@ -348,6 +348,7 @@ class GetSelectionScope(object):
                 self.get_scheme_syntax()
             except:
                 log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(traceback.format_exc()))
+                error("Evaluating theme failed!")
                 self.scheme_info = False
 
         # Divider

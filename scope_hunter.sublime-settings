@@ -54,5 +54,8 @@
     "show_color_scheme_info": false,
 
     // Max region to size to highlight
-    "highlight_max_size": 100
+    "highlight_max_size": 100,
+
+    // Use SubNotify plugin messages if installed
+    "use_sub_notify": true
 }
