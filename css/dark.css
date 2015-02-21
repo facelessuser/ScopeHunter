@@ -21,6 +21,11 @@ h1, h2, h3, h4, h5, h6 {
     color: #6699cc;
 }
 
+.copy-link {
+    color: #6699cc;
+    font-size: 0.8em;
+}
+
 .key {
     color: #cc99cc;
     font-weight: bold;
