@@ -41,16 +41,13 @@ def underline(regions):
 def copy_data(bfr, label, index, format=None):
     """ Copy data to clipboard from buffer """
     count = 0
-    for line in bfr:
-        if line.startswith(label + ':'):
-            if count == index:
-                text = line.replace(label + ':', '', 1).strip()
-                if format is not None:
-                    text = format(text)
-                sublime.set_clipboard(text)
-                notify("Copied: %s" % label)
-                break
-            count += 1
+    line = bfr[index]
+    if line.startswith(label + ':'):
+        text = line.replace(label + ':', '', 1).strip()
+        if format is not None:
+            text = format(text)
+        sublime.set_clipboard(text)
+        notify("Copied: %s" % label)
 
 
 def color_box(color, caption, link, index):
@@ -105,7 +102,11 @@ class ScopeHunterInsertCommand(sublime_plugin.TextCommand):
 
 
 class GetSelectionScope(object):
-    def get_extents(self, pt, index):
+    def next_index(self):
+        self.index += 1
+        return self.index
+
+    def get_extents(self, pt):
         """ Get the scope extent via the sublime API """
 
         # pts = self.view.extract_scope(pt)
@@ -168,7 +169,7 @@ class GetSelectionScope(object):
                 if self.points:
                     self.scope_bfr_tool.append('<span class="key">points:</span><br>')
                     self.scope_bfr_tool.append("(%d, %d)<br>" % (pts.begin(), pts.end()))
-                    self.scope_bfr_tool.append('<a href="copy-points:%d" class="copy-link">(copy)</a>' % index)
+                    self.scope_bfr_tool.append('<a href="copy-points:%d" class="copy-link">(copy)</a>' % self.next_index())
                     if self.rowcol:
                         self.scope_bfr_tool.append("<br><br>")
                 if self.rowcol:
@@ -179,13 +180,13 @@ class GetSelectionScope(object):
                         '<strong>Line:</strong> %d '
                         '<strong>Char:</strong> %d)<br>'
                         '<a href="copy-line-row:%d" class="copy-link">(copy)</a>' % (
-                            row1 + 1, col1 + 1, row2 + 1, col2 + 1, index
+                            row1 + 1, col1 + 1, row2 + 1, col2 + 1, self.next_index()
                         )
 
                     )
                 self.scope_bfr_tool.append("</p>")
 
-    def get_scope(self, pt, index):
+    def get_scope(self, pt):
         """ Get the scope at the cursor """
         scope = self.view.scope_name(pt)
         spacing = "\n" + (" " * 31)
@@ -207,12 +208,12 @@ class GetSelectionScope(object):
         if self.show_popup:
             self.scope_bfr_tool.append(
                 '<h1 class="header">Scope:</h1><p>%s<br>'
-                '<a href="copy-scope:%d" class="copy-link">(copy)</a></p>' % (self.view.scope_name(pt).strip(), index)
+                '<a href="copy-scope:%d" class="copy-link">(copy)</a></p>' % (self.view.scope_name(pt).strip(), self.next_index())
             )
 
         return scope
 
-    def get_colors(self, color, color_sim, bgcolor, bgcolor_sim, index):
+    def get_colors(self, color, color_sim, bgcolor, bgcolor_sim):
         """ Get colors of foreground, background, and simulated transparency colors """
         self.scope_bfr.append("%-30s %s" % ("Foreground:", color))
         if len(color) == 8 and not color.lower().endswith('ff'):
@@ -228,18 +229,18 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             self.scope_bfr_tool.append('<h1 class="header">%s</h1>' % "Color")
-            self.scope_bfr_tool.append(color_box(color, 'foreground', 'copy-fg', index))
+            self.scope_bfr_tool.append(color_box(color, 'foreground', 'copy-fg', self.next_index()))
             if len(color) == 9 and not color.lower().endswith('ff'):
                 self.scope_bfr_tool.append(
-                    color_box(color_sim, 'foreground (simulated transparency)', 'copy-fg-sim', index)
+                    color_box(color_sim, 'foreground (simulated transparency)', 'copy-fg-sim', self.next_index())
                 )
-            self.scope_bfr_tool.append(color_box(bgcolor, 'background', 'copy-bg', index))
+            self.scope_bfr_tool.append(color_box(bgcolor, 'background', 'copy-bg', self.next_index()))
             if len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
                 self.scope_bfr_tool.append(
-                    color_box(bgcolor_sim, 'background (simulated transparency)', 'copy-bg-sim', index)
+                    color_box(bgcolor_sim, 'background (simulated transparency)', 'copy-bg-sim', self.next_index())
                 )
 
-    def get_scheme_syntax(self, index):
+    def get_scheme_syntax(self):
         """ Get color scheme and syntax file path """
         global scheme_matcher
         global scheme_matcher_simulated
@@ -254,18 +255,18 @@ class GetSelectionScope(object):
                 '<h1 class="header">%s</h1><p>'
                 '<a class="file-link" href="scheme">%s</a><br>'
                 '<a href="copy-scheme:%d" class="copy-link">(copy)</a></p>' % (
-                    "Scheme File", self.scheme_file, index
+                    "Scheme File", self.scheme_file, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
                 '<h1 class="header">%s</h1><p>'
                 '<a class="file-link" href="syntax">%s</a><br>'
                 '<a href="copy-syntax:%d" class="copy-link">(copy)</a></p>' % (
-                    "Syntax File", self.syntax_file, index
+                    "Syntax File", self.syntax_file, self.next_index()
                 )
             )
 
-    def get_style(self, style, index):
+    def get_style(self, style):
         """ Get the font style """
         self.scope_bfr.append("%-30s %s" % ("Style:", style))
         if self.show_popup:
@@ -281,11 +282,11 @@ class GetSelectionScope(object):
             self.scope_bfr_tool.append(
                 '<p><%(tag)s>%(type)s</%(tag)s><br>'
                 '<a href="copy-style:%(index)d" class="copy-link">(copy)</a></p>' % {
-                    "type": style, "tag": tag, "index": index
+                    "type": style, "tag": tag, "index": self.next_index()
                 }
             )
 
-    def get_selectors(self, color_selector, bg_selector, style_selectors, index):
+    def get_selectors(self, color_selector, bg_selector, style_selectors):
         """ Get the selectors used to determine color and/or style """
         self.scope_bfr.append(
             "%-30s %s" % ("Foreground Selector Name:", color_selector.name)
@@ -321,47 +322,47 @@ class GetSelectionScope(object):
             )
             self.scope_bfr_tool.append(
                 '<span class="key">foreground selector name:</span><br>%s<br>'
-                '<a href="copy-fg-sel-name:%d" class="copy-link">(copy)</a>' % (color_selector.name, index)
+                '<a href="copy-fg-sel-name:%d" class="copy-link">(copy)</a>' % (color_selector.name, self.next_index())
             )
             self.scope_bfr_tool.append(
                 '<br><br><span class="key">foreground selector scope:</span><br>%s<br>'
-                '<a href="copy-fg-sel-scope:%d" class="copy-link">(copy)</a>' % (color_selector.scope, index)
+                '<a href="copy-fg-sel-scope:%d" class="copy-link">(copy)</a>' % (color_selector.scope, self.next_index())
             )
             self.scope_bfr_tool.append(
                 '<br><br><span class="key">background selector name:</span><br>%s<br>'
-                '<a href="copy-bg-sel-name:%d" class="copy-link">(copy)</a>' % (bg_selector.name, index)
+                '<a href="copy-bg-sel-name:%d" class="copy-link">(copy)</a>' % (bg_selector.name, self.next_index())
             )
             self.scope_bfr_tool.append(
                 '<br><br><span class="key">background selector scope:</span><br>%s<br>'
-                '<a href="copy-bg-sel-scope:%d" class="copy-link">(copy)</a>' % (bg_selector.scope, index)
+                '<a href="copy-bg-sel-scope:%d" class="copy-link">(copy)</a>' % (bg_selector.scope, self.next_index())
             )
             if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">bold selector name:</span><br>%s<br>'
-                    '<a href="copy-bold-sel-name:%d" class="copy-link">(copy)</a>' % (style_selectors["bold"].name, index)
+                    '<a href="copy-bold-sel-name:%d" class="copy-link">(copy)</a>' % (style_selectors["bold"].name, self.next_index())
                 )
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">bold selector scope:</span><br>%s<br>'
-                    '<a href="copy-bold-sel-scope:%d" class="copy-link">(copy)</a>' % (style_selectors["bold"].scope, index)
+                    '<a href="copy-bold-sel-scope:%d" class="copy-link">(copy)</a>' % (style_selectors["bold"].scope, self.next_index())
                 )
             if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">italic selector name:</span><br>%s<br>'
-                    '<a href="copy-italic-sel-name:%d" class="copy-link">(copy)</a>' % (style_selectors["italic"].name, index)
+                    '<a href="copy-italic-sel-name:%d" class="copy-link">(copy)</a>' % (style_selectors["italic"].name, self.next_index())
                 )
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">italic selector scope:</span><br>%s<br>'
-                    '<a href="copy-italic-sel-scope:%d" class="copy-link">(copy)</a>' % (style_selectors["italic"].scope, index)
+                    '<a href="copy-italic-sel-scope:%d" class="copy-link">(copy)</a>' % (style_selectors["italic"].scope, self.next_index())
                 )
 
-    def get_info(self, pt, index):
+    def get_info(self, pt):
         """ Get scope related info """
         global scheme_matcher
 
-        scope = self.get_scope(pt, index)
+        scope = self.get_scope(pt, )
 
         if self.rowcol or self.points or self.highlight_extent:
-            self.get_extents(pt, index)
+            self.get_extents(pt, )
 
         if self.scheme_info and scheme_matcher is not None:
             try:
@@ -375,17 +376,18 @@ class GetSelectionScope(object):
                 color_selector = match.fg_selector
                 style_selectors = match.style_selectors
 
-                self.get_colors(color, color_sim, bgcolor, bgcolor_sim, index)
-                self.get_style(style, index)
-                self.get_selectors(color_selector, bg_selector, style_selectors, index)
-                self.get_scheme_syntax(index)
+                self.get_colors(color, color_sim, bgcolor, bgcolor_sim)
+                self.get_style(style)
+                self.get_selectors(color_selector, bg_selector, style_selectors)
+                self.get_scheme_syntax()
             except:
                 log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(traceback.format_exc()))
                 error("Evaluating theme failed!")
                 self.scheme_info = False
 
         # Divider
-        self.scope_bfr.append("")
+        self.next_index()
+        self.scope_bfr.append("------")
 
     def on_navigate(self, href):
         """ Exceute link callback """
@@ -490,16 +492,17 @@ class GetSelectionScope(object):
         self.extents = []
 
         # Get scope info for each selection wanted
+        self.index = -1
         if len(self.view.sel()):
             if self.multiselect:
                 count = 0
                 for sel in self.view.sel():
                     if count > 0 and self.show_popup:
                         self.scope_bfr_tool.append('<p class="divider">------</p>')
-                    self.get_info(sel.b, count)
+                    self.get_info(sel.b)
                     count += 1
             else:
-                self.get_info(self.view.sel()[0].b, 0)
+                self.get_info(self.view.sel()[0].b)
 
         # Copy scopes to clipboard
         if self.clipboard:
