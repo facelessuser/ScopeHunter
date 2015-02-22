@@ -173,13 +173,13 @@ class GetSelectionScope(object):
                     if self.rowcol:
                         self.scope_bfr_tool.append("<br><br>")
                 if self.rowcol:
-                    self.scope_bfr_tool.append('<span class="key">line/row:</span><br>')
+                    self.scope_bfr_tool.append('<span class="key">line/char:</span><br>')
                     self.scope_bfr_tool.append(
                         '(<strong>Line:</strong> %d '
                         '<strong>Char:</strong> %d, '
                         '<strong>Line:</strong> %d '
                         '<strong>Char:</strong> %d)<br>'
-                        '<a href="copy-line-row:%d" class="copy-link">(copy)</a>' % (
+                        '<a href="copy-line-char:%d" class="copy-link">(copy)</a>' % (
                             row1 + 1, col1 + 1, row2 + 1, col2 + 1, self.next_index()
                         )
 
@@ -406,7 +406,7 @@ class GetSelectionScope(object):
             )
         elif key == 'copy-points':
             copy_data(self.scope_bfr, 'Scope Extents (Pts)', index)
-        elif key == 'copy-line-row':
+        elif key == 'copy-line-char':
             copy_data(self.scope_bfr, 'Scope Extents (Line/Char)', index)
         elif key == 'copy-fg':
             copy_data(self.scope_bfr, 'Foreground', index)
@@ -485,7 +485,7 @@ class GetSelectionScope(object):
         self.console_log = bool(sh_settings.get("console_log", False))
         self.highlight_extent = bool(sh_settings.get("highlight_extent", False))
         self.highlight_scope = sh_settings.get("highlight_scope", 'invalid')
-        self.highlight_style = sh_settings.get("highlight_style", 'underline')
+        self.highlight_style = sh_settings.get("highlight_style", 'outline')
         self.highlight_max_size = int(sh_settings.get("highlight_max_size", 100))
         self.scheme_info = bool(sh_settings.get("show_color_scheme_info", False))
         self.first = True
@@ -521,10 +521,14 @@ class GetSelectionScope(object):
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
 
         if self.show_popup:
+            if self.scheme_info or self.rowcol or self.points:
+                copy_all = '<br><a href="copy-all" class="copy-link">(copy all)</a></div>'
+            else:
+                copy_all = ''
             self.view.show_popup(
                 '<div class="content">' +
                 ''.join(self.scope_bfr_tool) +
-                '<br><a href="copy-all" class="copy-link">(copy all)</a></div>',
+                copy_all,
                 location=-1, max_width=600, on_navigate=self.on_navigate
             )
 

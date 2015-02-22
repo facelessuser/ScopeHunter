@@ -1,9 +1,28 @@
 # About
 This is a simple plugin get the scope under the cursor(s) in Sublime Text.  This is useful for plugin development.
 
-![Tooltip](https://dl.dropboxusercontent.com/u/342698/ScopeHunter/tooltip-copy.png)
+Dark theme with simple output:
+![Tooltip Dark](https://dl.dropboxusercontent.com/u/342698/ScopeHunter/tooltip-simple-dark.png)
 
-# Usage
+Light theme with advanced output:
+![Tooltip Light](https://dl.dropboxusercontent.com/u/342698/ScopeHunter/tooltip-copy.png)
+
+# Features
+All features are configurable via the settings file
+
+- Optionally show output in tooltip (stylesheets are configurable)
+- Optionally auto choose dark or light tooltip theme depending on your color scheme.
+- Optionally dump output to auto-popup panel and/or console
+- Optionally dump scope to status bar (no multi-select support).
+- Multi-select support for all output except status bar.
+- Optionally log scope extent in line/char format and/or point format.
+- Optionally copy scope(s) to clipboard
+- Optionally highlight and/or log scope extent.
+- Optionally log color scheme colors and selectors.
+- Optionally log location of Scheme file and Syntax.
+- Supports [SubNotify](https://github.com/facelessuser/SubNotify) messages.
+
+# Command Usage
 All commands are accessible via the command palatte.
 
 ## Scope Hunter: Show Scope Under Cursor
@@ -12,26 +31,14 @@ Show scope under cursor or cursors (depending whether multi-select is enabled)
 ## Scope Hunter: Toggle Instant Scoper
 Toggle scoping under cursor constantly.
 
-## Scope Hunter: User Settings
-In order to change the standard settings of Scope Hunter, please go to `Preferences -> Package Settings -> Scope Hunter` and click on `Settings - User`.  Repeat that for `Settings - Default`, copy all the settings from the default file to the user settings file, which you would like to change.
-
-# Features
-All features are configurable via the settings file
-
-- Show output in tooltip (stylesheet is configurable)
-- Dump scope to status bar (no multi-select support)
-- Dump scope extent in line/char format and/or point format
-- Dump output to auto-popup panel and/or console
-- Copy scope(s) to clipboard
-- Multi-select support for all output except status bar
-- Highlight scope extent
-- Show color scheme colors and selectors
+# Scope Hunter: User Settings
+In order to change the standard settings of Scope Hunter, please go to `Preferences -> Package Settings -> Scope Hunter` and click on `Settings - User`.  Repeat that for `Settings - Default`, copy all the settings from the default file that you wish to change to the user settings file.
 
 # License
 
 Scope Hunter is released under the MIT license.
 
-Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
+Copyright (c) 2012 - 2015 Isaac Muse <isaacmuse@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
