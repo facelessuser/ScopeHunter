@@ -104,7 +104,37 @@ class ScopeHunterInsertCommand(sublime_plugin.TextCommand):
 class GetSelectionScope(object):
     def get_extents(self, pt):
         """ Get the scope extent via the sublime API """
-        pts = self.view.extract_scope(pt)
+
+        # pts = self.view.extract_scope(pt)
+        # pts1 = self.view.extract_scope(pts.begin())
+        # pts2 = self.view.extract_scope(pts.end() - 1)
+        # intersect = pts1.intersection(pts2)
+        # # print('-----debug extent-----')
+        # # print(pt)
+        # # print(pts)
+        # # print(pts1)
+        # # print(pts2)
+        # # print(intersect)
+        # if (
+        #     (pts1.contains(pt) and pt != pts1.end()) and
+        #     (not pts2.contains(pt) or pt == pts2.end())
+        # ):
+        #     pts = sublime.Region(pts1.begin(), intersect.begin())
+        # elif (
+        #     (pts2.contains(pt) and pt != pts2.end()) and
+        #     (not pts1.contains(pt) or pt == pts1.end())
+        # ):
+        #     if pt == pts1.end():
+        #         pts = sublime.Region(pts1.end(), pts2.end())
+        #     elif (pts1.begin() == pts2.begin()) or (pts1.end() == pts2.end()):
+        #         pts = pts1.cover(pts2)
+
+        scope_name = self.view.scope_name(pt)
+        for r in self.view.find_by_selector(scope_name):
+            if r.contains(pt):
+                pts = r
+                break
+
         row1, col1 = self.view.rowcol(pts.begin())
         row2, col2 = self.view.rowcol(pts.end())
 
