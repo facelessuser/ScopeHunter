@@ -66,6 +66,11 @@ def color_box(color, caption, link, index):
     )
 
 
+class ShThreadMgr(object):
+    restart = False
+    kill = False
+
+
 class ScopeThreadManager(object):
     @classmethod
     def load(cls):
@@ -625,7 +630,7 @@ def sh_loop():
     be ignored and then accounted for with one match by this thread
     """
 
-    while True:
+    while not ShThreadMgr.restart and not ShThreadMgr.kill:
         if not ScopeThreadManager.ignore_all:
             if (
                 ScopeThreadManager.modified is True and
@@ -633,6 +638,15 @@ def sh_loop():
             ):
                 sublime.set_timeout(lambda: sh_run(), 0)
         sleep(0.5)
+
+    if ShThreadMgr.restart:
+        ShThreadMgr.restart = False
+        sublime.set_timeout(lambda: thread.start_new_thread(sh_loop, ()), 0)
+
+    if ShThreadMgr.kill:
+        global running_sh_loop
+        del running_sh_loop
+        ShThreadMgr.kill = False
 
 
 def init_css():
@@ -688,3 +702,9 @@ def plugin_loaded():
         global running_sh_loop
         running_sh_loop = True
         thread.start_new_thread(sh_loop, ())
+    else:
+        ShThreadMgr.restart = True
+
+
+def plugin_unloaded():
+    ShThreadMgr.kill = True
