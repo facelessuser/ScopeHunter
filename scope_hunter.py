@@ -247,8 +247,6 @@ class GetSelectionScope(object):
 
     def get_scheme_syntax(self):
         """ Get color scheme and syntax file path """
-        global scheme_matcher
-        global scheme_matcher_simulated
 
         self.scheme_file = scheme_matcher.color_scheme.replace('\\', '/')
         self.syntax_file = self.view.settings().get('syntax')
@@ -362,7 +360,6 @@ class GetSelectionScope(object):
 
     def get_info(self, pt):
         """ Get scope related info """
-        global scheme_matcher
 
         scope = self.get_scope(pt, )
 
@@ -650,9 +647,7 @@ def sh_loop():
 
 
 def init_css():
-    global sh_settings
     global css
-    global scheme_matcher
 
     css_file = sh_settings.get('css_file', None)
     if css_file is None:
