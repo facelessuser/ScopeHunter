@@ -7,7 +7,7 @@ Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
 import sublime
 import sublime_plugin
 from time import time, sleep
-import _thread as thread
+import threading
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.lib.rgba import RGBA
 from ScopeHunter.scope_hunter_notify import notify, error
@@ -18,6 +18,7 @@ pref_settings = {}
 scheme_matcher = None
 sh_settings = {}
 css = None
+sh_thread = None
 
 
 def log(msg):
@@ -66,32 +67,14 @@ def color_box(color, caption, link, index):
     )
 
 
-class ShThreadMgr(object):
-    restart = False
-    kill = False
-
-
-class ScopeThreadManager(object):
-    @classmethod
-    def load(cls):
-        """ Load up defaults """
-        cls.wait_time = 0.12
-        cls.time = time()
-        cls.modified = False
-        cls.ignore_all = False
-        cls.instant_scoper = False
-
-    @classmethod
-    def is_enabled(cls, view):
-        """ Check if we can execute """
-        return not view.settings().get("is_widget") and not cls.ignore_all
-
-ScopeThreadManager.load()
-
-
-class ScopeGlobals(object):
+class ScopeHunterEditCommand(sublime_plugin.TextCommand):
     bfr = None
     pt = None
+
+    def run(self, edit):
+        """ Insert text into buffer """
+        cls = ScopeHunterEditCommand
+        self.view.insert(edit, cls.pt, cls.bfr)
 
     @classmethod
     def clear(cls):
@@ -100,14 +83,9 @@ class ScopeGlobals(object):
         cls.pt = None
 
 
-class ScopeHunterInsertCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        """ Insert text into buffer """
-        self.view.insert(edit, ScopeGlobals.pt, ScopeGlobals.bfr)
-
-
 class GetSelectionScope(object):
     def next_index(self):
+        """ Get next index into scope buffer """
         self.index += 1
         return self.index
 
@@ -516,10 +494,10 @@ class GetSelectionScope(object):
 
         # Show panel
         if self.show_panel:
-            ScopeGlobals.bfr = '\n'.join(self.scope_bfr)
-            ScopeGlobals.pt = 0
-            view.run_command('scope_hunter_insert')
-            ScopeGlobals.clear()
+            ScopeHunterEditCommand.bfr = '\n'.join(self.scope_bfr)
+            ScopeHunterEditCommand.pt = 0
+            view.run_command('scope_hunter_edit')
+            ScopeHunterEditCommand.clear()
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
 
         if self.show_popup:
@@ -560,25 +538,28 @@ find_scopes = GetSelectionScope().run
 
 class GetSelectionScopeCommand(sublime_plugin.TextCommand):
     def run(self, edit):
-        ScopeThreadManager.modified = True
+        """ On demand scope request """
+        sh_thread.modified = True
 
     def is_enabled(self):
-        return ScopeThreadManager.is_enabled(self.view)
+        """ Check if we should scope this view """
+        return sh_thread.is_enabled(self.view)
 
 
 class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
     def run(self):
-        ScopeThreadManager.instant_scoper = False if ScopeThreadManager.instant_scoper else True
-        if ScopeThreadManager.instant_scoper:
-            ScopeThreadManager.modified = True
-            ScopeThreadManager.time = time()
+        """ Enable or disable instant scoper """
+        sh_thread.instant_scoper = False if sh_thread.instant_scoper else True
+        if sh_thread.instant_scoper:
+            sh_thread.modified = True
+            sh_thread.time = time()
         else:
             win = sublime.active_window()
             if win is not None:
                 view = win.active_view()
                 if (
                     view is not None and
-                    ScopeThreadManager.is_enabled(view) and
+                    sh_thread.is_enabled(view) and
                     bool(sh_settings.get("highlight_extent", False)) and
                     len(view.get_regions("scope_hunter"))
                 ):
@@ -587,66 +568,82 @@ class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
 
 class SelectionScopeListener(sublime_plugin.EventListener):
     def clear_regions(self, view):
+        """ Clear the highlight regions """
         if (
-            self.enabled and
             bool(sh_settings.get("highlight_extent", False)) and
             len(view.get_regions("scope_hunter"))
         ):
             view.erase_regions("scope_hunter")
 
     def on_selection_modified(self, view):
-        self.enabled = ScopeThreadManager.is_enabled(view)
-        if not ScopeThreadManager.instant_scoper or not self.enabled:
+        """
+        Clean up regions or let thread
+        know there was a modification
+        """
+        enabled = sh_thread.is_enabled(view)
+        if not sh_thread.instant_scoper or not enabled:
             # clean up dirty highlights
-            self.clear_regions(view)
+            if enabled:
+                self.clear_regions(view)
         else:
-            ScopeThreadManager.modified = True
-            ScopeThreadManager.time = time()
+            sh_thread.modified = True
+            sh_thread.time = time()
 
 
-def sh_run():
-    """
-    Kick off scoper
-    """
+class ShThread(threading.Thread):
+    """ Load up defaults """
 
-    # Ignore selection inside the routine
-    ScopeThreadManager.modified = False
-    ScopeThreadManager.ignore_all = True
-    window = sublime.active_window()
-    view = None if window is None else window.active_view()
-    if view is not None:
-        find_scopes(view)
-    ScopeThreadManager.ignore_all = False
-    ScopeThreadManager.time = time()
+    def __init__(self):
+        """ Setup the thread """
+        self.reset()
+        threading.Thread.__init__(self)
 
+    def reset(self):
+        """ Reset the thread variables """
+        self.wait_time = 0.12
+        self.time = time()
+        self.modified = False
+        self.ignore_all = False
+        self.instant_scoper = False
+        self.abort = False
 
-def sh_loop():
-    """
-    Start thread that will ensure scope hunting happens after a barage of events
-    Initial hunt is instant, but subsequent events in close succession will
-    be ignored and then accounted for with one match by this thread
-    """
+    def payload(self):
+        """ Code to run """
+        # Ignore selection inside the routine
+        self.modified = False
+        self.ignore_all = True
+        window = sublime.active_window()
+        view = None if window is None else window.active_view()
+        if view is not None:
+            find_scopes(view)
+        self.ignore_all = False
+        self.time = time()
 
-    while not ShThreadMgr.restart and not ShThreadMgr.kill:
-        if not ScopeThreadManager.ignore_all:
-            if (
-                ScopeThreadManager.modified is True and
-                time() - ScopeThreadManager.time > ScopeThreadManager.wait_time
-            ):
-                sublime.set_timeout(lambda: sh_run(), 0)
-        sleep(0.5)
+    def is_enabled(self, view):
+        """ Check if we can execute """
+        return not view.settings().get("is_widget") and not self.ignore_all
 
-    if ShThreadMgr.restart:
-        ShThreadMgr.restart = False
-        sublime.set_timeout(lambda: thread.start_new_thread(sh_loop, ()), 0)
+    def kill(self):
+        """ Kill thread """
+        self.abort = True
+        while self.is_alive():
+            pass
+        self.reset()
 
-    if ShThreadMgr.kill:
-        global running_sh_loop
-        del running_sh_loop
-        ShThreadMgr.kill = False
+    def run(self):
+        """ Thread loop """
+        while not self.abort:
+            if not self.ignore_all:
+                if (
+                    self.modified is True and
+                    time() - self.time > self.wait_time
+                ):
+                    sublime.set_timeout(lambda: self.payload(), 0)
+            sleep(0.5)
 
 
 def init_css():
+    """ Load up desired CSS """
     global css
 
     css_file = sh_settings.get('css_file', None)
@@ -673,6 +670,7 @@ def init_css():
 
 
 def init_color_scheme():
+    """ Setup color scheme match object with current scheme """
     global pref_settings
     global scheme_matcher
     pref_settings = sublime.load_settings('Preferences.sublime-settings')
@@ -684,22 +682,35 @@ def init_color_scheme():
         log("Theme parsing failed!  Ingoring theme related info.\n%s" % str(traceback.format_exc()))
     pref_settings.clear_on_change('reload')
     pref_settings.add_on_change('reload', init_color_scheme)
+
+    # Reload the CSS since it can change with scheme luminance
     init_css()
 
 
-def plugin_loaded():
+def init_plugin():
+    """ Setup plugin variables and objects """
+    global sh_thread
     global sh_settings
+
+    # Setup settings
     sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
 
+    # Setup color scheme
     init_color_scheme()
 
-    if 'running_sh_loop' not in globals():
-        global running_sh_loop
-        running_sh_loop = True
-        thread.start_new_thread(sh_loop, ())
-    else:
-        ShThreadMgr.restart = True
+    # Setup thread
+    if sh_thread is not None:
+        # This shouldn't be needed, but just in case
+        sh_thread.kill()
+    sh_thread = ShThread()
+    sh_thread.start()
+
+
+def plugin_loaded():
+    """ Setup plugin """
+    init_plugin()
 
 
 def plugin_unloaded():
-    ShThreadMgr.kill = True
+    """ Kill the thead """
+    sh_thread.kill()
