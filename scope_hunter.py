@@ -130,15 +130,15 @@ class GetSelectionScope(object):
         if pts.size() < self.highlight_max_size:
             self.extents.append(sublime.Region(pts.begin(), pts.end()))
 
-        if self.points or self.rowcol:
-            if self.points:
+        if self.points_info or self.rowcol_info:
+            if self.points_info:
                 self.scope_bfr.append(
                     "%-30s %s" % (
                         "Scope Extents (Pts):",
                         "(%d, %d)" % (pts.begin(), pts.end())
                     )
                 )
-            if self.rowcol:
+            if self.rowcol_info:
                 self.scope_bfr.append(
                     "%-30s %s" % (
                         "Scope Extents (Line/Char):",
@@ -150,13 +150,13 @@ class GetSelectionScope(object):
 
             if self.show_popup:
                 self.scope_bfr_tool.append('<h1 class="header">Scope Extent</h1><p>')
-                if self.points:
+                if self.points_info:
                     self.scope_bfr_tool.append('<span class="key">pts:</span> ')
                     self.scope_bfr_tool.append("(%d, %d)" % (pts.begin(), pts.end()))
                     self.scope_bfr_tool.append('<br><a href="copy-points:%d" class="copy-link">(copy)</a>' % self.next_index())
-                    if self.rowcol:
+                    if self.rowcol_info:
                         self.scope_bfr_tool.append("<br><br>")
-                if self.rowcol:
+                if self.rowcol_info:
                     self.scope_bfr_tool.append('<span class="key">line/char:</span> ')
                     self.scope_bfr_tool.append(
                         '(<strong>Line:</strong> %d '
@@ -339,12 +339,12 @@ class GetSelectionScope(object):
     def get_info(self, pt):
         """ Get scope related info """
 
-        scope = self.get_scope(pt, )
+        scope = self.get_scope(pt)
 
-        if self.rowcol or self.points or self.highlight_extent:
-            self.get_extents(pt, )
+        if self.rowcol_info or self.points_info or self.highlight_extent:
+            self.get_extents(pt)
 
-        if self.scheme_info and scheme_matcher is not None:
+        if (self.appearance_info or self.selector_info) and scheme_matcher is not None:
             try:
                 match = scheme_matcher.guess_color(self.view, pt, scope)
                 color = match.fg
@@ -356,13 +356,18 @@ class GetSelectionScope(object):
                 color_selector = match.fg_selector
                 style_selectors = match.style_selectors
 
-                self.get_appearance(color, color_sim, bgcolor, bgcolor_sim, style)
-                self.get_selectors(color_selector, bg_selector, style_selectors)
-                self.get_scheme_syntax()
+                if self.appearance_info:
+                    self.get_appearance(color, color_sim, bgcolor, bgcolor_sim, style)
+
+                if self.selector_info:
+                    self.get_selectors(color_selector, bg_selector, style_selectors)
             except:
                 log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(traceback.format_exc()))
                 error("Evaluating theme failed!")
                 self.scheme_info = False
+
+        if self.file_path_info and scheme_matcher:
+            self.get_scheme_syntax()
 
         # Divider
         self.next_index()
@@ -459,14 +464,17 @@ class GetSelectionScope(object):
             self.show_popup = False
         self.clipboard = bool(sh_settings.get("clipboard", False))
         self.multiselect = bool(sh_settings.get("multiselect", False))
-        self.rowcol = bool(sh_settings.get("extent_line_char", False))
-        self.points = bool(sh_settings.get("extent_points", False))
         self.console_log = bool(sh_settings.get("console_log", False))
         self.highlight_extent = bool(sh_settings.get("highlight_extent", False))
         self.highlight_scope = sh_settings.get("highlight_scope", 'invalid')
         self.highlight_style = sh_settings.get("highlight_style", 'outline')
         self.highlight_max_size = int(sh_settings.get("highlight_max_size", 100))
-        self.scheme_info = bool(sh_settings.get("show_color_scheme_info", False))
+        self.rowcol_info = bool(sh_settings.get("extent_line_char", False))
+        self.points_info = bool(sh_settings.get("extent_points", False))
+        self.appearance_info = bool(sh_settings.get("styling", False))
+        self.file_path_info = bool(sh_settings.get("file_paths", False))
+        self.selector_info = bool(sh_settings.get("selectors", False))
+        self.scheme_info = self.appearance_info or self.selector_info
         self.first = True
         self.extents = []
 
@@ -500,7 +508,7 @@ class GetSelectionScope(object):
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
 
         if self.show_popup:
-            if self.scheme_info or self.rowcol or self.points:
+            if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
                 copy_all = '<div class="divider"></div><a href="copy-all" class="copy-link">(copy all)</a></div>'
             else:
                 copy_all = ''

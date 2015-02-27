@@ -47,11 +47,16 @@
     // Show scope extent in line/char format
     "extent_line_char": false,
 
-    // Show color scheme info responsible for the colors and style:
-    //     syntax file location,
-    //     color scheme location,
-    //     colors, style, and theme selectors
-    "show_color_scheme_info": false,
+    // Show color and style at the given point
+    "styling": false,
+
+    // Show the selector names and scopes
+    // responsible for the color and styles
+    "selectors": false,
+
+    // Show current syntax and color scheme paths
+    // (click to open if using tooltips)
+    "file_paths": false,
 
     // Highlight scope extent in view
     "highlight_extent": true,
