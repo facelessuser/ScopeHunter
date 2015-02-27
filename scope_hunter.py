@@ -20,6 +20,8 @@ sh_settings = {}
 css = None
 sh_thread = None
 
+TOOLTIP_SUPPORT = int(sublime.version()) >= 3070
+
 
 def log(msg):
     """ Logging """
@@ -451,7 +453,7 @@ class GetSelectionScope(object):
         self.syntax_file = None
         self.show_statusbar = bool(sh_settings.get("show_statusbar", False))
         self.show_panel = bool(sh_settings.get("show_panel", False))
-        if int(sublime.version()) >= 3070:
+        if TOOLTIP_SUPPORT:
             self.show_popup = bool(sh_settings.get("show_popup", False))
         else:
             self.show_popup = False
