@@ -13,6 +13,10 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 1.2em;
 }
 
+p {
+    padding-left: 1em;
+}
+
 .content {
     margin: 1em;
 }
@@ -43,15 +47,8 @@ h1, h2, h3, h4, h5, h6 {
     color: #232628;
 }
 
-.color-box-frame {
-    margin: 0.5em 0;
-    background-color: #CCCCCC;
-}
-
-.color-box {
-    margin: 1px;
-}
-
 .divider {
-    color: #F99157;
+    padding: 1px;
+    margin: 2em 3em;
+    background-color: #393b3d;
 }
