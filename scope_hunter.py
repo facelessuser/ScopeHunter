@@ -20,7 +20,7 @@ scheme_matcher = None
 sh_settings = {}
 css = None
 
-TOOLTIP_SUPPORT = int(sublime.version()) >= 3070
+TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
 
 
 def log(msg):
