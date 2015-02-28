@@ -685,20 +685,16 @@ def init_css():
     """ Load up desired CSS """
     global css
 
-    css_file = sh_settings.get('css_file', None)
-    if css_file is None:
-        if scheme_matcher.is_dark_theme:
-            css_file = 'Packages/' + sh_settings.get(
-                'dark_css_override',
-                'Packages/ScopeHunter/css/dark.css'
-            )
-        else:
-            css_file = 'Packages/' + sh_settings.get(
-                'light_css_override',
-                'Packages/ScopeHunter/css/light.css'
-            )
+    if scheme_matcher.is_dark_theme:
+        css_file = 'Packages/' + sh_settings.get(
+            'dark_css_override',
+            'Packages/ScopeHunter/css/dark.css'
+        )
     else:
-        css_file = 'Packages/' + css_file
+        css_file = 'Packages/' + sh_settings.get(
+            'light_css_override',
+            'Packages/ScopeHunter/css/light.css'
+        )
 
     try:
         css = sublime.load_resource(css_file).replace('\r', '\n')

@@ -24,10 +24,6 @@
     // Included:
     //     ScopeHunter/css/dark.css
     //     ScopeHunter/css/light.css
-    //
-    //     Use `null` if you want ScopeHunter to auto determine when to use dark or light.
-    //     Dark themes can be overriden via dark_css_override and light_css_override
-    "css_file": null,
 
     // Overide the builtin "dark" css with the css of your choice.
     // Use the same rules as defined above in "css_file" in regards to formatting.
