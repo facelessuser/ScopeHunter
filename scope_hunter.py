@@ -9,7 +9,6 @@ import sublime_plugin
 from time import time, sleep
 import threading
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
-from ScopeHunter.lib.rgba import RGBA
 from ScopeHunter.scope_hunter_notify import notify, error
 from ScopeHunter.lib.color_box import color_box
 import re
@@ -83,23 +82,13 @@ def copy_data(bfr, label, index, format=None):
 def get_color_box(color, caption, link, index):
     """ Display an HTML color box using the given color """
 
-    def to_tuple(hex_color):
-        return (
-            int(hex_color[1:3], 16),
-            int(hex_color[3:5], 16),
-            int(hex_color[5:7], 16)
-        )
-
-    rgba = RGBA(color)
-    c = to_tuple(rgba.get_rgb())
-    display_text = rgba.get_rgba().upper()
-    bc = to_tuple('#CCCCCC' if scheme_matcher.is_dark_theme else '#333333')
+    border = '#CCCCCC' if scheme_matcher.is_dark_theme else '#333333'
     return (
         '<p><span class="key">%s: </span> %s&nbsp;%s'
         '<br><a href="%s:%d" class="copy-link">(copy)</a></p>'% (
             caption,
-            color_box(c, bc, 16),
-            display_text,
+            color_box(color, border, 16),
+            color.upper(),
             link,
             index
         )
