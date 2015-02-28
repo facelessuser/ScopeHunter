@@ -82,17 +82,23 @@ def copy_data(bfr, label, index, format=None):
 
 def get_color_box(color, caption, link, index):
     """ Display an HTML color box using the given color """
+
+    def to_tuple(hex_color):
+        return (
+            int(hex_color[1:3], 16),
+            int(hex_color[3:5], 16),
+            int(hex_color[5:7], 16)
+        )
+
     rgba = RGBA(color)
-    c = rgba.get_rgb()[1:]
-    rgb = (int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16))
+    c = to_tuple(rgba.get_rgb())
     display_text = rgba.get_rgba().upper()
-    bc = 'CCCCCC' if scheme_matcher.is_dark_theme else '232628'
-    border = (int(bc[0:2], 16), int(bc[2:4], 16), int(bc[4:6], 16))
+    bc = to_tuple('#CCCCCC' if scheme_matcher.is_dark_theme else '#333333')
     return (
         '<p><span class="key">%s: </span> %s&nbsp;%s'
         '<br><a href="%s:%d" class="copy-link">(copy)</a></p>'% (
             caption,
-            color_box(rgb, border, 16),
+            color_box(c, bc, 16),
             display_text,
             link,
             index
