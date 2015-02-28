@@ -46,6 +46,11 @@
     // Show color and style at the given point
     "styling": false,
 
+    // When showing a color with alpha transparency,
+    // Simulate what the color would look like in sublime
+    // by mixing the relevant background color,
+    "show_simulated_alpha_colors": false,
+
     // Show the selector names and scopes
     // responsible for the color and styles
     "selectors": false,

@@ -227,13 +227,13 @@ class GetSelectionScope(object):
     def get_appearance(self, color, color_sim, bgcolor, bgcolor_sim, style):
         """ Get colors of foreground, background, and simulated transparency colors """
         self.scope_bfr.append("%-30s %s" % ("Fg:", color))
-        if len(color) == 8 and not color.lower().endswith('ff'):
+        if self.show_simulated and len(color) == 8 and not color.lower().endswith('ff'):
             self.scope_bfr.append(
                 "%-30s %s" % ("Fg (Simulated Alpha):", color_sim)
             )
 
         self.scope_bfr.append("%-30s %s" % ("Bg:", bgcolor))
-        if len(bgcolor) == 8 and not bgcolor.lower().endswith('ff'):
+        if self.show_simulated and len(bgcolor) == 8 and not bgcolor.lower().endswith('ff'):
             self.scope_bfr.append(
                 "%-30s %s" % ("Bg (Simulated Alpha):", bgcolor_sim)
             )
@@ -243,12 +243,12 @@ class GetSelectionScope(object):
         if self.show_popup:
             self.scope_bfr_tool.append('<h1 class="header">%s</h1>' % "Appearance")
             self.scope_bfr_tool.append(get_color_box(color, 'fg', 'copy-fg', self.next_index()))
-            if len(color) == 9 and not color.lower().endswith('ff'):
+            if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
                 self.scope_bfr_tool.append(
                     get_color_box(color_sim, 'fg (simulated alpha)', 'copy-fg-sim', self.next_index())
                 )
             self.scope_bfr_tool.append(get_color_box(bgcolor, 'bg', 'copy-bg', self.next_index()))
-            if len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
+            if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
                 self.scope_bfr_tool.append(
                     get_color_box(bgcolor_sim, 'bg (simulated alpha)', 'copy-bg-sim', self.next_index())
                 )
@@ -499,6 +499,7 @@ class GetSelectionScope(object):
         self.rowcol_info = bool(sh_settings.get("extent_line_char", False))
         self.points_info = bool(sh_settings.get("extent_points", False))
         self.appearance_info = bool(sh_settings.get("styling", False))
+        self.show_simulated = bool(sh_settings.get("show_simulated_alpha_colors", False))
         self.file_path_info = bool(sh_settings.get("file_paths", False))
         self.selector_info = bool(sh_settings.get("selectors", False))
         self.scheme_info = self.appearance_info or self.selector_info
