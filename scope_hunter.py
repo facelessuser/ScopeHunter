@@ -11,6 +11,7 @@ import threading
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.lib.rgba import RGBA
 from ScopeHunter.scope_hunter_notify import notify, error
+from ScopeHunter.lib.color_box import color_box
 import re
 import traceback
 
@@ -79,17 +80,22 @@ def copy_data(bfr, label, index, format=None):
         notify("Copied: %s" % label)
 
 
-def color_box(color, caption, link, index):
+def get_color_box(color, caption, link, index):
     """ Display an HTML color box using the given color """
     rgba = RGBA(color)
-    display_color = rgba.get_rgb()
+    c = rgba.get_rgb()[1:]
+    rgb = (int(c[0:2], 16), int(c[2:4], 16), int(c[4:6], 16))
     display_text = rgba.get_rgba().upper()
-    font_class = 'color-box-light' if rgba.luminance() <= 127 else 'color-box-dark'
+    bc = 'CCCCCC' if scheme_matcher.is_dark_theme else '232628'
+    border = (int(bc[0:2], 16), int(bc[2:4], 16), int(bc[4:6], 16))
     return (
-        '<p><span class="key">%s: </span>'
-        '<span class="color-box %s" style="background-color: %s;">&nbsp;%s&nbsp;'
-        '</span><br><a href="%s:%d" class="copy-link">(copy)</a></p>' % (
-            caption, font_class, display_color, display_text, link, index
+        '<p><span class="key">%s: </span> %s&nbsp;%s'
+        '<br><a href="%s:%d" class="copy-link">(copy)</a></p>'% (
+            caption,
+            color_box(rgb, border, 16),
+            display_text,
+            link,
+            index
         )
     )
 
@@ -241,15 +247,15 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             self.scope_bfr_tool.append('<h1 class="header">%s</h1>' % "Appearance")
-            self.scope_bfr_tool.append(color_box(color, 'fg', 'copy-fg', self.next_index()))
+            self.scope_bfr_tool.append(get_color_box(color, 'fg', 'copy-fg', self.next_index()))
             if len(color) == 9 and not color.lower().endswith('ff'):
                 self.scope_bfr_tool.append(
-                    color_box(color_sim, 'fg (simulated alpha)', 'copy-fg-sim', self.next_index())
+                    get_color_box(color_sim, 'fg (simulated alpha)', 'copy-fg-sim', self.next_index())
                 )
-            self.scope_bfr_tool.append(color_box(bgcolor, 'bg', 'copy-bg', self.next_index()))
+            self.scope_bfr_tool.append(get_color_box(bgcolor, 'bg', 'copy-bg', self.next_index()))
             if len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
                 self.scope_bfr_tool.append(
-                    color_box(bgcolor_sim, 'bg (simulated alpha)', 'copy-bg-sim', self.next_index())
+                    get_color_box(bgcolor_sim, 'bg (simulated alpha)', 'copy-bg-sim', self.next_index())
                 )
 
             if style == "bold":
