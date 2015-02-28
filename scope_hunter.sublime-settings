@@ -68,7 +68,7 @@
     // Scope to use for the color
     "highlight_scope": "invalid",
 
-    // Highlight style (underline|solid|outline)
+    // Highlight style (underline|solid|outline|thin_underline|squiggly|stippled)
     "highlight_style": "outline",
 
     ///////////////////////////

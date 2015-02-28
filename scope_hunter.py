@@ -18,7 +18,6 @@ pref_settings = {}
 scheme_matcher = None
 sh_settings = {}
 css = None
-sh_thread = None
 
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3070
 
@@ -26,6 +25,33 @@ TOOLTIP_SUPPORT = int(sublime.version()) >= 3070
 def log(msg):
     """ Logging """
     print("ScopeHunter: %s" % msg)
+
+
+def extent_style(option):
+    """
+    Configure style of region based on option
+    """
+
+    style = sublime.HIDE_ON_MINIMAP
+    if option == "outline":
+        style |= sublime.DRAW_NO_FILL
+    elif option == "none":
+        style |= sublime.HIDDEN
+    elif option == "underline":
+        style |= sublime.DRAW_EMPTY_AS_OVERWRITE
+    elif option == "thin_underline":
+        style |= sublime.DRAW_NO_FILL
+        style |= sublime.DRAW_NO_OUTLINE
+        style |= sublime.DRAW_SOLID_UNDERLINE
+    elif option == "squiggly":
+        style |= sublime.DRAW_NO_FILL
+        style |= sublime.DRAW_NO_OUTLINE
+        style |= sublime.DRAW_SQUIGGLY_UNDERLINE
+    elif option == "stippled":
+        style |= sublime.DRAW_NO_FILL
+        style |= sublime.DRAW_NO_OUTLINE
+        style |= sublime.DRAW_STIPPLED_UNDERLINE
+    return style
 
 
 def underline(regions):
@@ -523,24 +549,18 @@ class GetSelectionScope(object):
             print('\n'.join(["Scope Hunter"] + self.scope_bfr))
 
         if self.highlight_extent:
-            highlight_style = 0
-            if self.highlight_style == 'underline':
-                # Use underline if explicity requested,
-                # or if doing a find only when under a selection only
-                # (only underline can be seen through a selection)
+            style = extent_style(self.highlight_style)
+            if style == 'underline':
                 self.extents = underline(self.extents)
-                highlight_style = sublime.DRAW_EMPTY_AS_OVERWRITE
-            elif self.highlight_style == 'outline':
-                highlight_style = sublime.DRAW_OUTLINED
             self.view.add_regions(
                 'scope_hunter',
                 self.extents,
                 self.highlight_scope,
                 '',
-                highlight_style
+                style
             )
 
-find_scopes = GetSelectionScope().run
+get_selection_scopes = GetSelectionScope()
 
 
 class GetSelectionScopeCommand(sublime_plugin.TextCommand):
@@ -622,7 +642,7 @@ class ShThread(threading.Thread):
         window = sublime.active_window()
         view = None if window is None else window.active_view()
         if view is not None:
-            find_scopes(view)
+            get_selection_scopes.run(view)
         self.ignore_all = False
         self.time = time()
 
@@ -706,7 +726,7 @@ def init_plugin():
     init_color_scheme()
 
     # Setup thread
-    if sh_thread is not None:
+    if 'sh_thread' in globals() and sh_thread is not None:
         # This shouldn't be needed, but just in case
         sh_thread.kill()
     sh_thread = ShThread()
