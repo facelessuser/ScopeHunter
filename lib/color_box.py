@@ -75,4 +75,4 @@ def color_box(color, border, size=16, border_size=1, check_size=4):
     f.seek(0)
     return "<img src=\"data:image/png;base64,%s\">" % (
         base64.b64encode(f.read()).decode('ascii')
-)
+    )

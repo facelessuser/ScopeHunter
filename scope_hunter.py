@@ -537,13 +537,13 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
-                copy_all = '<div class="divider"></div><a href="copy-all" class="copy-link">(copy all)</a></div>'
+                tail = '<div class="divider"></div><a href="copy-all" class="copy-link">(copy all)</a></div>'
             else:
-                copy_all = ''
+                tail = '</div>'
             self.view.show_popup(
                 '<div class="content">' +
                 ''.join(self.scope_bfr_tool) +
-                copy_all,
+                tail,
                 location=-1, max_width=600, on_navigate=self.on_navigate
             )
 
