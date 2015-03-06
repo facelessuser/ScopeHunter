@@ -11,8 +11,10 @@ import threading
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.scope_hunter_notify import notify, error
 from ScopeHunter.lib.color_box import color_box
-import re
 import traceback
+
+if 'sh_thread' not in globals():
+    sh_thread = None
 
 pref_settings = {}
 scheme_matcher = None
@@ -69,7 +71,6 @@ def underline(regions):
 
 def copy_data(bfr, label, index, format=None):
     """ Copy data to clipboard from buffer """
-    count = 0
     line = bfr[index]
     if line.startswith(label + ':'):
         text = line.replace(label + ':', '', 1).strip()
@@ -85,7 +86,7 @@ def get_color_box(color, caption, link, index):
     border = '#CCCCCC' if scheme_matcher.is_dark_theme else '#333333'
     return (
         '<p><span class="key">%s: </span> %s&nbsp;%s'
-        '<br><a href="%s:%d" class="copy-link">(copy)</a></p>'% (
+        '<br><a href="%s:%d" class="copy-link">(copy)</a></p>' % (
             caption,
             color_box(color, border, 16),
             color.upper(),
@@ -724,7 +725,7 @@ def init_plugin():
     init_color_scheme()
 
     # Setup thread
-    if 'sh_thread' in globals() and sh_thread is not None:
+    if sh_thread is not None:
         # This shouldn't be needed, but just in case
         sh_thread.kill()
     sh_thread = ShThread()
