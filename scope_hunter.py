@@ -736,11 +736,11 @@ def init_plugin():
     init_color_scheme()
     sh_theme = ShTheme()
 
-    pref_settings.clear_on_change('sh_reload_preference')
-    pref_settings.add_on_change('sh_reload_preference', reinit_plugin)
+    pref_settings.clear_on_change('scopehunter_reload')
+    pref_settings.add_on_change('scopehunter_reload', reinit_plugin)
 
-    sh_settings.clear_on_change('sh_reload_settings')
-    sh_settings.add_on_change('sh_reload_settings', sh_theme.setup)
+    sh_settings.clear_on_change('scopehunter_reload')
+    sh_settings.add_on_change('scopehunter_reload', sh_theme.setup)
 
     # Setup thread
     if sh_thread is not None:
