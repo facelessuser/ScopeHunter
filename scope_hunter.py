@@ -16,10 +16,9 @@ import traceback
 if 'sh_thread' not in globals():
     sh_thread = None
 
-pref_settings = {}
 scheme_matcher = None
 sh_settings = {}
-css = None
+sh_theme = None
 
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
 
@@ -479,7 +478,7 @@ class GetSelectionScope(object):
         self.window = self.view.window()
         view = self.window.get_output_panel('scope_viewer')
         self.scope_bfr = []
-        self.scope_bfr_tool = ['<style>%s</style>' % (css if css is not None else '')]
+        self.scope_bfr_tool = ['<style>%s</style>' % (sh_theme.css if sh_theme.css is not None else '')]
         self.clips = []
         self.status = ""
         self.scheme_file = None
@@ -672,32 +671,39 @@ class ShThread(threading.Thread):
             sleep(0.5)
 
 
-def init_css():
-    """ Load up desired CSS """
-    global css
+class ShTheme(object):
+    def __init__(self):
+        self.setup()
 
-    if scheme_matcher.is_dark_theme:
-        css_file = 'Packages/' + sh_settings.get(
-            'dark_css_override',
-            'Packages/ScopeHunter/css/dark.css'
-        )
-    else:
-        css_file = 'Packages/' + sh_settings.get(
-            'light_css_override',
-            'Packages/ScopeHunter/css/light.css'
-        )
+    def has_changed(self):
+        # Reload events recently are always reloading,
+        # So maybe we will use this to check if reload is needed.
+        pref_settings = sublime.load_settings('Preferences.sublime-settings')
+        return self.scheme_file != pref_settings.get('color_scheme')
 
-    try:
-        css = sublime.load_resource(css_file).replace('\r', '\n')
-    except:
-        css = None
-    sh_settings.clear_on_change('reload')
-    sh_settings.add_on_change('reload', init_css)
+    def get_theme_res(self, *args, link=False):
+        res = '/'.join(('Packages', self.tt_theme) + args)
+        return 'res://' + res if link else res
+
+    def setup(self):
+        pref_settings = sublime.load_settings('Preferences.sublime-settings')
+        self.scheme_file = pref_settings.get('color_scheme')
+        self.tt_theme = sh_settings.get('tooltip_theme', 'ScopeHunter/tt_theme')
+
+        if scheme_matcher.is_dark_theme:
+            self.border_color = '#CCCCCC'
+            self.css_file = self.get_theme_res('css', 'dark.css')
+        else:
+            self.border_color = '#333333'
+            self.css_file = self.get_theme_res('css', 'light.css')
+        try:
+            self.css = sublime.load_resource(self.css_file).replace('\r', '')
+        except:
+            self.css = None
 
 
 def init_color_scheme():
     """ Setup color scheme match object with current scheme """
-    global pref_settings
     global scheme_matcher
     pref_settings = sublime.load_settings('Preferences.sublime-settings')
     scheme_file = pref_settings.get('color_scheme')
@@ -706,23 +712,35 @@ def init_color_scheme():
     except:
         scheme_matcher = None
         log("Theme parsing failed!  Ingoring theme related info.\n%s" % str(traceback.format_exc()))
-    pref_settings.clear_on_change('reload')
-    pref_settings.add_on_change('reload', init_color_scheme)
 
-    # Reload the CSS since it can change with scheme luminance
-    init_css()
+
+def reinit_plugin():
+    """ Relaod scheme object and tooltip theme """
+    init_color_scheme()
+    sh_theme.setup()
 
 
 def init_plugin():
     """ Setup plugin variables and objects """
     global sh_thread
     global sh_settings
+    global sh_theme
+
+    # Preferences Settings
+    pref_settings = sublime.load_settings('Preferences.sublime-settings')
 
     # Setup settings
     sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
 
     # Setup color scheme
     init_color_scheme()
+    sh_theme = ShTheme()
+
+    pref_settings.clear_on_change('sh_reload_preference')
+    pref_settings.add_on_change('sh_reload_preference', reinit_plugin)
+
+    sh_settings.clear_on_change('sh_reload_settings')
+    sh_settings.add_on_change('sh_reload_settings', sh_theme.setup)
 
     # Setup thread
     if sh_thread is not None:

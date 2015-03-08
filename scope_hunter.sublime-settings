@@ -19,19 +19,8 @@
     // Tooltip Configurations
     ///////////////////////////
 
-    // Tooltip CSS file:
-    // PackageFolder/Sub/Directores/file.css (use forward slashes)
-    // Included:
-    //     ScopeHunter/css/dark.css
-    //     ScopeHunter/css/light.css
-
-    // Overide the builtin "dark" css with the css of your choice.
-    // Use the same rules as defined above in "css_file" in regards to formatting.
-    "dark_css_override": "ScopeHunter/css/dark.css",
-
-    // Overide the builtin "light" css with the css of your choice.
-    // Use the same rules as defined above in "css_file" in regards to formatting.
-    "light_css_override": "ScopeHunter/css/light.css",
+    // Override theme.  Use forward slashes.
+    "tooltip_theme": "ScopeHunter/tt_theme",
 
     ///////////////////////////
     // Additional Scope Info
