@@ -143,12 +143,19 @@ class GetSelectionScope(object):
         #         pts = sublime.Region(pts1.end(), pts2.end())
         #     elif (pts1.begin() == pts2.begin()) or (pts1.end() == pts2.end()):
         #         pts = pts1.cover(pts2)
-
+        pts = None
+        file_end = self.view.size()
         scope_name = self.view.scope_name(pt)
         for r in self.view.find_by_selector(scope_name):
             if r.contains(pt):
                 pts = r
                 break
+            elif pt == file_end and r.end() == pt:
+                pts = r
+                break
+
+        if pts is None:
+            pts = sublime.Region(pt)
 
         row1, col1 = self.view.rowcol(pts.begin())
         row2, col2 = self.view.rowcol(pts.end())
