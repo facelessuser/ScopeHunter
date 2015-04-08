@@ -234,13 +234,13 @@ class GetSelectionScope(object):
     def get_appearance(self, color, color_sim, bgcolor, bgcolor_sim, style):
         """ Get colors of foreground, background, and simulated transparency colors """
         self.scope_bfr.append("%-30s %s" % ("Fg:", color))
-        if self.show_simulated and len(color) == 8 and not color.lower().endswith('ff'):
+        if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
             self.scope_bfr.append(
                 "%-30s %s" % ("Fg (Simulated Alpha):", color_sim)
             )
 
         self.scope_bfr.append("%-30s %s" % ("Bg:", bgcolor))
-        if self.show_simulated and len(bgcolor) == 8 and not bgcolor.lower().endswith('ff'):
+        if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
             self.scope_bfr.append(
                 "%-30s %s" % ("Bg (Simulated Alpha):", bgcolor_sim)
             )
