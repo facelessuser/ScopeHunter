@@ -11,7 +11,10 @@ import threading
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.scope_hunter_notify import notify, error
 from ScopeHunter.lib.color_box import color_box
+from ScopeHunter.lib.file_strip.json import sanitize_json
+import json
 import traceback
+import os
 
 if 'sh_thread' not in globals():
     sh_thread = None
@@ -682,6 +685,29 @@ class ShTheme(object):
     def __init__(self):
         self.setup()
 
+    def read_theme(self, theme, default_theme):
+        theme_content = None
+        self.border_color = '#000'
+
+        for t in (theme, default_theme):
+            try:
+                theme_content = json.loads(
+                    sanitize_json(sublime.load_resource(t))
+                )
+                break
+            except:
+                pass
+
+        if theme_content is not None:
+            self.border_color = theme_content.get('border_color', None)
+            self.css_file = '/'.join(
+                [os.path.dirname(theme), theme_content.get('css', '')]
+            )
+            try:
+                self.css = sublime.load_resource(self.css_file).replace('\r', '')
+            except:
+                self.css = None
+
     def has_changed(self):
         # Reload events recently are always reloading,
         # So maybe we will use this to check if reload is needed.
@@ -695,18 +721,13 @@ class ShTheme(object):
     def setup(self):
         pref_settings = sublime.load_settings('Preferences.sublime-settings')
         self.scheme_file = pref_settings.get('color_scheme')
-        self.tt_theme = sh_settings.get('tooltip_theme', 'ScopeHunter/tt_theme')
+        self.tt_theme = sh_settings.get('tooltip_theme', 'ScopeHunter/tt_theme').rstrip('/')
+        theme_file = 'dark' if scheme_matcher.is_dark_theme else 'light'
 
-        if scheme_matcher.is_dark_theme:
-            self.border_color = '#CCCCCC'
-            self.css_file = self.get_theme_res('css', 'dark.css')
-        else:
-            self.border_color = '#333333'
-            self.css_file = self.get_theme_res('css', 'light.css')
-        try:
-            self.css = sublime.load_resource(self.css_file).replace('\r', '')
-        except:
-            self.css = None
+        self.read_theme(
+            'Packages/%s/%s.tt_theme' % (self.tt_theme, theme_file),
+            'Packages/ScopeHunter/tt_theme/%s.tt_theme' % theme_file
+        )
 
 
 def init_color_scheme():

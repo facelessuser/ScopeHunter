@@ -1,0 +1,7 @@
+{
+    // CSS file to use
+    "css": "css/dark.css",
+
+    // Border color for color previews
+    "border_color": "#cccccc"
+}
