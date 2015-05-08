@@ -1,41 +1,88 @@
 {
+    ///////////////////////////
+    // View Options
+    ///////////////////////////
+
+    // Show popup tooltip with info about scope
+    "show_popup": false,
+
     // Show scope in status bar
     "show_statusbar": false,
 
     // Show scope in auto-popup panel
     "show_panel": true,
 
-    // Copy scopes to clipboard
+    // Show scopes in console
+    "console_log": false,
+
+    ///////////////////////////
+    // Tooltip Configurations
+    ///////////////////////////
+
+    // Override theme.  Use forward slashes.
+    "tooltip_theme": "ScopeHunter/tt_theme",
+
+    ///////////////////////////
+    // Additional Scope Info
+    ///////////////////////////
+
+    // Show scope extent in point format
+    "extent_points": false,
+
+    // Show scope extent in line/char format
+    "extent_line_char": false,
+
+    // Show color and style at the given point
+    "styling": false,
+
+    // When showing a color with alpha transparency,
+    // Simulate what the color would look like in sublime
+    // by mixing the relevant background color,
+    "show_simulated_alpha_colors": false,
+
+    // Show the selector names and scopes
+    // responsible for the color and styles
+    "selectors": false,
+
+    // Show current syntax and color scheme paths
+    // (click to open if using tooltips)
+    "file_paths": false,
+
+    // Highlight scope extent in view
+    "highlight_extent": true,
+
+    ///////////////////////////
+    // Highlight Configuration
+    ///////////////////////////
+
+    // Scope to use for the color
+    "highlight_scope": "invalid",
+
+    // Highlight style (underline|solid|outline|thin_underline|squiggly|stippled)
+    "highlight_style": "outline",
+
+    ///////////////////////////
+    // Additional Options
+    ///////////////////////////
+
+    // Automatically copy scopes to clipboard
     "clipboard": false,
 
     // Allow multi-select scope hunting
     "multiselect": true,
 
-    // Show scope extent in line/char format
-    "extent_line_char": false,
+    // Max region size to highlight
+    "highlight_max_size": 100,
 
-    "console_log": false,
-
-    // Show scope extent in point format
-    "extent_points": false,
-
-    // Highlight scope extent?
-    "highlight_extent": true,
-
-    // Scope to use for the color
-    "highlight_scope": "invalid",
-
-    // Highlight style (underline|solid|outline)
-    "highlight_style": "underline",
-
-    // Show color scheme info: colors, style, and theme selectors
-    // responsible for the colors and style
-    "show_color_scheme_info": false,
-
+<<<<<<< HEAD
     // Max region to size to highlight
     "highlight_max_size": 100,
 
     // Split scope onto multiple lines in
     // panel and console (easier to read)
     "multiline_scope": false
+=======
+    // Use SubNotify plugin messages if installed
+    "use_sub_notify": true
+>>>>>>> master
 }

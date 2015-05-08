@@ -1,0 +1,27 @@
+site_name: ScopeHunter Documentation
+repo_url: https://github.com/facelessuser/ScopeHunter
+site_description: Syntax Scope Viewer in Sublime Text.
+copyright: Copyright &copy; 2012 - 2015 <a href="https://github.com/facelessuser">Isaac Muse</a>
+pages:
+- ['index.md', 'Home']
+- ['usage.md', 'User Guide']
+- ['license.md', 'License']
+theme: readthedocs
+theme_dir: doc_theme
+markdown_extensions:
+- markdown.extensions.extra
+- markdown.extensions.admonition
+- markdown.extensions.smarty
+- markdown.extensions.nl2br
+- markdown.extensions.codehilite
+- pymdownx.inlinehilite
+- pymdownx.magiclink
+- pymdownx.betterem
+- pymdownx.tilde
+- pymdownx.caret
+- pymdownx.smartsymbols
+- pymdownx.githubemoji
+- pymdownx.tasklist
+- pymdownx.superfences
+- pymdownx.progressbar
+- pymdownx.headeranchor
