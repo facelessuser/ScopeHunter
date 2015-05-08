@@ -1,7 +1,0 @@
-{
-    // CSS file to use
-    "css": "css/light.css",
-
-    // Border color for color previews
-    "border_color": "#333333"
-}
