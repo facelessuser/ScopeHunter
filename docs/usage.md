@@ -1,6 +1,5 @@
 # User Guide {: .doctitle}
 Configuration and usage of ScopeHunter.
-{: .doctitle-info}
 
 ---
 

@@ -1,6 +1,5 @@
 # ScopeHunter {: .doctitle}
 Syntax Scope Viewer in Sublime Text.
-{: .doctitle-info}
 
 ---
 # ScopeHunter
