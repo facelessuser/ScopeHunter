@@ -1,3 +1,9 @@
+"""
+Sublime tooltip color box.
+
+Licensed under MIT
+Copyright (c) 2015 Isaac Muse <isaacmuse@gmail.com>
+"""
 from .png import Writer
 from .rgba import RGBA
 import base64
@@ -12,6 +18,8 @@ DARK = 1
 
 def to_list(rgb):
     """
+    Break rgb channel itno a list.
+
     Take a color of the format #RRGGBBAA (alpha optional and will be stripped)
     and convert to a list with format [r, g, b].
     """
@@ -23,7 +31,7 @@ def to_list(rgb):
 
 
 def checkered_color(color, background):
-    """ Mix color with the checkered color """
+    """Mix color with the checkered color."""
     checkered = RGBA(color)
     checkered.apply_alpha(background)
     return checkered.get_rgb()
@@ -31,7 +39,9 @@ def checkered_color(color, background):
 
 def color_box(color, border, size=16, border_size=1, check_size=4):
     """
-    Create an RGBA color box with the specified RGBA color
+    Create an RGBA color box.
+
+    Create a color box with the specified RGBA color
     and RGB(A) border (alpha will be stripped out of border color).
 
     Define size of swatch, border width,  and size of checkered board squares.

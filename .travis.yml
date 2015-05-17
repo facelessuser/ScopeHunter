@@ -1,0 +1,10 @@
+language: python
+python:
+  - "3.3"
+install:
+  - pip install flake8
+  - pip install flake8_docstrings
+  - pip install nose
+script:
+  - nosetests .
+  - flake8 .

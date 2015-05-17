@@ -1,9 +1,9 @@
 """
-Scope Hunter
-Licensed under MIT
-Copyright (c) 2012 Isaac Muse <isaacmuse@gmail.com>
-"""
+Scope Hunter.
 
+Licensed under MIT
+Copyright (c) 2012 - 2015 Isaac Muse <isaacmuse@gmail.com>
+"""
 import sublime
 import sublime_plugin
 from time import time, sleep
@@ -27,14 +27,12 @@ TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
 
 
 def log(msg):
-    """ Logging """
+    """Logging."""
     print("ScopeHunter: %s" % msg)
 
 
 def extent_style(option):
-    """
-    Configure style of region based on option
-    """
+    """Configure style of region based on option."""
 
     style = sublime.HIDE_ON_MINIMAP
     if option == "outline":
@@ -59,7 +57,7 @@ def extent_style(option):
 
 
 def underline(regions):
-    """ Convert to empty regions """
+    """Convert to empty regions."""
 
     new_regions = []
     for region in regions:
@@ -72,7 +70,8 @@ def underline(regions):
 
 
 def copy_data(bfr, label, index, format=None):
-    """ Copy data to clipboard from buffer """
+    """Copy data to clipboard from buffer."""
+
     line = bfr[index]
     if line.startswith(label + ':'):
         text = line.replace(label + ':', '', 1).strip()
@@ -83,7 +82,7 @@ def copy_data(bfr, label, index, format=None):
 
 
 def get_color_box(color, caption, link, index):
-    """ Display an HTML color box using the given color """
+    """Display an HTML color box using the given color."""
 
     border = '#CCCCCC' if scheme_matcher.is_dark_theme else '#333333'
     return (
@@ -99,29 +98,38 @@ def get_color_box(color, caption, link, index):
 
 
 class ScopeHunterEditCommand(sublime_plugin.TextCommand):
+
+    """Edit a view."""
+
     bfr = None
     pt = None
 
     def run(self, edit):
-        """ Insert text into buffer """
+        """Insert text into buffer."""
+
         cls = ScopeHunterEditCommand
         self.view.insert(edit, cls.pt, cls.bfr)
 
     @classmethod
     def clear(cls):
-        """ Clear edit buffer """
+        """Clear edit buffer."""
+
         cls.bfr = None
         cls.pt = None
 
 
 class GetSelectionScope(object):
+
+    """Get the scope and the selection(s)."""
+
     def next_index(self):
-        """ Get next index into scope buffer """
+        """Get next index into scope buffer."""
+
         self.index += 1
         return self.index
 
     def get_extents(self, pt):
-        """ Get the scope extent via the sublime API """
+        """Get the scope extent via the sublime API."""
 
         # pts = self.view.extract_scope(pt)
         # pts1 = self.view.extract_scope(pts.begin())
@@ -190,7 +198,9 @@ class GetSelectionScope(object):
                 if self.points_info:
                     self.scope_bfr_tool.append('<span class="key">pts:</span> ')
                     self.scope_bfr_tool.append("(%d, %d)" % (pts.begin(), pts.end()))
-                    self.scope_bfr_tool.append('<br><a href="copy-points:%d" class="copy-link">(copy)</a>' % self.next_index())
+                    self.scope_bfr_tool.append(
+                        '<br><a href="copy-points:%d" class="copy-link">(copy)</a>' % self.next_index()
+                    )
                     if self.rowcol_info:
                         self.scope_bfr_tool.append("<br><br>")
                 if self.rowcol_info:
@@ -208,7 +218,8 @@ class GetSelectionScope(object):
                 self.scope_bfr_tool.append("</p>")
 
     def get_scope(self, pt):
-        """ Get the scope at the cursor """
+        """Get the scope at the cursor."""
+
         scope = self.view.scope_name(pt)
         spacing = "\n" + (" " * 31)
 
@@ -229,13 +240,16 @@ class GetSelectionScope(object):
         if self.show_popup:
             self.scope_bfr_tool.append(
                 '<h1 class="header">Scope</h1><p>%s'
-                '<br><a href="copy-scope:%d" class="copy-link">(copy)</a></p>' % (self.view.scope_name(pt).strip(), self.next_index())
+                '<br><a href="copy-scope:%d" class="copy-link">(copy)</a></p>' % (
+                    self.view.scope_name(pt).strip(), self.next_index()
+                )
             )
 
         return scope
 
     def get_appearance(self, color, color_sim, bgcolor, bgcolor_sim, style):
-        """ Get colors of foreground, background, and simulated transparency colors """
+        """Get colors of foreground, background, and simulated transparency colors."""
+
         self.scope_bfr.append("%-30s %s" % ("Fg:", color))
         if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
             self.scope_bfr.append(
@@ -279,7 +293,7 @@ class GetSelectionScope(object):
             )
 
     def get_scheme_syntax(self):
-        """ Get color scheme and syntax file path """
+        """Get color scheme and syntax file path."""
 
         self.scheme_file = scheme_matcher.color_scheme.replace('\\', '/')
         self.syntax_file = self.view.settings().get('syntax')
@@ -304,7 +318,8 @@ class GetSelectionScope(object):
             )
 
     def get_selectors(self, color_selector, bg_selector, style_selectors):
-        """ Get the selectors used to determine color and/or style """
+        """Get the selectors used to determine color and/or style."""
+
         self.scope_bfr.append(
             "%-30s %s" % ("Fg Name:", color_selector.name)
         )
@@ -339,42 +354,58 @@ class GetSelectionScope(object):
             )
             self.scope_bfr_tool.append(
                 '<span class="key">fg name:</span> %s'
-                '<br><a href="copy-fg-sel-name:%d" class="copy-link">(copy)</a>' % (color_selector.name, self.next_index())
+                '<br><a href="copy-fg-sel-name:%d" class="copy-link">(copy)</a>' % (
+                    color_selector.name, self.next_index()
+                )
             )
             self.scope_bfr_tool.append(
                 '<br><br><span class="key">fg scope:</span> %s'
-                '<br><a href="copy-fg-sel-scope:%d" class="copy-link">(copy)</a>' % (color_selector.scope, self.next_index())
+                '<br><a href="copy-fg-sel-scope:%d" class="copy-link">(copy)</a>' % (
+                    color_selector.scope, self.next_index()
+                )
             )
             self.scope_bfr_tool.append(
                 '<br><br><span class="key">bg name:</span> %s'
-                '<br><a href="copy-bg-sel-name:%d" class="copy-link">(copy)</a>' % (bg_selector.name, self.next_index())
+                '<br><a href="copy-bg-sel-name:%d" class="copy-link">(copy)</a>' % (
+                    bg_selector.name, self.next_index()
+                )
             )
             self.scope_bfr_tool.append(
                 '<br><br><span class="key">bg scope:</span> %s'
-                '<br><a href="copy-bg-sel-scope:%d" class="copy-link">(copy)</a>' % (bg_selector.scope, self.next_index())
+                '<br><a href="copy-bg-sel-scope:%d" class="copy-link">(copy)</a>' % (
+                    bg_selector.scope, self.next_index()
+                )
             )
             if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">bold name:</span> %s'
-                    '<br><a href="copy-bold-sel-name:%d" class="copy-link">(copy)</a>' % (style_selectors["bold"].name, self.next_index())
+                    '<br><a href="copy-bold-sel-name:%d" class="copy-link">(copy)</a>' % (
+                        style_selectors["bold"].name, self.next_index()
+                    )
                 )
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">bold scope:</span> %s'
-                    '<br><a href="copy-bold-sel-scope:%d" class="copy-link">(copy)</a>' % (style_selectors["bold"].scope, self.next_index())
+                    '<br><a href="copy-bold-sel-scope:%d" class="copy-link">(copy)</a>' % (
+                        style_selectors["bold"].scope, self.next_index()
+                    )
                 )
             if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">italic name:</span> %s'
-                    '<br><a href="copy-italic-sel-name:%d" class="copy-link">(copy)</a>' % (style_selectors["italic"].name, self.next_index())
+                    '<br><a href="copy-italic-sel-name:%d" class="copy-link">(copy)</a>' % (
+                        style_selectors["italic"].name, self.next_index()
+                    )
                 )
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">italic scope:</span> %s'
-                    '<br><a href="copy-italic-sel-scope:%d" class="copy-link">(copy)</a>' % (style_selectors["italic"].scope, self.next_index())
+                    '<br><a href="copy-italic-sel-scope:%d" class="copy-link">(copy)</a>' % (
+                        style_selectors["italic"].scope, self.next_index()
+                    )
                 )
             self.scope_bfr_tool.append('</p>')
 
     def get_info(self, pt):
-        """ Get scope related info """
+        """Get scope related info."""
 
         scope = self.get_scope(pt)
 
@@ -411,7 +442,8 @@ class GetSelectionScope(object):
         self.scope_bfr.append("------")
 
     def on_navigate(self, href):
-        """ Exceute link callback """
+        """Exceute link callback."""
+
         params = href.split(':')
         key = params[0]
         index = int(params[1]) if len(params) > 1 else None
@@ -481,7 +513,8 @@ class GetSelectionScope(object):
             )
 
     def run(self, v):
-        """ Run ScopeHunter and display in the approriate way """
+        """Run ScopeHunter and display in the approriate way."""
+
         global css
 
         self.view = v
@@ -576,18 +609,27 @@ get_selection_scopes = GetSelectionScope()
 
 
 class GetSelectionScopeCommand(sublime_plugin.TextCommand):
+
+    """Command to get the selection(s) scope."""
+
     def run(self, edit):
-        """ On demand scope request """
+        """On demand scope request."""
+
         sh_thread.modified = True
 
     def is_enabled(self):
-        """ Check if we should scope this view """
+        """Check if we should scope this view."""
+
         return sh_thread.is_enabled(self.view)
 
 
 class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
+
+    """Command to toggle instant scoper."""
+
     def run(self):
-        """ Enable or disable instant scoper """
+        """Enable or disable instant scoper."""
+
         sh_thread.instant_scoper = False if sh_thread.instant_scoper else True
         if sh_thread.instant_scoper:
             sh_thread.modified = True
@@ -606,8 +648,12 @@ class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
 
 
 class SelectionScopeListener(sublime_plugin.EventListener):
+
+    """Listern for instant scoping."""
+
     def clear_regions(self, view):
-        """ Clear the highlight regions """
+        """Clear the highlight regions."""
+
         if (
             bool(sh_settings.get("highlight_extent", False)) and
             len(view.get_regions("scope_hunter"))
@@ -615,10 +661,8 @@ class SelectionScopeListener(sublime_plugin.EventListener):
             view.erase_regions("scope_hunter")
 
     def on_selection_modified(self, view):
-        """
-        Clean up regions or let thread
-        know there was a modification
-        """
+        """Clean up regions or let thread know there was a modification."""
+
         enabled = sh_thread.is_enabled(view)
         if not sh_thread.instant_scoper or not enabled:
             # clean up dirty highlights
@@ -630,15 +674,16 @@ class SelectionScopeListener(sublime_plugin.EventListener):
 
 
 class ShThread(threading.Thread):
-    """ Load up defaults """
+
+    """Load up defaults."""
 
     def __init__(self):
-        """ Setup the thread """
+        """Setup the thread."""
         self.reset()
         threading.Thread.__init__(self)
 
     def reset(self):
-        """ Reset the thread variables """
+        """Reset the thread variables."""
         self.wait_time = 0.12
         self.time = time()
         self.modified = False
@@ -647,7 +692,7 @@ class ShThread(threading.Thread):
         self.abort = False
 
     def payload(self):
-        """ Code to run """
+        """Code to run."""
         # Ignore selection inside the routine
         self.modified = False
         self.ignore_all = True
@@ -659,18 +704,18 @@ class ShThread(threading.Thread):
         self.time = time()
 
     def is_enabled(self, view):
-        """ Check if we can execute """
+        """Check if we can execute."""
         return not view.settings().get("is_widget") and not self.ignore_all
 
     def kill(self):
-        """ Kill thread """
+        """Kill thread."""
         self.abort = True
         while self.is_alive():
             pass
         self.reset()
 
     def run(self):
-        """ Thread loop """
+        """Thread loop."""
         while not self.abort:
             if not self.ignore_all:
                 if (
@@ -682,10 +727,17 @@ class ShThread(threading.Thread):
 
 
 class ShTheme(object):
+
+    """Theme object for the tooltip."""
+
     def __init__(self):
+        """Initialize."""
+
         self.setup()
 
     def read_theme(self, theme, default_theme):
+        """Read tooltip theme."""
+
         theme_content = None
         self.border_color = '#000'
 
@@ -709,16 +761,25 @@ class ShTheme(object):
                 self.css = None
 
     def has_changed(self):
-        # Reload events recently are always reloading,
-        # So maybe we will use this to check if reload is needed.
+        """
+        See if scheme has changed.
+
+        Reload events recently are always reloading,
+        So maybe we will use this to check if reload is needed.
+        """
         pref_settings = sublime.load_settings('Preferences.sublime-settings')
         return self.scheme_file != pref_settings.get('color_scheme')
 
-    def get_theme_res(self, *args, link=False):
+    def get_theme_res(self, *args, **kwargs):
+        """Get theme resource."""
+
+        link = kwargs.get('link', False)
         res = '/'.join(('Packages', self.tt_theme) + args)
         return 'res://' + res if link else res
 
     def setup(self):
+        """Setup the theme object."""
+
         pref_settings = sublime.load_settings('Preferences.sublime-settings')
         self.scheme_file = pref_settings.get('color_scheme')
         self.tt_theme = sh_settings.get('tooltip_theme', 'ScopeHunter/tt_theme').rstrip('/')
@@ -731,7 +792,8 @@ class ShTheme(object):
 
 
 def init_color_scheme():
-    """ Setup color scheme match object with current scheme """
+    """Setup color scheme match object with current scheme."""
+
     global scheme_matcher
     pref_settings = sublime.load_settings('Preferences.sublime-settings')
     scheme_file = pref_settings.get('color_scheme')
@@ -743,13 +805,15 @@ def init_color_scheme():
 
 
 def reinit_plugin():
-    """ Relaod scheme object and tooltip theme """
+    """Relaod scheme object and tooltip theme."""
+
     init_color_scheme()
     sh_theme.setup()
 
 
 def init_plugin():
-    """ Setup plugin variables and objects """
+    """Setup plugin variables and objects."""
+
     global sh_thread
     global sh_settings
     global sh_theme
@@ -779,10 +843,12 @@ def init_plugin():
 
 
 def plugin_loaded():
-    """ Setup plugin """
+    """Setup plugin."""
+
     init_plugin()
 
 
 def plugin_unloaded():
-    """ Kill the thead """
+    """Kill the thead."""
+
     sh_thread.kill()
