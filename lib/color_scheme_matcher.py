@@ -1,6 +1,4 @@
-"""
-Color Scheme Matcher (for sublime text).
-"""
+"""Color Scheme Matcher (for sublime text)."""
 from __future__ import absolute_import
 import sublime
 import re
