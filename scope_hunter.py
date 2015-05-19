@@ -69,14 +69,14 @@ def underline(regions):
     return new_regions
 
 
-def copy_data(bfr, label, index, format=None):
+def copy_data(bfr, label, index, copy_format=None):
     """Copy data to clipboard from buffer."""
 
     line = bfr[index]
     if line.startswith(label + ':'):
         text = line.replace(label + ':', '', 1).strip()
         if format is not None:
-            text = format(text)
+            text = copy_format(text)
         sublime.set_clipboard(text)
         notify("Copied: %s" % label)
 
@@ -429,7 +429,7 @@ class GetSelectionScope(object):
 
                 if self.selector_info:
                     self.get_selectors(color_selector, bg_selector, style_selectors)
-            except:
+            except Exception:
                 log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(traceback.format_exc()))
                 error("Evaluating theme failed!")
                 self.scheme_info = False
@@ -455,7 +455,7 @@ class GetSelectionScope(object):
                 self.scope_bfr,
                 r'Scope',
                 index,
-                format=lambda x: x.replace('\n' + ' ' * 31, ' ')
+                lambda x: x.replace('\n' + ' ' * 31, ' ')
             )
         elif key == 'copy-points':
             copy_data(self.scope_bfr, 'Scope Extents (Pts)', index)
@@ -514,8 +514,6 @@ class GetSelectionScope(object):
 
     def run(self, v):
         """Run ScopeHunter and display in the approriate way."""
-
-        global css
 
         self.view = v
         self.window = self.view.window()
@@ -722,7 +720,7 @@ class ShThread(threading.Thread):
                     self.modified is True and
                     time() - self.time > self.wait_time
                 ):
-                    sublime.set_timeout(lambda: self.payload(), 0)
+                    sublime.set_timeout(self.payload, 0)
             sleep(0.5)
 
 
@@ -747,7 +745,7 @@ class ShTheme(object):
                     sanitize_json(sublime.load_resource(t))
                 )
                 break
-            except:
+            except Exception:
                 pass
 
         if theme_content is not None:
@@ -757,7 +755,7 @@ class ShTheme(object):
             )
             try:
                 self.css = sublime.load_resource(self.css_file).replace('\r', '')
-            except:
+            except Exception:
                 self.css = None
 
     def has_changed(self):
@@ -799,7 +797,7 @@ def init_color_scheme():
     scheme_file = pref_settings.get('color_scheme')
     try:
         scheme_matcher = ColorSchemeMatcher(scheme_file)
-    except:
+    except Exception:
         scheme_matcher = None
         log("Theme parsing failed!  Ingoring theme related info.\n%s" % str(traceback.format_exc()))
 

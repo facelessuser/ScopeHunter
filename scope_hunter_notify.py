@@ -7,8 +7,8 @@ Copyright (c) 2012 - 2015 Isaac Muse <isaacmuse@gmail.com>
 import sublime
 try:
     from SubNotify.sub_notify import SubNotifyIsReadyCommand as Notify
-except:
-    class Notify:
+except Exception:
+    class Notify(object):
 
         """Fallback Notify class if SubNotify is not found."""
 

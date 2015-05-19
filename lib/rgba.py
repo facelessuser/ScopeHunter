@@ -38,6 +38,7 @@ class RGBA(object):
         """Split the color into color channels: red, green, blue, alpha."""
 
         def alpha_channel(alpha):
+            """Get alpha channel."""
             return int(alpha, 16) if alpha else 0xFF
 
         m = self.color_pattern.match(s)
@@ -159,42 +160,46 @@ class RGBA(object):
         b = clamp(int((self.r * .272) + (self.g * .534) + (self.b * .131)), 0, 255) & 0xFF
         self.r, self.g, self.b = r, g, b
 
+    def _get_overage(self, c):
+        """Get overage."""
+
+        if c < 0.0:
+            o = 0.0 + c
+            c = 0.0
+        elif c > 255.0:
+            o = c - 255.0
+            c = 255.0
+        else:
+            o = 0.0
+        return o, c
+
+    def _distribute_overage(self, c, o, s):
+        """Distribute overage."""
+
+        channels = len(s)
+        if channels == 0:
+            return c
+        parts = o / len(s)
+        if "r" in s and "g" in s:
+            c = c[0] + parts, c[1] + parts, c[2]
+        elif "r" in s and "b" in s:
+            c = c[0] + parts, c[1], c[2] + parts
+        elif "g" in s and "b" in s:
+            c = c[0], c[1] + parts, c[2] + parts
+        elif "r" in s:
+            c = c[0] + parts, c[1], c[2]
+        elif "g" in s:
+            c = c[0], c[1] + parts, c[2]
+        else:  # "b" in s:
+            c = c[0], c[1], c[2] + parts
+        return c
+
     def brightness(self, factor):
         """
         Adjust the brightness by the given factor.
 
         Brightness is determined by percieved luminance.
         """
-
-        def get_overage(c):
-            if c < 0.0:
-                o = 0.0 + c
-                c = 0.0
-            elif c > 255.0:
-                o = c - 255.0
-                c = 255.0
-            else:
-                o = 0.0
-            return o, c
-
-        def distribute_overage(c, o, s):
-            channels = len(s)
-            if channels == 0:
-                return c
-            parts = o / len(s)
-            if "r" in s and "g" in s:
-                c = c[0] + parts, c[1] + parts, c[2]
-            elif "r" in s and "b" in s:
-                c = c[0] + parts, c[1], c[2] + parts
-            elif "g" in s and "b" in s:
-                c = c[0], c[1] + parts, c[2] + parts
-            elif "r" in s:
-                c = c[0] + parts, c[1], c[2]
-            elif "g" in s:
-                c = c[0], c[1] + parts, c[2]
-            else:  # "b" in s:
-                c = c[0], c[1], c[2] + parts
-            return c
 
         channels = ["r", "g", "b"]
         total_lumes = clamp(self.luminance() + (255.0 * factor) - 255.0, 0.0, 255.0)
@@ -212,10 +217,10 @@ class RGBA(object):
             components = [float(self.r) + pts, float(self.g) + pts, float(self.b) + pts]
             count = 0
             for c in channels:
-                overage, components[count] = get_overage(components[count])
+                overage, components[count] = self._get_overage(components[count])
                 if overage:
                     slots.remove(c)
-                    components = list(distribute_overage(components, overage, slots))
+                    components = list(self._distribute_overage(components, overage, slots))
                 count += 1
 
             self.r = clamp(int(round(components[0])), 0, 255) & 0xFF

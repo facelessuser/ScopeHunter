@@ -42,16 +42,21 @@ def _strip_regex(pattern, text, preserve_lines):
     """Generic function that strips out comments pased on the given pattern."""
 
     def remove_comments(group, preserve_lines=False):
+        """Remove comments."""
+
         return ''.join([x[0] for x in LINE_PRESERVE.findall(group)]) if preserve_lines else ''
 
     def evaluate(m, preserve_lines):
+        """Search for comments."""
+
         g = m.groupdict()
         return g["code"] if g["code"] is not None else remove_comments(g["comments"], preserve_lines)
 
     return ''.join(map(lambda m: evaluate(m, preserve_lines), pattern.finditer(text)))
 
 
-def _cpp(self, text, preserve_lines=False):
+@staticmethod
+def _cpp(text, preserve_lines=False):
     """C/C++ style comment stripper."""
 
     return _strip_regex(
@@ -61,7 +66,8 @@ def _cpp(self, text, preserve_lines=False):
     )
 
 
-def _python(self, text, preserve_lines=False):
+@staticmethod
+def _python(text, preserve_lines=False):
     """Python style comment stripper."""
 
     return _strip_regex(

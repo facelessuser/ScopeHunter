@@ -37,6 +37,8 @@ def strip_dangling_commas(text, preserve_lines=False):
     regex = JSON_PATTERN
 
     def remove_comma(g, preserve_lines):
+        """Remove comma."""
+
         if preserve_lines:
             # ,] -> ] else ,} -> }
             if g["square_comma"] is not None:
@@ -48,6 +50,8 @@ def strip_dangling_commas(text, preserve_lines=False):
             return g["square_bracket"] if g["square_comma"] else g["curly_bracket"]
 
     def evaluate(m, preserve_lines):
+        """Search for dangling comma."""
+
         g = m.groupdict()
         return remove_comma(g, preserve_lines) if g["code"] is None else g["code"]
 
