@@ -2,7 +2,7 @@
 Syntax Scope Viewer in Sublime Text.
 
 ---
-# ScopeHunter
+## ScopeHunter
 This is a simple plugin get the scope under the cursor(s) in Sublime Text.  This is useful for plugin development.
 
 Dark theme with simple output:
@@ -11,7 +11,7 @@ Dark theme with simple output:
 Light theme with advanced output:
 ![Tooltip Light](https://dl.dropboxusercontent.com/u/342698/ScopeHunter/tooltip-copy.png)
 
-# Features
+## Features
 All features are configurable via the settings file
 
 - Optionally show output in tooltip (stylesheets are configurable)

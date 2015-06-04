@@ -3,19 +3,19 @@ Configuration and usage of ScopeHunter.
 
 ---
 
-# Command Usage
+## Command Usage
 All commands are accessible via the command palette.
 
-## Scope Hunter: Show Scope Under Cursor
+### Scope Hunter: Show Scope Under Cursor
 Show scope under cursor or cursors (depending whether multi-select is enabled)
 
-## Scope Hunter: Toggle Instant Scoper
+### Scope Hunter: Toggle Instant Scoper
 Toggle scoping under cursor constantly.
 
-# Scope Hunter: User Settings
+## Scope Hunter: User Settings
 In order to change the standard settings of Scope Hunter, please go to `Preferences -> Package Settings -> Scope Hunter` and click on `Settings - User`.  Repeat that for `Settings - Default`, copy all the settings from the default file that you wish to change to the user settings file.
 
-## View options
+### View options
 ScopeHunter on ST3, by default, uses the output panel to communicate the scope.  But if you prefer a more subtle or flashier way of displaying the scope, ScopeHunter can be configured to do so.
 
 ```js
@@ -36,19 +36,19 @@ ScopeHunter on ST3, by default, uses the output panel to communicate the scope. 
     "console_log": false,
 ```
 
-### show_popup
+#### show_popup
 This uses the new ST3 tooltip API to display as is my personal favorite.  It shows a styled tooltip with all the information about the scope of the current cursor(s).  You get previews of the colors, and you can click links to copy the info to the clipboard.
 
-### show_statusbar
+#### show_statusbar
 This shows just the scope in the status bar.  Simple and subtle.
 
-### show_panel
+#### show_panel
 This shows the scope and related info in an output panel.  This allows a user to directly copy and paste the info from the panel.
 
-### console_log
+#### console_log
 This is useful if you are doing something like `show_statusbar`.  You can keep the output subtle, but you can open the console and get more in depth info that you can copy and paste.
 
-## Scope Info
+### Scope Info
 For modes like `show_panel`, `console_log`, and `show_popup` you can control the info displayed.  You can keep it just to the scope, or you can extend it show other useful info.
 
 ```js
@@ -82,28 +82,28 @@ For modes like `show_panel`, `console_log`, and `show_popup` you can control the
     "highlight_extent": true,
 ```
 
-### extent_points
+#### extent_points
 Show the extent of the scope as view points.
 
-### extent_line_char
+#### extent_line_char
 Show the extent of the scope as line/char or row/col format.
 
-### highlight_extent
+#### highlight_extent
 Highlight the scope extent.
 
-### styling
+#### styling
 Show not only the color value of the scope and text styling.
 
-### show_simulated_alpha_colors
+#### show_simulated_alpha_colors
 When showing color values, ScopeHunter can show the perceived color value of transparent colors (or mix the transparent foreground with the background giving the color value you are actually seeing).
 
-### selectors
+#### selectors
 Show the color scheme selectors that are responsible for applying the visible color and styles.
 
-### file_paths
+#### file_paths
 Show the file paths of the color scheme and language file that are responsible for giving the styled appearance of your view.  In the tooltip, you can click these links and open the responsible file directly in Sublime Text.
 
-## Scope Highlighting
+### Scope Highlighting
 When `highlight_extent` is enabled, this controls the visual style of the highlights.  Due to the way the Sublime Text API for highlighting regions works, colors must be described as scope names from your color scheme file.  Just define the scope to use and the supported style as shown below.
 
 ```js
@@ -118,7 +118,7 @@ When `highlight_extent` is enabled, this controls the visual style of the highli
     "highlight_style": "outline",
 ```
 
-## Miscellaneous Options
+### Miscellaneous Options
 Lastly there are a couple of other options:
 
 ```js
@@ -139,19 +139,19 @@ Lastly there are a couple of other options:
     "use_sub_notify": true
 ```
 
-### clipboard
+#### clipboard
 Auto-copies just the scope to the clipboard.
 
-### multiselect
+#### multiselect
 Allow displaying the scope info for multiple cursor selections (does not work for `show_statusbar` as space is limited).
 
-### highlgiht_max_size
+#### highlgiht_max_size
 For performance, ScopeHunter is limited to highlight regions less that a given size.  If a region is bigger than the defined limit, it will not be highlighted.  You can control that limit here.
 
-###  use_sub_notify
+####  use_sub_notify
 If you have the [SubNotify](#https://github.com/facelessuser/SubNotify) installed, this will enable or disable messages through it.
 
-## Tooltip Theme
+### Tooltip Theme
 You can choose a different theme style if you desire.  See [customizing tooltip theme](#customizing-tootip-theme) for more info on creating your own theme.
 
 ```js
@@ -163,10 +163,10 @@ You can choose a different theme style if you desire.  See [customizing tooltip 
     "tooltip_theme": "ScopeHunter/tt_theme",
 ```
 
-### tooltip_theme
+#### tooltip_theme
 Simply provide the path to the theme relative from the Sublime `Packages` folder.
 
-# Customizing Tooltip Theme
+## Customizing Tooltip Theme
 On the latest ST3 branches, a new tooltip API is available.  ScopeHunter can take advantage of this feature and provide useful scope tooltips when invoked.  ScopeHunter comes with a theme that provides a light and dark variant that will be used depending on how light or dark you current color scheme is.
 
 You can create your own if desired and use it instead of the default.  The theme folder must include a `light.tt_theme` file and a `dark.tt_theme` file.  The `tt_theme` files are a JSON files with a slightly modified syntax allowing JavaScript style comments.  `tt_theme` files point to needed theme assets and set certain variables that are not defined in CSS files.  All assets should be contained within the tt_theme folder and paths in the `tt_theme` files are relative to the `tt_theme` file itself.  Do not use windows style backslashes `\`.
