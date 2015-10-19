@@ -78,7 +78,6 @@ def _python(text, preserve_lines=False):
 
 
 class CommentException(Exception):
-
     """Comment exception."""
 
     def __init__(self, value):
@@ -93,7 +92,6 @@ class CommentException(Exception):
 
 
 class Comments(object):
-
     """Comment strip class."""
 
     styles = []

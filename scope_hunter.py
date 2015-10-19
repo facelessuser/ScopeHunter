@@ -98,7 +98,6 @@ def get_color_box(color, caption, link, index):
 
 
 class ScopeHunterEditCommand(sublime_plugin.TextCommand):
-
     """Edit a view."""
 
     bfr = None
@@ -119,7 +118,6 @@ class ScopeHunterEditCommand(sublime_plugin.TextCommand):
 
 
 class GetSelectionScope(object):
-
     """Get the scope and the selection(s)."""
 
     def next_index(self):
@@ -607,7 +605,6 @@ get_selection_scopes = GetSelectionScope()
 
 
 class GetSelectionScopeCommand(sublime_plugin.TextCommand):
-
     """Command to get the selection(s) scope."""
 
     def run(self, edit):
@@ -622,7 +619,6 @@ class GetSelectionScopeCommand(sublime_plugin.TextCommand):
 
 
 class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
-
     """Command to toggle instant scoper."""
 
     def run(self):
@@ -646,7 +642,6 @@ class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
 
 
 class SelectionScopeListener(sublime_plugin.EventListener):
-
     """Listern for instant scoping."""
 
     def clear_regions(self, view):
@@ -672,7 +667,6 @@ class SelectionScopeListener(sublime_plugin.EventListener):
 
 
 class ShThread(threading.Thread):
-
     """Load up defaults."""
 
     def __init__(self):
@@ -725,7 +719,6 @@ class ShThread(threading.Thread):
 
 
 class ShTheme(object):
-
     """Theme object for the tooltip."""
 
     def __init__(self):

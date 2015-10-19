@@ -18,7 +18,6 @@ def clamp(value, mn, mx):
 
 
 class RGBA(object):
-
     """RGBA object for converting between color formats or applying filters to the color."""
 
     r = None

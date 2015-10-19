@@ -43,14 +43,12 @@ class SchemeColors(
         verbose=False
     )
 ):
-
     """SchemeColors."""
 
     pass
 
 
 class SchemeSelectors(namedtuple('SchemeSelectors', ['name', 'scope'], verbose=False)):
-
     """SchemeSelectors."""
 
     pass
@@ -66,7 +64,6 @@ def sublime_format_path(pth):
 
 
 class ColorSchemeMatcher(object):
-
     """Determine color scheme colors and style for text in a Sublime view buffer."""
 
     def __init__(self, scheme_file, ignore_gutter=False, track_dark_background=False, color_filter=None):
