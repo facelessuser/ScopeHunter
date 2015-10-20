@@ -665,6 +665,18 @@ class SelectionScopeListener(sublime_plugin.EventListener):
             sh_thread.modified = True
             sh_thread.time = time()
 
+    def on_activated(self, view):
+        """Check color scheme on activated and update if needed."""
+
+        scheme = view.settings().get("color_scheme")
+        if scheme is None:
+            pref_settings = sublime.load_settings('Preferences.sublime-settings')
+            scheme = pref_settings.get('color_scheme')
+
+        if sh_theme is not None and scheme is not None:
+            if scheme != sh_theme.scheme_file:
+                reinit_plugin()
+
 
 class ShThread(threading.Thread):
     """Load up defaults."""
@@ -771,8 +783,7 @@ class ShTheme(object):
     def setup(self):
         """Setup the theme object."""
 
-        pref_settings = sublime.load_settings('Preferences.sublime-settings')
-        self.scheme_file = pref_settings.get('color_scheme')
+        self.scheme_file = scheme_matcher.scheme_file
         self.tt_theme = sh_settings.get('tooltip_theme', 'ScopeHunter/tt_theme').rstrip('/')
         theme_file = 'dark' if scheme_matcher.is_dark_theme else 'light'
 
@@ -786,8 +797,20 @@ def init_color_scheme():
     """Setup color scheme match object with current scheme."""
 
     global scheme_matcher
-    pref_settings = sublime.load_settings('Preferences.sublime-settings')
-    scheme_file = pref_settings.get('color_scheme')
+    scheme_file = None
+
+    # Attempt syntax specific from view
+    window = sublime.active_window()
+    if window is not None:
+        view = window.active_view()
+        if view is not None:
+            scheme_file = view.settings().get('color_scheme', None)
+
+    # Get global scheme
+    if scheme_file is None:
+        pref_settings = sublime.load_settings('Preferences.sublime-settings')
+        scheme_file = pref_settings.get('color_scheme')
+
     try:
         scheme_matcher = ColorSchemeMatcher(scheme_file)
     except Exception:
