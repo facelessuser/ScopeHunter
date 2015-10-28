@@ -29,11 +29,7 @@ import re
 from .rgba import RGBA
 from os import path
 from collections import namedtuple
-ST3 = int(sublime.version()) >= 3000
-if not ST3:
-    from plistlib import readPlist
-else:
-    from plistlib import readPlistFromBytes
+from plistlib import readPlistFromBytes
 
 
 class SchemeColors(
@@ -72,14 +68,14 @@ class ColorSchemeMatcher(object):
             color_filter = self.filter
         self.color_scheme = path.normpath(scheme_file)
         self.scheme_file = path.basename(self.color_scheme)
-        if ST3:
-            self.plist_file = color_filter(
-                readPlistFromBytes(sublime.load_binary_resource(sublime_format_path(self.color_scheme)))
+        self.plist_file = color_filter(
+            readPlistFromBytes(
+                re.sub(
+                    br"(\r?\n?\s*)*<!--[\s\S]*?-->(\s*\r?\n?)*", b'',
+                    sublime.load_binary_resource(sublime_format_path(self.color_scheme))
+                )
             )
-        else:
-            self.plist_file = color_filter(
-                readPlist(sublime.packages_path() + self.color_scheme.replace('Packages', ''))
-            )
+        )
         self.scheme_file = scheme_file
         self.ignore_gutter = ignore_gutter
         self.track_dark_background = track_dark_background
