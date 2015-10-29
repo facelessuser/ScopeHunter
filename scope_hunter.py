@@ -668,14 +668,15 @@ class SelectionScopeListener(sublime_plugin.EventListener):
     def on_activated(self, view):
         """Check color scheme on activated and update if needed."""
 
-        scheme = view.settings().get("color_scheme")
-        if scheme is None:
-            pref_settings = sublime.load_settings('Preferences.sublime-settings')
-            scheme = pref_settings.get('color_scheme')
+        if not view.settings().get('is_widget', False):
+            scheme = view.settings().get("color_scheme")
+            if scheme is None:
+                pref_settings = sublime.load_settings('Preferences.sublime-settings')
+                scheme = pref_settings.get('color_scheme')
 
-        if sh_theme is not None and scheme is not None:
-            if scheme != sh_theme.scheme_file:
-                reinit_plugin()
+            if sh_theme is not None and scheme is not None:
+                if scheme != sh_theme.scheme_file:
+                    reinit_plugin()
 
 
 class ShThread(threading.Thread):
