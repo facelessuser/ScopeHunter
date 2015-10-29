@@ -41,13 +41,9 @@ class SchemeColors(
 ):
     """SchemeColors."""
 
-    pass
-
 
 class SchemeSelectors(namedtuple('SchemeSelectors', ['name', 'scope'], verbose=False)):
     """SchemeSelectors."""
-
-    pass
 
 
 def sublime_format_path(pth):
@@ -71,7 +67,7 @@ class ColorSchemeMatcher(object):
         self.plist_file = color_filter(
             readPlistFromBytes(
                 re.sub(
-                    br"(\r?\n?\s*)*<!--[\s\S]*?-->(\s*\r?\n?)*", b'',
+                    br"^[\r\n\s]*<!--[\s\S]*?-->[\s\r\n]*|<!--[\s\S]*?-->", b'',
                     sublime.load_binary_resource(sublime_format_path(self.color_scheme))
                 )
             )
