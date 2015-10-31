@@ -10,6 +10,7 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
+    color: #99cc99;
     font-size: 1.2em;
 }
 
@@ -21,13 +22,10 @@ p {
     margin: 1em;
 }
 
-.control-link, .file-link {
-    color: #6699cc;
-}
-
-.copy-link {
-    color: #6699cc;
-    font-size: 0.8em;
+.divider {
+    padding: 1px;
+    margin: 1em 3em;
+    background-color: #393b3d;
 }
 
 .key {
@@ -35,12 +33,10 @@ p {
     font-weight: bold;
 }
 
-.header {
-    color: #99cc99;
+.link {
+    color: #6699cc;
 }
 
-.divider {
-    padding: 1px;
-    margin: 2em 3em;
-    background-color: #393b3d;
+.small {
+    font-size: 0.8em;
 }
