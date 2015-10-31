@@ -169,7 +169,7 @@ Simply provide the path to the theme relative from the Sublime `Packages` folder
 ## Customizing Tooltip Theme
 On the latest ST3 branches, a new tooltip API is available.  ScopeHunter can take advantage of this feature and provide useful scope tooltips when invoked.  ScopeHunter comes with a theme that provides a light and dark variant that will be used depending on how light or dark you current color scheme is.
 
-You can create your own if desired and use it instead of the default.  The theme folder must include a `light.tt_theme` file and a `dark.tt_theme` file.  The `tt_theme` files are JSON files with a slightly modified syntax allowing JavaScript style comments; just like what is used in Sublime Text.  `tt_theme` files point to needed theme assets and set certain variables that are not defined in CSS files.  All assets should be contained within the tt_theme folder and paths in the `tt_theme` files are relative to the `tt_theme` file itself.  Do not use windows style backslashes `\`.
+You can create your own if desired and use it instead of the default.  The theme folder must include a `light.tt_theme` file and a `dark.tt_theme` file.  The `tt_theme` files are JSON files with a slightly modified syntax allowing JavaScript style comments: just like what is used in Sublime Text.  `tt_theme` files point to needed theme assets and set certain variables that are not defined in CSS files.  All assets should be contained within the tt_theme folder and paths in the `tt_theme` files are relative to the `tt_theme` file itself.  Do not use windows style backslashes `\`.
 
 Example tt_theme structure:
 
@@ -183,3 +183,23 @@ tt_theme/
 ```
 
 Please use the default `tt_theme` as an example and template for creating your own.  In the default `tt_theme` you should be able to see all the settings that can be set, and all the CSS classes that can be targeted.
+
+### CSS Classes
+In general there is some basic styling to the html, body, header, and paragraph tags. These can be overridden as desired.
+
+In addition to the basic HTML tag styling, there are specific classes that are used within the tooltip theme.
+
+### content
+`content` is used to style inner content of the tooltip.
+
+### divider
+`divider` is used to style the dividers between the different sections in the tooltip.
+
+### key
+`key` is used to style the "key" value in scenarios like `key: some value`.
+
+### link
+`link` styles HTML links.
+
+### small
+`small` is used to create smaller text.
