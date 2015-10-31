@@ -87,7 +87,7 @@ def get_color_box(color, caption, link, index):
     border = '#CCCCCC' if scheme_matcher.is_dark_theme else '#333333'
     return (
         '<p><span class="key">%s: </span> %s&nbsp;%s'
-        '<br><a href="%s:%d" class="link small">(copy)</a></p>' % (
+        '<br><a href="%s:%d" class="small">(copy)</a></p>' % (
             caption,
             color_box(color, border, 16),
             color.upper(),
@@ -197,7 +197,7 @@ class GetSelectionScope(object):
                     self.scope_bfr_tool.append('<span class="key">pts:</span> ')
                     self.scope_bfr_tool.append("(%d, %d)" % (pts.begin(), pts.end()))
                     self.scope_bfr_tool.append(
-                        '<br><a href="copy-points:%d" class="link small">(copy)</a>' % self.next_index()
+                        '<br><a href="copy-points:%d" class="small">(copy)</a>' % self.next_index()
                     )
                     if self.rowcol_info:
                         self.scope_bfr_tool.append("<br><br>")
@@ -208,7 +208,7 @@ class GetSelectionScope(object):
                         '<strong>Char:</strong> %d, '
                         '<strong>Line:</strong> %d '
                         '<strong>Char:</strong> %d)'
-                        '<br><a href="copy-line-char:%d" class="link small">(copy)</a>' % (
+                        '<br><a href="copy-line-char:%d" class="small">(copy)</a>' % (
                             row1 + 1, col1 + 1, row2 + 1, col2 + 1, self.next_index()
                         )
 
@@ -238,7 +238,7 @@ class GetSelectionScope(object):
         if self.show_popup:
             self.scope_bfr_tool.append(
                 '<h1>Scope</h1><p>%s'
-                '<br><a href="copy-scope:%d" class="link small">(copy)</a></p>' % (
+                '<br><a href="copy-scope:%d" class="small">(copy)</a></p>' % (
                     self.view.scope_name(pt).strip(), self.next_index()
                 )
             )
@@ -285,7 +285,7 @@ class GetSelectionScope(object):
                 tag = "span"
             self.scope_bfr_tool.append(
                 '<p><span class="key">style:</span> <%(tag)s>%(type)s</%(tag)s>'
-                '<br><a href="copy-style:%(index)d" class="link small">(copy)</a></p>' % {
+                '<br><a href="copy-style:%(index)d" class="small">(copy)</a></p>' % {
                     "type": style, "tag": tag, "index": self.next_index()
                 }
             )
@@ -302,15 +302,15 @@ class GetSelectionScope(object):
             self.scope_bfr_tool.append('<h1>%s</h1><p>' % 'Files')
             self.scope_bfr_tool.append(
                 '<span class="key">scheme:</span> '
-                '<a class="link" href="scheme">%s</a>'
-                '<br><a href="copy-scheme:%d" class="link small">(copy)</a><br><br>' % (
+                '<a href="scheme">%s</a>'
+                '<br><a href="copy-scheme:%d" class="small">(copy)</a><br><br>' % (
                     self.scheme_file, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
                 '<span class="key">syntax:</span> '
-                '<a class="link" href="syntax">%s</a>'
-                '<br><a href="copy-syntax:%d" class="link small">(copy)</a></p>' % (
+                '<a href="syntax">%s</a>'
+                '<br><a href="copy-syntax:%d" class="small">(copy)</a></p>' % (
                     self.syntax_file, self.next_index()
                 )
             )
@@ -352,51 +352,51 @@ class GetSelectionScope(object):
             )
             self.scope_bfr_tool.append(
                 '<span class="key">fg name:</span> %s'
-                '<br><a href="copy-fg-sel-name:%d" class="link small">(copy)</a>' % (
+                '<br><a href="copy-fg-sel-name:%d" class="small">(copy)</a>' % (
                     color_selector.name, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
                 '<br><br><span class="key">fg scope:</span> %s'
-                '<br><a href="copy-fg-sel-scope:%d" class="link small">(copy)</a>' % (
+                '<br><a href="copy-fg-sel-scope:%d" class="small">(copy)</a>' % (
                     color_selector.scope, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
                 '<br><br><span class="key">bg name:</span> %s'
-                '<br><a href="copy-bg-sel-name:%d" class="link small">(copy)</a>' % (
+                '<br><a href="copy-bg-sel-name:%d" class="small">(copy)</a>' % (
                     bg_selector.name, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
                 '<br><br><span class="key">bg scope:</span> %s'
-                '<br><a href="copy-bg-sel-scope:%d" class="link small">(copy)</a>' % (
+                '<br><a href="copy-bg-sel-scope:%d" class="small">(copy)</a>' % (
                     bg_selector.scope, self.next_index()
                 )
             )
             if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">bold name:</span> %s'
-                    '<br><a href="copy-bold-sel-name:%d" class="link small">(copy)</a>' % (
+                    '<br><a href="copy-bold-sel-name:%d" class="small">(copy)</a>' % (
                         style_selectors["bold"].name, self.next_index()
                     )
                 )
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">bold scope:</span> %s'
-                    '<br><a href="copy-bold-sel-scope:%d" class="link small">(copy)</a>' % (
+                    '<br><a href="copy-bold-sel-scope:%d" class="small">(copy)</a>' % (
                         style_selectors["bold"].scope, self.next_index()
                     )
                 )
             if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">italic name:</span> %s'
-                    '<br><a href="copy-italic-sel-name:%d" class="link small">(copy)</a>' % (
+                    '<br><a href="copy-italic-sel-name:%d" class="small">(copy)</a>' % (
                         style_selectors["italic"].name, self.next_index()
                     )
                 )
                 self.scope_bfr_tool.append(
                     '<br><br><span class="key">italic scope:</span> %s'
-                    '<br><a href="copy-italic-sel-scope:%d" class="link small">(copy)</a>' % (
+                    '<br><a href="copy-italic-sel-scope:%d" class="small">(copy)</a>' % (
                         style_selectors["italic"].scope, self.next_index()
                     )
                 )
@@ -576,7 +576,7 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
-                tail = '<div class="divider"></div><a href="copy-all" class="link small">(copy all)</a></div>'
+                tail = '<div class="divider"></div><a href="copy-all" class="small">(copy all)</a></div>'
             else:
                 tail = '</div>'
             self.view.show_popup(

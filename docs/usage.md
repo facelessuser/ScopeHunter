@@ -185,7 +185,7 @@ tt_theme/
 Please use the default `tt_theme` as an example and template for creating your own.  In the default `tt_theme` you should be able to see all the settings that can be set, and all the CSS classes that can be targeted.
 
 ### CSS Classes
-In general there is some basic styling to the html, body, header, and paragraph tags. These can be overridden as desired.
+In general there is some basic styling to the html, body, header, anchor, and paragraph tags. These can be overridden as desired.
 
 In addition to the basic HTML tag styling, there are specific classes that are used within the tooltip theme.
 
@@ -197,9 +197,6 @@ In addition to the basic HTML tag styling, there are specific classes that are u
 
 ### key
 `key` is used to style the "key" value in scenarios like `key: some value`.
-
-### link
-`link` styles HTML links.
 
 ### small
 `small` is used to create smaller text.
