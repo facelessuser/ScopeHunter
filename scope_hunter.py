@@ -11,17 +11,14 @@ import threading
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.scope_hunter_notify import notify, error
 from ScopeHunter.lib.color_box import color_box
-from ScopeHunter.lib import file_strip
-import json
 import traceback
-import os
+import mdpopups
 
 if 'sh_thread' not in globals():
     sh_thread = None
 
 scheme_matcher = None
 sh_settings = {}
-sh_theme = None
 
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
 
@@ -84,12 +81,13 @@ def copy_data(bfr, label, index, copy_format=None):
 def get_color_box(color, caption, link, index):
     """Display an HTML color box using the given color."""
 
-    border = '#CCCCCC' if scheme_matcher.is_dark_theme else '#333333'
+    border = '#CCCCCC'
+    border2 = '#333333'
     return (
-        '<p><span class="keyword">%s: </span> %s&nbsp;%s'
-        '<br><a href="%s:%d" class="small">(copy)</a></p>' % (
+        '**%s:**{: .st-keyword} %s&nbsp;%s'
+        '\n[(copy)](%s:%d){: .small}\n\n' % (
             caption,
-            color_box(color, border, 16),
+            color_box(color, border, border2, 18, 2),
             color.upper(),
             link,
             index
@@ -169,28 +167,25 @@ class GetSelectionScope(object):
                 )
 
             if self.show_popup:
-                self.scope_bfr_tool.append('<h1>Scope Extent</h1><p>')
+                self.scope_bfr_tool.append('\n# Scope Extent\n')
                 if self.points_info:
-                    self.scope_bfr_tool.append('<span class="keyword">pts:</span> ')
+                    self.scope_bfr_tool.append('**pts:**{: .st-keyword} ')
                     self.scope_bfr_tool.append("(%d, %d)" % (pts.begin(), pts.end()))
                     self.scope_bfr_tool.append(
-                        '<br><a href="copy-points:%d" class="small">(copy)</a>' % self.next_index()
+                        '\n[(copy)](copy-points:%d){: .small}\n\n' % self.next_index()
                     )
-                    if self.rowcol_info:
-                        self.scope_bfr_tool.append("<br><br>")
                 if self.rowcol_info:
-                    self.scope_bfr_tool.append('<span class="keyword">line/char:</span> ')
+                    self.scope_bfr_tool.append('**line/char:**{: .st-keyword} ')
                     self.scope_bfr_tool.append(
-                        '(<strong>Line:</strong> %d '
-                        '<strong>Char:</strong> %d, '
-                        '<strong>Line:</strong> %d '
-                        '<strong>Char:</strong> %d)'
-                        '<br><a href="copy-line-char:%d" class="small">(copy)</a>' % (
+                        '(**Line:** %d '
+                        '**Char:** %d, '
+                        '**Line:** %d '
+                        '**Char:** %d)'
+                        '\n[(copy)](copy-line-char:%d){: .small}\n\n' % (
                             row1 + 1, col1 + 1, row2 + 1, col2 + 1, self.next_index()
                         )
 
                     )
-                self.scope_bfr_tool.append("</p>")
 
     def get_scope(self, pt):
         """Get the scope at the cursor."""
@@ -214,8 +209,8 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             self.scope_bfr_tool.append(
-                '<h1>Scope</h1><p>%s'
-                '<br><a href="copy-scope:%d" class="small">(copy)</a></p>' % (
+                '## Scope\n%s'
+                '\n[(copy)](copy-scope:%d){: .small}\n' % (
                     self.view.scope_name(pt).strip(), self.next_index()
                 )
             )
@@ -240,7 +235,7 @@ class GetSelectionScope(object):
         self.scope_bfr.append("%-30s %s" % ("Style:", style))
 
         if self.show_popup:
-            self.scope_bfr_tool.append('<h1>%s</h1>' % "Appearance")
+            self.scope_bfr_tool.append('## %s\n' % "Appearance")
             self.scope_bfr_tool.append(get_color_box(color, 'fg', 'copy-fg', self.next_index()))
             if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
                 self.scope_bfr_tool.append(
@@ -261,8 +256,8 @@ class GetSelectionScope(object):
             else:
                 tag = "span"
             self.scope_bfr_tool.append(
-                '<p><span class="keyword">style:</span> <%(tag)s>%(type)s</%(tag)s>'
-                '<br><a href="copy-style:%(index)d" class="small">(copy)</a></p>' % {
+                '**style:**{: .st-keyword} <%(tag)s>%(type)s</%(tag)s>'
+                '\n[(copy)](copy-style:%(index)d){: .small}\n' % {
                     "type": style, "tag": tag, "index": self.next_index()
                 }
             )
@@ -276,18 +271,18 @@ class GetSelectionScope(object):
         self.scope_bfr.append("%-30s %s" % ("Syntax File:", self.syntax_file))
 
         if self.show_popup:
-            self.scope_bfr_tool.append('<h1>%s</h1><p>' % 'Files')
+            self.scope_bfr_tool.append('## %s\n' % 'Files')
             self.scope_bfr_tool.append(
-                '<span class="keyword">scheme:</span> '
-                '<a href="scheme">%s</a>'
-                '<br><a href="copy-scheme:%d" class="small">(copy)</a><br><br>' % (
+                '**scheme:**{: .st-keyword} '
+                '[%s](scheme)'
+                '\n[(copy)](copy-scheme:%d){: .small}\n\n' % (
                     self.scheme_file, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
-                '<span class="keyword">syntax:</span> '
-                '<a href="syntax">%s</a>'
-                '<br><a href="copy-syntax:%d" class="small">(copy)</a></p>' % (
+                '**syntax:**{: .st-keyword} '
+                '[%s](syntax)'
+                '\n[(copy)](copy-syntax:%d){: .small}\n' % (
                     self.syntax_file, self.next_index()
                 )
             )
@@ -325,59 +320,59 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             self.scope_bfr_tool.append(
-                '<h1>%s</h1><p>' % "Selectors"
+                '# Selectors\n'
             )
             self.scope_bfr_tool.append(
-                '<span class="keyword">fg name:</span> %s'
-                '<br><a href="copy-fg-sel-name:%d" class="small">(copy)</a>' % (
+                '\n**fg name:**{: .st-keyword} %s'
+                '\n[(copy)](copy-fg-sel-name:%d){: .small}\n' % (
                     color_selector.name, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
-                '<br><br><span class="keyword">fg scope:</span> %s'
-                '<br><a href="copy-fg-sel-scope:%d" class="small">(copy)</a>' % (
+                '\n**fg scope:**{: .st-keyword} %s'
+                '\n[(copy)](copy-fg-sel-scope:%d){: .small}\n' % (
                     color_selector.scope, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
-                '<br><br><span class="keyword">bg name:</span> %s'
-                '<br><a href="copy-bg-sel-name:%d" class="small">(copy)</a>' % (
+                '\n**bg name:**{: .st-keyword} %s'
+                '\n[(copy)](copy-bg-sel-name:%d){: .small}\n' % (
                     bg_selector.name, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
-                '<br><br><span class="keyword">bg scope:</span> %s'
-                '<br><a href="copy-bg-sel-scope:%d" class="small">(copy)</a>' % (
+                '\n**bg scope:**{: .st-keyword} %s'
+                '\n[(copy)](copy-bg-sel-scope:%d){: .small}\n' % (
                     bg_selector.scope, self.next_index()
                 )
             )
             if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
                 self.scope_bfr_tool.append(
-                    '<br><br><span class="keyword">bold name:</span> %s'
-                    '<br><a href="copy-bold-sel-name:%d" class="small">(copy)</a>' % (
+                    '\n**bold name:**{: .st-keyword} %s'
+                    '\n[(copy)](copy-bold-sel-name:%d){: .small}\n' % (
                         style_selectors["bold"].name, self.next_index()
                     )
                 )
                 self.scope_bfr_tool.append(
-                    '<br><br><span class="keyword">bold scope:</span> %s'
-                    '<br><a href="copy-bold-sel-scope:%d" class="small">(copy)</a>' % (
+                    '\n**bold scope:**{: .st-keyword} %s'
+                    '\n[(copy)](copy-bold-sel-scope:%d){: .small}\n' % (
                         style_selectors["bold"].scope, self.next_index()
                     )
                 )
             if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
                 self.scope_bfr_tool.append(
-                    '<br><br><span class="keyword">italic name:</span> %s'
-                    '<br><a href="copy-italic-sel-name:%d" class="small">(copy)</a>' % (
+                    '\n**italic name:**{: .st-keyword} %s'
+                    '\n[(copy)](copy-italic-sel-name:%d){: .small}\n' % (
                         style_selectors["italic"].name, self.next_index()
                     )
                 )
                 self.scope_bfr_tool.append(
-                    '<br><br><span class="keyword">italic scope:</span> %s'
-                    '<br><a href="copy-italic-sel-scope:%d" class="small">(copy)</a>' % (
+                    '\n**italic scope:**{: .st-keyword} %s'
+                    '\n[(copy)](copy-italic-sel-scope:%d){: .small}\n' % (
                         style_selectors["italic"].scope, self.next_index()
                     )
                 )
-            self.scope_bfr_tool.append('</p>')
+            self.scope_bfr_tool.append('\n')
 
     def get_info(self, pt):
         """Get scope related info."""
@@ -494,7 +489,7 @@ class GetSelectionScope(object):
         self.window = self.view.window()
         view = self.window.get_output_panel('scope_viewer')
         self.scope_bfr = []
-        self.scope_bfr_tool = ['<style>%s</style>' % (sh_theme.css if sh_theme.css is not None else '')]
+        self.scope_bfr_tool = []
         self.clips = []
         self.status = ""
         self.scheme_file = None
@@ -529,7 +524,7 @@ class GetSelectionScope(object):
                 count = 0
                 for sel in self.view.sel():
                     if count > 0 and self.show_popup:
-                        self.scope_bfr_tool.append('<div class="divider"></div>')
+                        self.scope_bfr_tool.append('\n---\n')
                     self.get_info(sel.b)
                     count += 1
             else:
@@ -551,18 +546,6 @@ class GetSelectionScope(object):
             ScopeHunterEditCommand.clear()
             self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
 
-        if self.show_popup:
-            if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
-                tail = '<div class="divider"></div><a href="copy-all" class="small">(copy all)</a></div>'
-            else:
-                tail = '</div>'
-            self.view.show_popup(
-                '<div class="content">' +
-                ''.join(self.scope_bfr_tool) +
-                tail,
-                location=-1, max_width=600, on_navigate=self.on_navigate
-            )
-
         if self.console_log:
             print('\n'.join(["Scope Hunter"] + self.scope_bfr))
 
@@ -576,6 +559,19 @@ class GetSelectionScope(object):
                 self.highlight_scope,
                 '',
                 style
+            )
+
+        if self.show_popup:
+            if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
+                tail = '\n---\n\n[(copy all)](copy-all){: .small}\n'
+            else:
+                tail = ''
+            # print(''.join(self.scope_bfr_tool) + tail)
+            mdpopups.show_popup(
+                self.view,
+                ''.join(self.scope_bfr_tool) +
+                tail,
+                max_width=500, on_navigate=self.on_navigate
             )
 
 get_selection_scopes = GetSelectionScope()
@@ -651,8 +647,8 @@ class SelectionScopeListener(sublime_plugin.EventListener):
                 pref_settings = sublime.load_settings('Preferences.sublime-settings')
                 scheme = pref_settings.get('color_scheme')
 
-            if sh_theme is not None and scheme is not None:
-                if scheme != sh_theme.scheme_file:
+            if scheme_matcher is not None and scheme is not None:
+                if scheme != scheme_matcher.scheme_file:
                     reinit_plugin()
 
 
@@ -708,61 +704,6 @@ class ShThread(threading.Thread):
             sleep(0.5)
 
 
-class ShTheme(object):
-    """Theme object for the tooltip."""
-
-    def __init__(self):
-        """Initialize."""
-
-        self.setup()
-
-    def read_theme(self, theme, default_theme):
-        """Read tooltip theme."""
-
-        theme_content = None
-        self.border_color = '#000'
-
-        for t in (theme, default_theme):
-            try:
-                theme_content = json.loads(
-                    file_strip.json.sanitize_json(sublime.load_resource(t))
-                )
-                break
-            except Exception:
-                pass
-
-        if theme_content is not None:
-            self.border_color = theme_content.get('border_color', None)
-            self.css_file = '/'.join(
-                [os.path.dirname(theme), theme_content.get('css', '')]
-            )
-            try:
-                self.css = file_strip.comments.Comments(
-                    'css'
-                ).strip(sublime.load_resource(self.css_file).replace('\r', ''))
-            except Exception:
-                self.css = None
-
-    def get_theme_res(self, *args, **kwargs):
-        """Get theme resource."""
-
-        link = kwargs.get('link', False)
-        res = '/'.join(('Packages', self.tt_theme) + args)
-        return 'res://' + res if link else res
-
-    def setup(self):
-        """Setup the theme object."""
-
-        self.scheme_file = scheme_matcher.scheme_file
-        self.tt_theme = sh_settings.get('tooltip_theme', 'ScopeHunter/tt_theme').rstrip('/')
-        theme_file = 'dark' if scheme_matcher.is_dark_theme else 'light'
-
-        self.read_theme(
-            'Packages/%s/%s.tt_theme' % (self.tt_theme, theme_file),
-            'Packages/ScopeHunter/tt_theme/%s.tt_theme' % theme_file
-        )
-
-
 def init_color_scheme():
     """Setup color scheme match object with current scheme."""
 
@@ -785,14 +726,13 @@ def init_color_scheme():
         scheme_matcher = ColorSchemeMatcher(scheme_file)
     except Exception:
         scheme_matcher = None
-        log("Theme parsing failed!  Ingoring theme related info.\n%s" % str(traceback.format_exc()))
+        log("Theme parsing failed!  Ignoring theme related info.\n%s" % str(traceback.format_exc()))
 
 
 def reinit_plugin():
     """Relaod scheme object and tooltip theme."""
 
     init_color_scheme()
-    sh_theme.setup()
 
 
 def init_plugin():
@@ -800,7 +740,6 @@ def init_plugin():
 
     global sh_thread
     global sh_settings
-    global sh_theme
 
     # Preferences Settings
     pref_settings = sublime.load_settings('Preferences.sublime-settings')
@@ -810,13 +749,11 @@ def init_plugin():
 
     # Setup color scheme
     init_color_scheme()
-    sh_theme = ShTheme()
 
     pref_settings.clear_on_change('scopehunter_reload')
     pref_settings.add_on_change('scopehunter_reload', reinit_plugin)
 
     sh_settings.clear_on_change('reload')
-    sh_settings.add_on_change('reload', sh_theme.setup)
 
     # Setup thread
     if sh_thread is not None:
