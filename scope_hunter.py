@@ -22,6 +22,12 @@ sh_settings = {}
 
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
 
+ADD_CSS = '''
+.small {
+    font-size: 0.7em;
+}
+'''
+
 
 def log(msg):
     """Logging."""
@@ -571,6 +577,7 @@ class GetSelectionScope(object):
                 self.view,
                 ''.join(self.scope_bfr_tool) +
                 tail,
+                append_css=ADD_CSS,
                 max_width=500, on_navigate=self.on_navigate
             )
 
