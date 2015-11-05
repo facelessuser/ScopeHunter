@@ -93,7 +93,7 @@ def get_color_box(color, caption, link, index):
         '**%s:**{: .st-keyword} %s&nbsp;%s'
         '\n[(copy)](%s:%d){: .small}\n\n' % (
             caption,
-            color_box(color, border, border2, 18, 2),
+            color_box([color], border, border2, height=18, width=18, border_size=2),
             color.upper(),
             link,
             index
