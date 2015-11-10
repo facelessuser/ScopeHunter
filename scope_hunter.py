@@ -28,6 +28,77 @@ ADD_CSS = '''
 }
 '''
 
+# Scope Toolip Markdown
+SCOPE_HEADER = '## Scope\n'
+SCOPES = '''
+%s
+[(copy)](copy-scope:%d){: .scope-hunter .small}
+'''
+
+SCOPE_EXTENT_HEADER = '\n## Scope Extent\n'
+PTS = '''
+**pts:**{: .keyword} (%d, %d)
+[(copy)](copy-points:%d){: .scope-hunter .small}
+'''
+CHAR_LINE = '''
+**line/char:**{: .keyword} (**Line:** %d **Char:** %d, **Line:** %d **Char:** %d)
+[(copy)](copy-line-char:%d){: .scope-hunter .small}
+'''
+
+APPEARANCE_HEADER = '\n## Appearance\n'
+COLOR_BOX = '''
+**%s:**{: .keyword} %s&nbsp;%s
+[(copy)](%s:%d){: .scope-hunter .small}
+'''
+FONT_STYLE = '''
+**style:**{: .keyword} <%(tag)s>%(type)s</%(tag)s>
+[(copy)](copy-style:%(index)d){: .scope-hunter .small}
+'''
+
+SELECTOR_HEADER = '\n## Selectors\n'
+FG_NAME = '''
+**fg name:**{: .keyword} %s
+[(copy)](copy-fg-sel-name:%d){: .scope-hunter .small}
+'''
+FG_SCOPE = '''
+**fg scope:**{: .keyword} %s
+[(copy)](copy-fg-sel-scope:%d){: .scope-hunter .small}
+'''
+BG_NAME = '''
+**bg name:**{: .keyword} %s
+[(copy)](copy-bg-sel-name:%d){: .scope-hunter .small}
+'''
+BG_SCOPE = '''
+**bg scope:**{: .keyword} %s
+[(copy)](copy-bg-sel-scope:%d){: .scope-hunter .small}
+'''
+BOLD_NAME = '''
+**bold name:**{: .keyword} %s
+[(copy)](copy-bold-sel-name:%d){: .scope-hunter .small}
+'''
+BOLD_SCOPE = '''
+**bold scope:**{: .keyword} %s
+[(copy)](copy-bold-sel-scope:%d){: .scope-hunter .small}
+'''
+ITALIC_NAME = '''
+**italic name:**{: .keyword} %s
+[(copy)](copy-italic-sel-name:%d){: .scope-hunter .small}
+'''
+ITALIC_SCOPE = '''
+**italic scope:**{: .keyword} %s
+[(copy)](copy-italic-sel-scope:%d){: .scope-hunter .small}
+'''
+
+FILE_HEADER = '\n## Files\n'
+SCHEME_FILE = '''
+**scheme:**{: .keyword} [%s](scheme)
+[(copy)](copy-scheme:%d){: .scope-hunter .small}
+'''
+SYNTAX_FILE = '''
+**syntax:**{: .keyword} [%s](syntax)
+[(copy)](copy-syntax:%d){: .scope-hunter .small}
+'''
+
 
 def log(msg):
     """Logging."""
@@ -90,8 +161,7 @@ def get_color_box(color, caption, link, index):
     border = '#CCCCCC'
     border2 = '#333333'
     return (
-        '**%s:**{: .keyword} %s&nbsp;%s'
-        '\n[(copy)](%s:%d){: .scope-hunter .small}\n\n' % (
+        COLOR_BOX % (
             caption,
             color_box([color], border, border2, height=18, width=18, border_size=2),
             color.upper(),
@@ -173,25 +243,11 @@ class GetSelectionScope(object):
                 )
 
             if self.show_popup:
-                self.scope_bfr_tool.append('\n## Scope Extent\n')
+                self.scope_bfr_tool.append(SCOPE_EXTENT_HEADER)
                 if self.points_info:
-                    self.scope_bfr_tool.append('**pts:**{: .keyword} ')
-                    self.scope_bfr_tool.append("(%d, %d)" % (pts.begin(), pts.end()))
-                    self.scope_bfr_tool.append(
-                        '\n[(copy)](copy-points:%d){: .scope-hunter .small}\n\n' % self.next_index()
-                    )
+                    self.scope_bfr_tool.append(PTS % (pts.begin(), pts.end(), self.next_index()))
                 if self.rowcol_info:
-                    self.scope_bfr_tool.append('**line/char:**{: .keyword} ')
-                    self.scope_bfr_tool.append(
-                        '(**Line:** %d '
-                        '**Char:** %d, '
-                        '**Line:** %d '
-                        '**Char:** %d)'
-                        '\n[(copy)](copy-line-char:%d){: .scope-hunter .small}\n\n' % (
-                            row1 + 1, col1 + 1, row2 + 1, col2 + 1, self.next_index()
-                        )
-
-                    )
+                    self.scope_bfr_tool.append(CHAR_LINE % (row1 + 1, col1 + 1, row2 + 1, col2 + 1, self.next_index()))
 
     def get_scope(self, pt):
         """Get the scope at the cursor."""
@@ -214,12 +270,8 @@ class GetSelectionScope(object):
         )
 
         if self.show_popup:
-            self.scope_bfr_tool.append(
-                '## Scope\n%s'
-                '\n[(copy)](copy-scope:%d){: .scope-hunter .small}\n' % (
-                    self.view.scope_name(pt).strip(), self.next_index()
-                )
-            )
+            self.scope_bfr_tool.append(SCOPE_HEADER)
+            self.scope_bfr_tool.append(SCOPES % (self.view.scope_name(pt).strip(), self.next_index()))
 
         return scope
 
@@ -241,7 +293,7 @@ class GetSelectionScope(object):
         self.scope_bfr.append("%-30s %s" % ("Style:", style))
 
         if self.show_popup:
-            self.scope_bfr_tool.append('## %s\n' % "Appearance")
+            self.scope_bfr_tool.append(APPEARANCE_HEADER)
             self.scope_bfr_tool.append(get_color_box(color, 'fg', 'copy-fg', self.next_index()))
             if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
                 self.scope_bfr_tool.append(
@@ -261,12 +313,7 @@ class GetSelectionScope(object):
                 tag = "u"
             else:
                 tag = "span"
-            self.scope_bfr_tool.append(
-                '**style:**{: .keyword} <%(tag)s>%(type)s</%(tag)s>'
-                '\n[(copy)](copy-style:%(index)d){: .scope-hunter .small}\n' % {
-                    "type": style, "tag": tag, "index": self.next_index()
-                }
-            )
+            self.scope_bfr_tool.append(FONT_STYLE % {"type": style, "tag": tag, "index": self.next_index()})
 
     def get_scheme_syntax(self):
         """Get color scheme and syntax file path."""
@@ -277,21 +324,9 @@ class GetSelectionScope(object):
         self.scope_bfr.append("%-30s %s" % ("Syntax File:", self.syntax_file))
 
         if self.show_popup:
-            self.scope_bfr_tool.append('## %s\n' % 'Files')
-            self.scope_bfr_tool.append(
-                '**scheme:**{: .keyword} '
-                '[%s](scheme)'
-                '\n[(copy)](copy-scheme:%d){: .scope-hunter .small}\n\n' % (
-                    self.scheme_file, self.next_index()
-                )
-            )
-            self.scope_bfr_tool.append(
-                '**syntax:**{: .keyword} '
-                '[%s](syntax)'
-                '\n[(copy)](copy-syntax:%d){: .scope-hunter .small}\n' % (
-                    self.syntax_file, self.next_index()
-                )
-            )
+            self.scope_bfr_tool.append(FILE_HEADER)
+            self.scope_bfr_tool.append(SCHEME_FILE % (self.scheme_file, self.next_index()))
+            self.scope_bfr_tool.append(SYNTAX_FILE % (self.syntax_file, self.next_index()))
 
     def get_selectors(self, color_selector, bg_selector, style_selectors):
         """Get the selectors used to determine color and/or style."""
@@ -325,59 +360,17 @@ class GetSelectionScope(object):
             )
 
         if self.show_popup:
-            self.scope_bfr_tool.append(
-                '## Selectors\n'
-            )
-            self.scope_bfr_tool.append(
-                '\n**fg name:**{: .keyword} %s'
-                '\n[(copy)](copy-fg-sel-name:%d){: .scope-hunter .small}\n' % (
-                    color_selector.name, self.next_index()
-                )
-            )
-            self.scope_bfr_tool.append(
-                '\n**fg scope:**{: .keyword} %s'
-                '\n[(copy)](copy-fg-sel-scope:%d){: .scope-hunter .small}\n' % (
-                    color_selector.scope, self.next_index()
-                )
-            )
-            self.scope_bfr_tool.append(
-                '\n**bg name:**{: .keyword} %s'
-                '\n[(copy)](copy-bg-sel-name:%d){: .scope-hunter .small}\n' % (
-                    bg_selector.name, self.next_index()
-                )
-            )
-            self.scope_bfr_tool.append(
-                '\n**bg scope:**{: .keyword} %s'
-                '\n[(copy)](copy-bg-sel-scope:%d){: .scope-hunter .small}\n' % (
-                    bg_selector.scope, self.next_index()
-                )
-            )
+            self.scope_bfr_tool.append(SELECTOR_HEADER)
+            self.scope_bfr_tool.append(FG_NAME % (color_selector.name, self.next_index()))
+            self.scope_bfr_tool.append(FG_SCOPE % (color_selector.scope, self.next_index()))
+            self.scope_bfr_tool.append(BG_NAME % (bg_selector.name, self.next_index()))
+            self.scope_bfr_tool.append(BG_SCOPE % (bg_selector.scope, self.next_index()))
             if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
-                self.scope_bfr_tool.append(
-                    '\n**bold name:**{: .keyword} %s'
-                    '\n[(copy)](copy-bold-sel-name:%d){: .scope-hunter .small}\n' % (
-                        style_selectors["bold"].name, self.next_index()
-                    )
-                )
-                self.scope_bfr_tool.append(
-                    '\n**bold scope:**{: .keyword} %s'
-                    '\n[(copy)](copy-bold-sel-scope:%d){: .scope-hunter .small}\n' % (
-                        style_selectors["bold"].scope, self.next_index()
-                    )
-                )
+                self.scope_bfr_tool.append(BOLD_NAME % (style_selectors["bold"].name, self.next_index()))
+                self.scope_bfr_tool.append(BOLD_SCOPE % (style_selectors["bold"].scope, self.next_index()))
             if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
-                self.scope_bfr_tool.append(
-                    '\n**italic name:**{: .keyword} %s'
-                    '\n[(copy)](copy-italic-sel-name:%d){: .scope-hunter .small}\n' % (
-                        style_selectors["italic"].name, self.next_index()
-                    )
-                )
-                self.scope_bfr_tool.append(
-                    '\n**italic scope:**{: .keyword} %s'
-                    '\n[(copy)](copy-italic-sel-scope:%d){: .scope-hunter .small}\n' % (
-                        style_selectors["italic"].scope, self.next_index()
-                    )
-                )
+                self.scope_bfr_tool.append(ITALIC_NAME % (style_selectors["italic"].name, self.next_index()))
+                self.scope_bfr_tool.append(ITALIC_SCOPE % (style_selectors["italic"].scope, self.next_index()))
             self.scope_bfr_tool.append('\n')
 
     def get_info(self, pt):
