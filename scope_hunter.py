@@ -23,7 +23,7 @@ sh_settings = {}
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
 
 ADD_CSS = '''
-.small {
+.scope-hunter.small {
     font-size: 0.7em;
 }
 '''
@@ -90,8 +90,8 @@ def get_color_box(color, caption, link, index):
     border = '#CCCCCC'
     border2 = '#333333'
     return (
-        '**%s:**{: .st-keyword} %s&nbsp;%s'
-        '\n[(copy)](%s:%d){: .small}\n\n' % (
+        '**%s:**{: .keyword} %s&nbsp;%s'
+        '\n[(copy)](%s:%d){: .scope-hunter .small}\n\n' % (
             caption,
             color_box([color], border, border2, height=18, width=18, border_size=2),
             color.upper(),
@@ -173,21 +173,21 @@ class GetSelectionScope(object):
                 )
 
             if self.show_popup:
-                self.scope_bfr_tool.append('\n# Scope Extent\n')
+                self.scope_bfr_tool.append('\n## Scope Extent\n')
                 if self.points_info:
-                    self.scope_bfr_tool.append('**pts:**{: .st-keyword} ')
+                    self.scope_bfr_tool.append('**pts:**{: .keyword} ')
                     self.scope_bfr_tool.append("(%d, %d)" % (pts.begin(), pts.end()))
                     self.scope_bfr_tool.append(
-                        '\n[(copy)](copy-points:%d){: .small}\n\n' % self.next_index()
+                        '\n[(copy)](copy-points:%d){: .scope-hunter .small}\n\n' % self.next_index()
                     )
                 if self.rowcol_info:
-                    self.scope_bfr_tool.append('**line/char:**{: .st-keyword} ')
+                    self.scope_bfr_tool.append('**line/char:**{: .keyword} ')
                     self.scope_bfr_tool.append(
                         '(**Line:** %d '
                         '**Char:** %d, '
                         '**Line:** %d '
                         '**Char:** %d)'
-                        '\n[(copy)](copy-line-char:%d){: .small}\n\n' % (
+                        '\n[(copy)](copy-line-char:%d){: .scope-hunter .small}\n\n' % (
                             row1 + 1, col1 + 1, row2 + 1, col2 + 1, self.next_index()
                         )
 
@@ -216,7 +216,7 @@ class GetSelectionScope(object):
         if self.show_popup:
             self.scope_bfr_tool.append(
                 '## Scope\n%s'
-                '\n[(copy)](copy-scope:%d){: .small}\n' % (
+                '\n[(copy)](copy-scope:%d){: .scope-hunter .small}\n' % (
                     self.view.scope_name(pt).strip(), self.next_index()
                 )
             )
@@ -262,8 +262,8 @@ class GetSelectionScope(object):
             else:
                 tag = "span"
             self.scope_bfr_tool.append(
-                '**style:**{: .st-keyword} <%(tag)s>%(type)s</%(tag)s>'
-                '\n[(copy)](copy-style:%(index)d){: .small}\n' % {
+                '**style:**{: .keyword} <%(tag)s>%(type)s</%(tag)s>'
+                '\n[(copy)](copy-style:%(index)d){: .scope-hunter .small}\n' % {
                     "type": style, "tag": tag, "index": self.next_index()
                 }
             )
@@ -279,16 +279,16 @@ class GetSelectionScope(object):
         if self.show_popup:
             self.scope_bfr_tool.append('## %s\n' % 'Files')
             self.scope_bfr_tool.append(
-                '**scheme:**{: .st-keyword} '
+                '**scheme:**{: .keyword} '
                 '[%s](scheme)'
-                '\n[(copy)](copy-scheme:%d){: .small}\n\n' % (
+                '\n[(copy)](copy-scheme:%d){: .scope-hunter .small}\n\n' % (
                     self.scheme_file, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
-                '**syntax:**{: .st-keyword} '
+                '**syntax:**{: .keyword} '
                 '[%s](syntax)'
-                '\n[(copy)](copy-syntax:%d){: .small}\n' % (
+                '\n[(copy)](copy-syntax:%d){: .scope-hunter .small}\n' % (
                     self.syntax_file, self.next_index()
                 )
             )
@@ -326,55 +326,55 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             self.scope_bfr_tool.append(
-                '# Selectors\n'
+                '## Selectors\n'
             )
             self.scope_bfr_tool.append(
-                '\n**fg name:**{: .st-keyword} %s'
-                '\n[(copy)](copy-fg-sel-name:%d){: .small}\n' % (
+                '\n**fg name:**{: .keyword} %s'
+                '\n[(copy)](copy-fg-sel-name:%d){: .scope-hunter .small}\n' % (
                     color_selector.name, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
-                '\n**fg scope:**{: .st-keyword} %s'
-                '\n[(copy)](copy-fg-sel-scope:%d){: .small}\n' % (
+                '\n**fg scope:**{: .keyword} %s'
+                '\n[(copy)](copy-fg-sel-scope:%d){: .scope-hunter .small}\n' % (
                     color_selector.scope, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
-                '\n**bg name:**{: .st-keyword} %s'
-                '\n[(copy)](copy-bg-sel-name:%d){: .small}\n' % (
+                '\n**bg name:**{: .keyword} %s'
+                '\n[(copy)](copy-bg-sel-name:%d){: .scope-hunter .small}\n' % (
                     bg_selector.name, self.next_index()
                 )
             )
             self.scope_bfr_tool.append(
-                '\n**bg scope:**{: .st-keyword} %s'
-                '\n[(copy)](copy-bg-sel-scope:%d){: .small}\n' % (
+                '\n**bg scope:**{: .keyword} %s'
+                '\n[(copy)](copy-bg-sel-scope:%d){: .scope-hunter .small}\n' % (
                     bg_selector.scope, self.next_index()
                 )
             )
             if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
                 self.scope_bfr_tool.append(
-                    '\n**bold name:**{: .st-keyword} %s'
-                    '\n[(copy)](copy-bold-sel-name:%d){: .small}\n' % (
+                    '\n**bold name:**{: .keyword} %s'
+                    '\n[(copy)](copy-bold-sel-name:%d){: .scope-hunter .small}\n' % (
                         style_selectors["bold"].name, self.next_index()
                     )
                 )
                 self.scope_bfr_tool.append(
-                    '\n**bold scope:**{: .st-keyword} %s'
-                    '\n[(copy)](copy-bold-sel-scope:%d){: .small}\n' % (
+                    '\n**bold scope:**{: .keyword} %s'
+                    '\n[(copy)](copy-bold-sel-scope:%d){: .scope-hunter .small}\n' % (
                         style_selectors["bold"].scope, self.next_index()
                     )
                 )
             if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
                 self.scope_bfr_tool.append(
-                    '\n**italic name:**{: .st-keyword} %s'
-                    '\n[(copy)](copy-italic-sel-name:%d){: .small}\n' % (
+                    '\n**italic name:**{: .keyword} %s'
+                    '\n[(copy)](copy-italic-sel-name:%d){: .scope-hunter .small}\n' % (
                         style_selectors["italic"].name, self.next_index()
                     )
                 )
                 self.scope_bfr_tool.append(
-                    '\n**italic scope:**{: .st-keyword} %s'
-                    '\n[(copy)](copy-italic-sel-scope:%d){: .small}\n' % (
+                    '\n**italic scope:**{: .keyword} %s'
+                    '\n[(copy)](copy-italic-sel-scope:%d){: .scope-hunter .small}\n' % (
                         style_selectors["italic"].scope, self.next_index()
                     )
                 )
@@ -569,15 +569,13 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
-                tail = '\n---\n\n[(copy all)](copy-all){: .small}\n'
+                tail = '\n---\n\n[(copy all)](copy-all){: .scope-hunter .small}\n'
             else:
                 tail = ''
-            # print(''.join(self.scope_bfr_tool) + tail)
             mdpopups.show_popup(
                 self.view,
-                ''.join(self.scope_bfr_tool) +
-                tail,
-                append_css=ADD_CSS,
+                ''.join(self.scope_bfr_tool) + tail,
+                css=ADD_CSS,
                 max_width=500, on_navigate=self.on_navigate
             )
 
