@@ -128,6 +128,7 @@ ITALIC_SCOPE_KEY = "Italic Scope"
 SCHEME_KEY = "Scheme File"
 SYNTAX_KEY = "Syntax File"
 
+
 def log(msg):
     """Logging."""
     print("ScopeHunter: %s" % msg)
@@ -254,7 +255,7 @@ class GetSelectionScope(object):
 
         if self.points_info or self.rowcol_info:
             if self.points_info:
-                self.scope_bfr.append(ENTRY % (PTS_KEY + ':', PTS_VALUE  % (pts.begin(), pts.end())))
+                self.scope_bfr.append(ENTRY % (PTS_KEY + ':', PTS_VALUE % (pts.begin(), pts.end())))
             if self.rowcol_info:
                 self.scope_bfr.append(
                     ENTRY % (CHAR_LINE_KEY + ':', CHAR_LINE_VALUE % (row1 + 1, col1 + 1, row2 + 1, col2 + 1))
