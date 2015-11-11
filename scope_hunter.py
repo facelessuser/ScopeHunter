@@ -10,7 +10,6 @@ from time import time, sleep
 import threading
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.scope_hunter_notify import notify, error
-from ScopeHunter.lib.color_box import color_box
 import traceback
 import mdpopups
 
@@ -192,7 +191,7 @@ def get_color_box(color, caption, link, index):
     return (
         COLOR_BOX % (
             caption,
-            color_box([color], border, border2, height=18, width=18, border_size=2),
+            mdpopups.color_box([color], border, border2, height=18, width=18, border_size=2),
             color.upper(),
             link,
             index
