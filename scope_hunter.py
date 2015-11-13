@@ -11,15 +11,16 @@ import threading
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.scope_hunter_notify import notify, error
 import traceback
-import mdpopups
+
+TOOLTIP_SUPPORT = int(sublime.version()) >= 3080
+if TOOLTIP_SUPPORT:
+    import mdpopups
 
 if 'sh_thread' not in globals():
     sh_thread = None
 
 scheme_matcher = None
 sh_settings = {}
-
-TOOLTIP_SUPPORT = int(sublime.version()) >= 3072
 
 ADD_CSS = '''
 .scope-hunter.small {
