@@ -90,7 +90,10 @@ class ColorSchemeMatcher(object):
     def parse_scheme(self):
         """Parse the color scheme."""
 
-        color_settings = self.plist_file["settings"][0]["settings"]
+        color_settings = {}
+        for item in self.plist_file["settings"]:
+            if item.get('scope', None) is None:
+                color_settings = item["settings"]
 
         # Get general theme colors from color scheme file
         self.bground, self.bground_sim = self.strip_color(
@@ -122,7 +125,7 @@ class ColorSchemeMatcher(object):
         # Create scope colors mapping from color scheme file
         self.colors = {}
         for item in self.plist_file["settings"]:
-            name = item.get('name', None)
+            name = item.get('name', '')
             scope = item.get('scope', None)
             color = None
             style = []
@@ -134,7 +137,7 @@ class ColorSchemeMatcher(object):
                         if s == "bold" or s == "italic":  # or s == "underline":
                             style.append(s)
 
-            if scope is not None and name is not None and (color is not None or bgcolor is not None):
+            if scope is not None and (color is not None or bgcolor is not None):
                 fg, fg_sim = self.strip_color(color)
                 bg, bg_sim = self.strip_color(bgcolor, bg=True)
                 self.colors[scope] = {
@@ -268,41 +271,3 @@ class ColorSchemeMatcher(object):
             color, color_sim, bgcolor, bgcolor_sim, style,
             color_selector, bg_selector, style_selectors
         )
-
-    def shift_background_brightness(self, lumens_limit):
-        """Shift background color brightness if below lumens limit."""
-
-        dlumen = self.get_darkest_lumen()
-        if dlumen is not None and dlumen < lumens_limit:
-            factor = 1 + ((lumens_limit - dlumen) / 255.0)
-            for k, v in self.colors.items():
-                fg, bg = v["color"], v["bgcolor"]
-                fg_sim, bg_sim = v["color_simulated"], v["bgcolor_simulated"]
-                if fg is not None:
-                    self.colors[k]["color"] = self.apply_brightness(fg, factor)
-                    self.colors[k]["color_simulated"] = self.apply_brightness(fg_sim, factor)
-                if bg is not None:
-                    self.colors[k]["bgcolor"] = self.apply_brightness(bg, factor)
-                    self.colors[k]["bgcolor_simulated"] = self.apply_brightness(bg_sim, factor)
-            self.bground = self.apply_brightness(self.bground, factor)
-            self.bground_sim = self.apply_brightness(self.bground_sim, factor)
-            self.fground = self.apply_brightness(self.fground, factor)
-            self.fground_sim = self.apply_brightness(self.fground_sim, factor)
-            self.sbground = self.apply_brightness(self.sbground, factor)
-            self.sbground_sim = self.apply_brightness(self.sbground_sim, factor)
-            if self.sfground is not None:
-                self.sfground = self.apply_brightness(self.sfground, factor)
-                self.sfground_sim = self.apply_brightness(self.sfground_sim, factor)
-
-            self.gbground = self.apply_brightness(self.gbground, factor)
-            self.gbground_sim = self.apply_brightness(self.gbground_sim, factor)
-            self.gfground = self.apply_brightness(self.gfground, factor)
-            self.gfground_sim = self.apply_brightness(self.gfground_sim, factor)
-
-    def apply_brightness(self, color, shift_factor):
-        """Apply the brightness to the given color using the shift_factor."""
-
-        rgba = RGBA(color)
-        if shift_factor is not None:
-            rgba.brightness(shift_factor)
-        return rgba.get_rgb()
