@@ -79,10 +79,37 @@ class RGBA(object):
 
         return self.get_rgb()
 
-    def luminance(self):
+    def get_luminance(self):
         """Get percieved luminance."""
 
         return clamp(int(round(0.299 * self.r + 0.587 * self.g + 0.114 * self.b)), 0, 255)
+
+    def alpha(self, factor):
+        """Adjust alpha."""
+
+        self.a = int(clamp(self.a + (255.0 * factor) - 255.0, 0.0, 255.0))
+
+    def red(self, factor):
+        """Adjust red."""
+
+        self.r = int(clamp(self.r + (255.0 * factor) - 255.0, 0.0, 255.0))
+
+    def green(self, factor):
+        """Adjust green."""
+
+        self.g = int(clamp(self.g + (255.0 * factor) - 255.0, 0.0, 255.0))
+
+    def blue(self, factor):
+        """Adjust blue."""
+
+        self.b = int(clamp(self.b + (255.0 * factor) - 255.0, 0.0, 255.0))
+
+    def luminance(self, factor):
+        """True luminance."""
+
+        h, l, s = self.tohls()
+        l = clamp(l + factor - 1.0, 0.0, 1.0)
+        self.fromhls(h, l, s)
 
     def tohsv(self):
         """Convert to HSV color format."""
@@ -140,13 +167,13 @@ class RGBA(object):
         """Saturate or unsaturate the color by the given factor."""
 
         h, l, s = self.tohls()
-        s = clamp(s * factor, 0.0, 1.0)
+        s = clamp(s + factor - 1.0, 0.0, 1.0)
         self.fromhls(h, l, s)
 
     def grayscale(self):
         """Convert the color with a grayscale filter."""
 
-        luminance = self.luminance() & 0xFF
+        luminance = self.get_luminance() & 0xFF
         self.r = luminance
         self.g = luminance
         self.b = luminance
@@ -201,7 +228,7 @@ class RGBA(object):
         """
 
         channels = ["r", "g", "b"]
-        total_lumes = clamp(self.luminance() + (255.0 * factor) - 255.0, 0.0, 255.0)
+        total_lumes = clamp(self.get_luminance() + (255.0 * factor) - 255.0, 0.0, 255.0)
 
         if total_lumes == 255.0:
             # white

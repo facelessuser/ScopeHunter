@@ -92,8 +92,9 @@ class ColorSchemeMatcher(object):
 
         color_settings = {}
         for item in self.plist_file["settings"]:
-            if item.get('scope', None) is None:
+            if item.get('scope', None) is None and item.get('name', None) is None:
                 color_settings = item["settings"]
+                break
 
         # Get general theme colors from color scheme file
         self.bground, self.bground_sim = self.strip_color(
@@ -166,7 +167,7 @@ class ColorSchemeMatcher(object):
         if not simple_strip:
             rgba.apply_alpha(self.bground_sim if self.bground_sim != "" else "#FFFFFF")
 
-        self.lumens = rgba.luminance()
+        self.lumens = rgba.get_luminance()
         if self.track_dark_background and bg:
             if self.dark_lumens is None or self.lumens < self.dark_lumens:
                 self.dark_lumens = self.lumens
