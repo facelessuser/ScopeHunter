@@ -23,9 +23,8 @@ scheme_matcher = None
 sh_settings = {}
 
 ADD_CSS = '''
-.scope-hunter.small {
-    font-size: 0.7em;
-}
+.scope-hunter.content { margin: 0; padding: 0.5em; }
+.scope-hunter.small { font-size: 0.8em; }
 '''
 
 # Scope Toolip Markdown
@@ -559,9 +558,10 @@ class GetSelectionScope(object):
                 tail = COPY_ALL
             else:
                 tail = ''
+            md = mdpopups.md2html(self.view, ''.join(self.scope_bfr_tool) + tail)
             mdpopups.show_popup(
                 self.view,
-                ''.join(self.scope_bfr_tool) + tail,
+                '<div class="scope-hunter content">%s</div>' % md,
                 css=ADD_CSS,
                 max_width=500, on_navigate=self.on_navigate
             )
