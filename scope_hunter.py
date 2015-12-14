@@ -728,6 +728,7 @@ def init_color_scheme():
         log("Theme parsing failed!  Ignoring theme related info.")
         debug(str(traceback.format_exc()))
 
+
 def reinit_plugin():
     """Relaod scheme object and tooltip theme."""
 
