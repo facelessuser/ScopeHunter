@@ -133,6 +133,12 @@ def log(msg):
     print("ScopeHunter: %s" % msg)
 
 
+def debug(msg):
+    """Debug."""
+    if sh_settings.get('debug', False):
+        log(msg)
+
+
 def extent_style(option):
     """Configure style of region based on option."""
 
@@ -392,7 +398,8 @@ class GetSelectionScope(object):
                 if self.selector_info:
                     self.get_selectors(color_selector, bg_selector, style_selectors)
             except Exception:
-                log("Evaluating theme failed!  Ignoring theme related info.\n%s" % str(traceback.format_exc()))
+                log("Evaluating theme failed!  Ignoring theme related info.")
+                debug(str(traceback.format_exc()))
                 error("Evaluating theme failed!")
                 self.scheme_info = False
 
@@ -718,8 +725,8 @@ def init_color_scheme():
         scheme_matcher = ColorSchemeMatcher(scheme_file)
     except Exception:
         scheme_matcher = None
-        log("Theme parsing failed!  Ignoring theme related info.\n%s" % str(traceback.format_exc()))
-
+        log("Theme parsing failed!  Ignoring theme related info.")
+        debug(str(traceback.format_exc()))
 
 def reinit_plugin():
     """Relaod scheme object and tooltip theme."""

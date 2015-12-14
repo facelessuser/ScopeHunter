@@ -15,6 +15,19 @@ Toggle scoping under cursor constantly.
 ## Scope Hunter: User Settings
 In order to change the standard settings of Scope Hunter, please go to `Preferences -> Package Settings -> Scope Hunter` and click on `Settings - User`.  Repeat that for `Settings - Default`, copy all the settings that you wish to change from the default settings to the user settings file.
 
+### Dev Options
+These settings are for debugging issues.
+
+```js
+    ///////////////////////////
+    // Dev Options
+    ///////////////////////////
+    "debug": false,
+```
+
+#### debug
+Turns on debug logging.
+
 ### View options
 By default, ScopeHunter (on ST3) uses the output panel to communicate the scope.  But if you prefer a more subtle **or** flashier way of displaying the scope, ScopeHunter can be configured to do so.
 
