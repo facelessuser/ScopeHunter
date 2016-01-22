@@ -603,7 +603,13 @@ class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
         else:
             win = sublime.active_window()
             if win is not None:
+                view = win.get_output_panel('scope_viewer')
+                parent_win = view.window()
+                if parent_win:
+                    parent_win.run_command('hide_panel', {'cancel': True})
                 view = win.active_view()
+                if view is not None and TOOLTIP_SUPPORT:
+                    mdpopups.hide_popup(view)
                 if (
                     view is not None and
                     sh_thread.is_enabled(view) and
