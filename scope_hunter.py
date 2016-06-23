@@ -657,6 +657,26 @@ class SelectionScopeListener(sublime_plugin.EventListener):
                     reinit_plugin()
 
 
+class ScopeHunterGenerateCssCommand(sublime_plugin.WindowCommand):
+    """Command to generate scope CSS."""
+
+    def run(self):
+        """Generate the CSS for theme scopes."""
+
+        if scheme_matcher is not None:
+            generated_css = mdpopups.st_scheme_template.Scheme2CSS(scheme_matcher.color_scheme.replace('\\', '/')).text
+            view = self.window.create_output_panel('scopehunter.gencss', unlisted=True)
+            view.sel().clear()
+            view.sel().add(sublime.Region(0, view.size()))
+            view.run_command('insert', {'characters': generated_css})
+            self.window.run_command("show_panel", {"panel": "output.scopehunter.gencss"})
+
+    def is_enabled(self):
+        """Check if command is enabled."""
+
+        return TOOLTIP_SUPPORT and scheme_matcher is not None
+
+
 class ShThread(threading.Thread):
     """Load up defaults."""
 
