@@ -486,7 +486,7 @@ class GetSelectionScope(object):
 
         self.view = v
         self.window = self.view.window()
-        view = self.window.get_output_panel('scope_viewer')
+        view = self.window.create_output_panel('scopehunter.results', unlisted=True)
         self.scope_bfr = []
         self.scope_bfr_tool = []
         self.clips = []
@@ -543,7 +543,7 @@ class GetSelectionScope(object):
             ScopeHunterEditCommand.pt = 0
             view.run_command('scope_hunter_edit')
             ScopeHunterEditCommand.clear()
-            self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
+            self.window.run_command("show_panel", {"panel": "output.scopehunter.results"})
 
         if self.console_log:
             print('\n'.join(["Scope Hunter"] + self.scope_bfr))
@@ -603,7 +603,7 @@ class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
         else:
             win = sublime.active_window()
             if win is not None:
-                view = win.get_output_panel('scope_viewer')
+                view = win.get_output_panel('scopehunter.results')
                 parent_win = view.window()
                 if parent_win:
                     parent_win.run_command('hide_panel', {'cancel': True})

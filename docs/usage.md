@@ -12,6 +12,41 @@ Show scope under cursor or cursors (depending whether multi-select is enabled).
 ### Scope Hunter: Toggle Instant Scoper
 Toggle scoping under cursor constantly.
 
+### Scope Hunter: Generate Color Scheme CSS
+Generate CSS from valid scopes in color scheme.  This is great for dropping in Sublime tooltips.
+
+Example output:
+
+```css
+.foreground { color: #CCCCCC; }
+.background { background-color: #232628; }
+.comment { color: #888888; }
+.constant.other { color: #CCCCCC; }
+.entity.name.tag { color: #F2777A; }
+.entity.other.attribute-name { color: #F2777A; }
+.constant.numeric { color: #F99157; }
+.support.constant { color: #F99157; }
+.constant.character { color: #F99157; }
+.variable.parameter { color: #F99157; }
+.support.type { color: #FFCC66; }
+.support.class { color: #FFCC66; }
+.string { color: #99CC99; }
+.entity.other.inherited-class { color: #99CC99; }
+.markup.heading { color: #99CC99; }
+.keyword.operator { color: #66CCCC; }
+.entity.name.function { color: #6699CC; }
+.support.function { color: #6699CC; }
+.keyword { color: #CC99CC; }
+.storage { color: #CC99CC; }
+.storage.type { color: #CC99CC; }
+.invalid { color: #FAFDFF; background-color: #F2777A; }
+.invalid.deprecated { color: #FAFDFF; background-color: #CC99CC; }
+.variable.language { color: #FFCC66; }
+.markup.underline.link { color: #99CCCC; }
+.markup.bold { color: #CC99CC; font-weight: bold; }
+.markup.italic { color: #CC99CC; font-style: italic; }
+```
+
 ## Scope Hunter: User Settings
 In order to change the standard settings of Scope Hunter, please go to `Preferences -> Package Settings -> Scope Hunter` and click on `Settings - User`.  Repeat that for `Settings - Default`, copy all the settings that you wish to change from the default settings to the user settings file.
 

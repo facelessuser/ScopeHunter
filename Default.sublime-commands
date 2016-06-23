@@ -8,5 +8,10 @@
     {
         "caption": "Scope Hunter: Toggle Instant Scoper",
         "command": "toggle_selection_scope"
+    },
+    // Generate color scheme CSS
+    {
+        "caption": "Scope Hunter: Generate Color Scheme CSS",
+        "command": "scope_hunter_generate_css"
     }
 ]
