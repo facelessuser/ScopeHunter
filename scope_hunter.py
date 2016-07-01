@@ -486,7 +486,7 @@ class GetSelectionScope(object):
 
         self.view = v
         self.window = self.view.window()
-        view = self.window.get_output_panel('scope_viewer')
+        view = self.window.create_output_panel('scopehunter.results', unlisted=True)
         self.scope_bfr = []
         self.scope_bfr_tool = []
         self.clips = []
@@ -543,7 +543,7 @@ class GetSelectionScope(object):
             ScopeHunterEditCommand.pt = 0
             view.run_command('scope_hunter_edit')
             ScopeHunterEditCommand.clear()
-            self.window.run_command("show_panel", {"panel": "output.scope_viewer"})
+            self.window.run_command("show_panel", {"panel": "output.scopehunter.results"})
 
         if self.console_log:
             print('\n'.join(["Scope Hunter"] + self.scope_bfr))
@@ -593,32 +593,24 @@ class GetSelectionScopeCommand(sublime_plugin.TextCommand):
 class ToggleSelectionScopeCommand(sublime_plugin.TextCommand):
     """Command to toggle instant scoper."""
 
-    def run(self, edit, view_only=False):
+    def run(self, edit):
         """Enable or disable instant scoper."""
 
         close_display = False
 
-        if view_only:
-            if not self.view.settings().get('scope_hunter.view_enable', False):
-                self.view.settings().set('scope_hunter.view_enable', True)
-                sh_thread.modified = True
-                sh_thread.time = time()
-            else:
-                self.view.settings().set('scope_hunter.view_enable', False)
-                close_display = True
-
+        sh_thread.instant_scoper = False
+        if not self.view.settings().get('scope_hunter.view_enable', False):
+            self.view.settings().set('scope_hunter.view_enable', True)
+            sh_thread.modified = True
+            sh_thread.time = time()
         else:
-            sh_thread.instant_scoper = False if sh_thread.instant_scoper else True
-            if sh_thread.instant_scoper:
-                sh_thread.modified = True
-                sh_thread.time = time()
-            else:
-                close_display = True
+            self.view.settings().set('scope_hunter.view_enable', False)
+            close_display = True
 
         if close_display:
             win = self.view.window()
             if win is not None:
-                view = win.get_output_panel('scope_viewer')
+                view = win.get_output_panel('scopehunter.results')
                 parent_win = view.window()
                 if parent_win:
                     parent_win.run_command('hide_panel', {'cancel': True})
@@ -670,6 +662,26 @@ class SelectionScopeListener(sublime_plugin.EventListener):
             if scheme_matcher is not None and scheme is not None:
                 if scheme != scheme_matcher.scheme_file:
                     reinit_plugin()
+
+
+class ScopeHunterGenerateCssCommand(sublime_plugin.WindowCommand):
+    """Command to generate scope CSS."""
+
+    def run(self):
+        """Generate the CSS for theme scopes."""
+
+        if scheme_matcher is not None:
+            generated_css = mdpopups.st_scheme_template.Scheme2CSS(scheme_matcher.color_scheme.replace('\\', '/')).text
+            view = self.window.create_output_panel('scopehunter.gencss', unlisted=True)
+            view.sel().clear()
+            view.sel().add(sublime.Region(0, view.size()))
+            view.run_command('insert', {'characters': generated_css})
+            self.window.run_command("show_panel", {"panel": "output.scopehunter.gencss"})
+
+    def is_enabled(self):
+        """Check if command is enabled."""
+
+        return TOOLTIP_SUPPORT and scheme_matcher is not None
 
 
 class ShThread(threading.Thread):
