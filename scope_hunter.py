@@ -590,28 +590,42 @@ class GetSelectionScopeCommand(sublime_plugin.TextCommand):
         return sh_thread.is_enabled(self.view)
 
 
-class ToggleSelectionScopeCommand(sublime_plugin.ApplicationCommand):
+class ToggleSelectionScopeCommand(sublime_plugin.TextCommand):
     """Command to toggle instant scoper."""
 
-    def run(self):
+    def run(self, edit, view_only=False):
         """Enable or disable instant scoper."""
 
-        sh_thread.instant_scoper = False if sh_thread.instant_scoper else True
-        if sh_thread.instant_scoper:
-            sh_thread.modified = True
-            sh_thread.time = time()
+        close_display = False
+
+        if view_only:
+            if not self.view.settings().get('scope_hunter.view_enable', False):
+                self.view.settings().set('scope_hunter.view_enable', True)
+                sh_thread.modified = True
+                sh_thread.time = time()
+            else:
+                self.view.settings().set('scope_hunter.view_enable', False)
+                close_display = True
+
         else:
-            win = sublime.active_window()
+            sh_thread.instant_scoper = False if sh_thread.instant_scoper else True
+            if sh_thread.instant_scoper:
+                sh_thread.modified = True
+                sh_thread.time = time()
+            else:
+                close_display = True
+
+        if close_display:
+            win = self.view.window()
             if win is not None:
                 view = win.get_output_panel('scope_viewer')
                 parent_win = view.window()
                 if parent_win:
                     parent_win.run_command('hide_panel', {'cancel': True})
-                view = win.active_view()
-                if view is not None and TOOLTIP_SUPPORT:
-                    mdpopups.hide_popup(view)
+                if TOOLTIP_SUPPORT:
+                    mdpopups.hide_popup(self.view)
                 if (
-                    view is not None and
+                    self.view is not None and
                     sh_thread.is_enabled(view) and
                     bool(sh_settings.get("highlight_extent", False)) and
                     len(view.get_regions("scope_hunter"))
@@ -635,7 +649,8 @@ class SelectionScopeListener(sublime_plugin.EventListener):
         """Clean up regions or let thread know there was a modification."""
 
         enabled = sh_thread.is_enabled(view)
-        if not sh_thread.instant_scoper or not enabled:
+        view_enable = view.settings().get('scope_hunter.view_enable', False)
+        if (not sh_thread.instant_scoper and not view_enable) or not enabled:
             # clean up dirty highlights
             if enabled:
                 self.clear_regions(view)
