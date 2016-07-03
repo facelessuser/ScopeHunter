@@ -382,7 +382,7 @@ class GetSelectionScope(object):
 
         if (self.appearance_info or self.selector_info) and scheme_matcher is not None:
             try:
-                match = scheme_matcher.guess_color(self.view, pt, scope)
+                match = scheme_matcher.guess_color(scope)
                 color = match.fg
                 bgcolor = match.bg
                 color_sim = match.fg_simulated

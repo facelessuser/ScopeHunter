@@ -58,7 +58,7 @@ def sublime_format_path(pth):
 class ColorSchemeMatcher(object):
     """Determine color scheme colors and style for text in a Sublime view buffer."""
 
-    def __init__(self, scheme_file, ignore_gutter=False, track_dark_background=False, color_filter=None):
+    def __init__(self, scheme_file, color_filter=None):
         """Initialize."""
         if color_filter is None:
             color_filter = self.filter
@@ -73,12 +73,7 @@ class ColorSchemeMatcher(object):
             )
         )
         self.scheme_file = scheme_file
-        self.ignore_gutter = ignore_gutter
-        self.track_dark_background = track_dark_background
-        self.dark_lumens = None
-        self.lumens = None
         self.matched = {}
-        self.is_dark_theme = False
 
         self.parse_scheme()
 
@@ -97,31 +92,30 @@ class ColorSchemeMatcher(object):
                 break
 
         # Get general theme colors from color scheme file
-        self.bground, self.bground_sim = self.strip_color(
-            color_settings.get("background", '#FFFFFF'), simple_strip=True, bg=True
+        bground, bground_sim = self.strip_color(
+            color_settings.get("background", '#FFFFFF'), simple_strip=True
         )
-        if self.lumens <= 127:
-            self.is_dark_theme = True
-        self.fground, self.fground_sim = self.strip_color(color_settings.get("foreground", '#000000'))
-        self.sbground = self.strip_color(color_settings.get("selection", self.fground), bg=True)[0]
-        self.sbground_sim = self.strip_color(color_settings.get("selection", self.fground_sim), bg=True)[1]
-        self.sfground, self.sfground_sim = self.strip_color(color_settings.get("selectionForeground", None))
-        if not self.ignore_gutter:
-            self.gbground = self.strip_color(color_settings.get("gutter", self.bground), bg=True)[0]
-        else:
-            self.gbground = self.bground
-        if not self.ignore_gutter:
-            self.gbground_sim = self.strip_color(color_settings.get("gutter", self.bground_sim), bg=True)[1]
-        else:
-            self.gbground_sim = self.bground_sim
-        if not self.ignore_gutter:
-            self.gfground = self.strip_color(color_settings.get("gutterForeground", self.fground))[0]
-        else:
-            self.gfground = self.fground
-        if not self.ignore_gutter:
-            self.gfground_sim = self.strip_color(color_settings.get("gutterForeground", self.fground_sim))[1]
-        else:
-            self.gfground_sim = self.fground_sim
+
+        # Need to set background so other colors can simulate their transparency.
+        self.special_colors = {
+            "background": {'color': bground, 'color_simulated': bground_sim}
+        }
+
+        fground, fground_sim = self.strip_color(color_settings.get("foreground", '#000000'))
+        sbground = self.strip_color(color_settings.get("selection", fground))[0]
+        sbground_sim = self.strip_color(color_settings.get("selection", fground_sim))[1]
+        sfground, sfground_sim = self.strip_color(color_settings.get("selectionForeground", None))
+        gbground = self.strip_color(color_settings.get("gutter", bground))[0]
+        gbground_sim = self.strip_color(color_settings.get("gutter", bground_sim))[1]
+        gfground = self.strip_color(color_settings.get("gutterForeground", fground))[0]
+        gfground_sim = self.strip_color(color_settings.get("gutterForeground", fground_sim))[1]
+
+        self.special_colors["foreground"] = {'color': fground, 'color_simulated': fground_sim}
+        self.special_colors["background"] = {'color': bground, 'color_simulated': bground_sim}
+        self.special_colors["selectionForeground"] = {'color': sfground, 'color_simulated': sfground_sim}
+        self.special_colors["selection"] = {'color': sbground, 'color_simulated': sbground_sim}
+        self.special_colors["gutter"] = {'color': gbground, 'color_simulated': gbground_sim}
+        self.special_colors["gutterForeground"] = {'color': gfground, 'color_simulated': gfground_sim}
 
         # Create scope colors mapping from color scheme file
         self.colors = {}
@@ -130,7 +124,7 @@ class ColorSchemeMatcher(object):
             scope = item.get('scope', None)
             color = None
             style = []
-            if 'settings' in item:
+            if 'settings' in item and scope is not None:
                 color = item['settings'].get('foreground', None)
                 bgcolor = item['settings'].get('background', None)
                 if 'fontStyle' in item['settings']:
@@ -140,7 +134,7 @@ class ColorSchemeMatcher(object):
 
             if scope is not None and (color is not None or bgcolor is not None):
                 fg, fg_sim = self.strip_color(color)
-                bg, bg_sim = self.strip_color(bgcolor, bg=True)
+                bg, bg_sim = self.strip_color(bgcolor)
                 self.colors[scope] = {
                     "name": name,
                     "scope": scope,
@@ -151,7 +145,7 @@ class ColorSchemeMatcher(object):
                     "style": style
                 }
 
-    def strip_color(self, color, simple_strip=False, bg=False):
+    def strip_color(self, color, simple_strip=False):
         """
         Strip transparency from the color value.
 
@@ -165,33 +159,19 @@ class ColorSchemeMatcher(object):
 
         rgba = RGBA(color.replace(" ", ""))
         if not simple_strip:
-            rgba.apply_alpha(self.bground_sim if self.bground_sim != "" else "#FFFFFF")
-
-        self.lumens = rgba.get_luminance()
-        if self.track_dark_background and bg:
-            if self.dark_lumens is None or self.lumens < self.dark_lumens:
-                self.dark_lumens = self.lumens
+            bground = self.special_colors['background']['color_simulated']
+            rgba.apply_alpha(bground if bground != "" else "#FFFFFF")
 
         return color, rgba.get_rgb()
 
-    def get_general_colors(self, simulate_transparency=False):
+    def get_special_color(self, name, simulate_transparency=False):
         """
         Get the core colors (background, foreground) for the view and gutter.
 
         Get the visible look of the color by simulated transparency if requrested.
         """
-        if simulate_transparency:
-            return (
-                self.bground_sim, self.fground_sim, self.sbground_sim,
-                self.sfground_sim, self.gbground_sim, self.gfground_sim
-            )
-        else:
-            return self.bground, self.fground, self.sbground, self.sfground, self.gbground, self.gfground
 
-    def get_darkest_lumen(self):
-        """Get the darkest background lumen found."""
-
-        return self.dark_lumens
+        return self.special_colors.get(name, {}).get('color_simulated' if simulate_transparency else 'color')
 
     def get_plist_file(self):
         """Get the plist file used during the process."""
@@ -203,13 +183,26 @@ class ColorSchemeMatcher(object):
 
         return self.scheme_file
 
-    def guess_color(self, view, pt, scope_key):
-        """Guess the colors and style of the text for the given Sublime view pt."""
+    def guess_color(self, scope_key, selected=False, explicit_background=False):
+        """
+        Guess the colors and style of the text for the given Sublime scope.
 
-        color = self.fground
-        color_sim = self.fground_sim
-        bgcolor = self.bground
-        bgcolor_sim = self.bground_sim
+        By default, we always fall back to the schemes default background,
+        but if desired, we can show that no background was explicitly
+        specified by returning None.  This is done by enabling explicit_background.
+        This will only show backgrounds that were explicitly specified.
+
+        This was orginially introduced for mdpopups so that it would
+        know when a background was not needed.  This allowed mdpopups
+        to generate syntax highlighted code that could be overlayed on
+        block elements with different background colors and allow that
+        background would show through.
+        """
+
+        color = self.special_colors['foreground']['color']
+        color_sim = self.special_colors['foreground']['color_simulated']
+        bgcolor = self.special_colors['background']['color'] if not explicit_background else None
+        bgcolor_sim = self.special_colors['background']['color_simulated'] if not explicit_background else None
         style = set([])
         color_selector = SchemeSelectors("foreground", "foreground")
         bg_selector = SchemeSelectors("background", "background")
@@ -229,7 +222,7 @@ class ColorSchemeMatcher(object):
             best_match_fg = 0
             best_match_style = 0
             for key in self.colors:
-                match = view.score_selector(pt, key)
+                match = sublime.score_selector(scope_key, key)
                 if self.colors[key]["color"] is not None and match > best_match_fg:
                     best_match_fg = match
                     color = self.colors[key]["color"]
@@ -252,6 +245,12 @@ class ColorSchemeMatcher(object):
                     bgcolor = self.colors[key]["bgcolor"]
                     bgcolor_sim = self.colors[key]["bgcolor_simulated"]
                     bg_selector = SchemeSelectors(self.colors[key]["name"], self.colors[key]["scope"])
+
+            if len(style) == 0:
+                style = ""
+            else:
+                style = ' '.join(style)
+
             self.matched[scope_key] = {
                 "color": color,
                 "bgcolor": bgcolor,
@@ -264,10 +263,16 @@ class ColorSchemeMatcher(object):
                     "style": style_selectors
                 }
             }
-        if len(style) == 0:
-            style = "normal"
-        else:
-            style = ' '.join(style)
+
+        if selected:
+            if self.special_colors['selectionForeground']['color']:
+                color = self.special_colors['selectionForeground']['color']
+                color_sim = color = self.special_colors['selectionForeground']['color_simulated']
+                style = ''
+            if self.special_colors['selection']['color']:
+                bgcolor = self.special_colors['selection']['color']
+                bgcolor_sim = color = self.special_colors['selection']['color_simulated']
+
         return SchemeColors(
             color, color_sim, bgcolor, bgcolor_sim, style,
             color_selector, bg_selector, style_selectors
