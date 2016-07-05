@@ -11,10 +11,12 @@ import threading
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.scope_hunter_notify import notify, error
 import traceback
+from textwrap import dedent
 
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3080
 if TOOLTIP_SUPPORT:
     import mdpopups
+    RELATIVE_FONT_SUPPORT = mdpopups.version() >= (1, 7, 0)
 
 if 'sh_thread' not in globals():
     sh_thread = None
@@ -22,10 +24,20 @@ if 'sh_thread' not in globals():
 scheme_matcher = None
 sh_settings = {}
 
-ADD_CSS = '''
-.scope-hunter.content { margin: 0; padding: 0.5em; }
-.scope-hunter.small { font-size: 0.8em; }
-'''
+if RELATIVE_FONT_SUPPORT:
+    ADD_CSS = dedent(
+        '''
+        .scope-hunter.content { margin: 0; padding: 0.5em; }
+        .scope-hunter.small { font-size: {{'*.7'|relativesize('em')}}; }
+        '''
+    )
+else:
+    ADD_CSS = dedent(
+        '''
+        .scope-hunter.content { margin: 0; padding: 0.5em; }
+        .scope-hunter.small { font-size: 0.8em; }
+        '''
+    )
 
 # Scope Toolip Markdown
 SCOPE_HEADER = '## Scope\n'
