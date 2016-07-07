@@ -2,7 +2,7 @@
 Scope Hunter.
 
 Licensed under MIT
-Copyright (c) 2012 - 2015 Isaac Muse <isaacmuse@gmail.com>
+Copyright (c) 2012 - 2016 Isaac Muse <isaacmuse@gmail.com>
 """
 import sublime
 import sublime_plugin
@@ -24,7 +24,7 @@ if 'sh_thread' not in globals():
 scheme_matcher = None
 sh_settings = {}
 
-if RELATIVE_FONT_SUPPORT:
+if TOOLTIP_SUPPORT and RELATIVE_FONT_SUPPORT:
     ADD_CSS = dedent(
         '''
         .scope-hunter.content { margin: 0; padding: 0.5em; }
