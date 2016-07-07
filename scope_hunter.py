@@ -16,7 +16,7 @@ from textwrap import dedent
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3080
 if TOOLTIP_SUPPORT:
     import mdpopups
-    RELATIVE_FONT_SUPPORT = mdpopups.version() >= (1, 7, 0)
+    RELATIVE_FONT_SUPPORT = mdpopups.version() >= (1, 7, 2)
 
 if 'sh_thread' not in globals():
     sh_thread = None
@@ -28,7 +28,7 @@ if RELATIVE_FONT_SUPPORT:
     ADD_CSS = dedent(
         '''
         .scope-hunter.content { margin: 0; padding: 0.5em; }
-        .scope-hunter.small { font-size: {{'*.7'|relativesize('em')}}; }
+        .scope-hunter.small { font-size: {{'*0.7px'|relativesize}}; }
         '''
     )
 else:
