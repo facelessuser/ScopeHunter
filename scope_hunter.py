@@ -582,7 +582,7 @@ class GetSelectionScope(object):
                 self.view,
                 '<div class="scope-hunter content">%s</div>' % md,
                 css=ADD_CSS,
-                max_width=500, on_navigate=self.on_navigate
+                max_width=1000, on_navigate=self.on_navigate
             )
 
 get_selection_scopes = GetSelectionScope()
