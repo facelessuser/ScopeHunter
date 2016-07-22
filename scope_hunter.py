@@ -201,15 +201,21 @@ def copy_data(bfr, label, index, copy_format=None):
         notify("Copied: %s" % label)
 
 
-def get_color_box(color, caption, link, index):
+def get_color_box(view, color, caption, link, index):
     """Display an HTML color box using the given color."""
 
     border = '#CCCCCC'
     border2 = '#333333'
+    padding = int(view.settings().get('line_padding_top', 0))
+    padding += int(view.settings().get('line_padding_bottom', 0))
+    box_height = int(view.line_height()) - padding - 6
+    check_size = int((box_height - 4) / 8)
+    if check_size < 2:
+        check_size = 2
     return (
         COLOR_BOX % (
             caption,
-            mdpopups.color_box([color], border, border2, height=18, width=18, border_size=2),
+            mdpopups.color_box([color], border, border2, height=box_height, width=box_height, border_size=check_size),
             color.upper(),
             link,
             index
@@ -321,12 +327,12 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             self.scope_bfr_tool.append(APPEARANCE_HEADER)
-            self.scope_bfr_tool.append(get_color_box(color, 'fg', 'copy-fg', self.next_index()))
+            self.scope_bfr_tool.append(get_color_box(self.view, color, 'fg', 'copy-fg', self.next_index()))
             if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
                 self.scope_bfr_tool.append(
                     get_color_box(color_sim, 'fg (simulated alpha)', 'copy-fg-sim', self.next_index())
                 )
-            self.scope_bfr_tool.append(get_color_box(bgcolor, 'bg', 'copy-bg', self.next_index()))
+            self.scope_bfr_tool.append(get_color_box(self.view, bgcolor, 'bg', 'copy-bg', self.next_index()))
             if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
                 self.scope_bfr_tool.append(
                     get_color_box(bgcolor_sim, 'bg (simulated alpha)', 'copy-bg-sim', self.next_index())
