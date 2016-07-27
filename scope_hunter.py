@@ -221,14 +221,16 @@ def get_color_box(view, color, caption, link, index):
     border2 = '#333333'
     padding = int(view.settings().get('line_padding_top', 0))
     padding += int(view.settings().get('line_padding_bottom', 0))
-    box_height = int(view.line_height()) - padding - 6
-    check_size = int((box_height - 4) / 8)
+    box_height = int(view.line_height()) - padding
+    check_size = int((box_height - 4) / 4)
     if check_size < 2:
         check_size = 2
     return (
         COLOR_BOX % (
             caption,
-            mdpopups.color_box([color], border, border2, height=box_height, width=box_height, border_size=check_size),
+            mdpopups.color_box([color], border, border2, height=box_height,
+                width=box_height, border_size=2, check_size=check_size
+            ),
             color.upper(),
             link,
             index
