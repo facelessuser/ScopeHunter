@@ -17,6 +17,7 @@ TOOLTIP_SUPPORT = int(sublime.version()) >= 3080
 if TOOLTIP_SUPPORT:
     import mdpopups
     RELATIVE_FONT_SUPPORT = mdpopups.version() >= (1, 7, 2)
+    BETTER_RELATIVE_FONT_SUPPORT = mdpopups.version() >= (1, 8, 0)
 
 if 'sh_thread' not in globals():
     sh_thread = None
@@ -24,7 +25,19 @@ if 'sh_thread' not in globals():
 scheme_matcher = None
 sh_settings = {}
 
-if TOOLTIP_SUPPORT and RELATIVE_FONT_SUPPORT:
+if TOOLTIP_SUPPORT and BETTER_RELATIVE_FONT_SUPPORT:
+    ADD_CSS = dedent(
+        '''
+        {% if var.sublime_version >= 3119 %}
+        .scope-hunter.content { margin: 0; padding: 0.5rem; }
+        .scope-hunter.small { font-size: 0.7rem; }
+        {% else %}
+        .scope-hunter.content { margin: 0; padding: 0.5em; }
+        .scope-hunter.small { font-size: {{'*0.7px'|relativesize}}; }
+        {% endif %}
+        '''
+    )
+elif TOOLTIP_SUPPORT and RELATIVE_FONT_SUPPORT:
     ADD_CSS = dedent(
         '''
         .scope-hunter.content { margin: 0; padding: 0.5em; }
