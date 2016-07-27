@@ -228,7 +228,8 @@ def get_color_box(view, color, caption, link, index):
     return (
         COLOR_BOX % (
             caption,
-            mdpopups.color_box([color], border, border2, height=box_height,
+            mdpopups.color_box(
+                [color], border, border2, height=box_height,
                 width=box_height, border_size=2, check_size=check_size
             ),
             color.upper(),
