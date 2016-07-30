@@ -16,6 +16,7 @@ from textwrap import dedent
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3080
 if TOOLTIP_SUPPORT:
     import mdpopups
+    import jinja2
     RELATIVE_FONT_SUPPORT = mdpopups.version() >= (1, 7, 2)
     BETTER_RELATIVE_FONT_SUPPORT = mdpopups.version() >= (1, 8, 0)
 
@@ -52,75 +53,72 @@ else:
         '''
     )
 
-# Scope Toolip Markdown
-SCOPE_HEADER = '## Scope\n'
-SCOPES = '''
-%s
-[(copy)](copy-scope:%d){: .scope-hunter .small}
-'''
+POPUP = '''
+## Scope
+%(scope)s
+[(copy)](copy-scope:%(scope_index)d){: .scope-hunter .small}
 
-SCOPE_EXTENT_HEADER = '\n## Scope Extent\n'
-PTS = '''
-**pts:**{: .keyword} (%d, %d)
-[(copy)](copy-points:%d){: .scope-hunter .small}
-'''
-CHAR_LINE = '''
-**line/char:**{: .keyword} (**Line:** %d **Char:** %d, **Line:** %d **Char:** %d)
-[(copy)](copy-line-char:%d){: .scope-hunter .small}
-'''
+<!-- if var.pt_extent or var.rowcol_extent -->
+## Scope Extent
+  <!-- if var.pt_extent -->
+**pts:**{: .keyword} (%(extent_start)d, %(extent_end)d)
+[(copy)](copy-points:%(extent_pt_index)d){: .scope-hunter .small}
+  <!-- endif -->
+  <!-- if var.pt_extent or var.rowcol_extent -->
+**line/char:**{: .keyword} (**Line:** %(l_start)d **Char:** %(c_start)d, **Line:** %(l_end)d **Char:** %(c_end)d)
+[(copy)](copy-line-char:%(line_char_index)d){: .scope-hunter .small}
+  <!-- endif -->
+<!-- endif -->
 
-APPEARANCE_HEADER = '\n## Appearance\n'
-COLOR_BOX = '''
-**%s:**{: .keyword} %s&nbsp;%s
-[(copy)](%s:%d){: .scope-hunter .small}
-'''
-FONT_STYLE = '''
-**style:**{: .keyword} <%(tag)s>%(type)s</%(tag)s>
-[(copy)](copy-style:%(index)d){: .scope-hunter .small}
-'''
+<!-- if var.appearance -->
+## Appearance
+**%(fg)s:**{: .keyword} %(fg_preview)s %(fg_color)s
+[(copy)](%(fg_link)s:%(fg_index)d){: .scope-hunter .small}
+  <!-- if var.fg_sim -->
+**%(fg_sim)s:**{: .keyword} %(fg_sim_preview)s %(fg_sim_color)s
+[(copy)](%(fg_sim_link)s:%(fg_sim_index)d){: .scope-hunter .small}
+  <!-- endif -->
+**%(bg)s:**{: .keyword} %(bg_preview)s %(bg_color)s
+[(copy)](%(bg_link)s:%(bg_index)d){: .scope-hunter .small}
+  <!-- if var.bg_sim -->
+**%(bg_sim)s:**{: .keyword} %(bg_sim_preview)s %(bg_sim_color)s
+[(copy)](%(bg_sim_link)s:%(bg_sim_index)d){: .scope-hunter .small}
+  <!-- endif -->
+**style:**{: .keyword} <%(style_tag)s>%(style)s</%(style_tag)s>
+[(copy)](copy-style:%(style_index)d){: .scope-hunter .small}
+<!-- endif -->
 
-SELECTOR_HEADER = '\n## Selectors\n'
-FG_NAME = '''
-**fg name:**{: .keyword} %s
-[(copy)](copy-fg-sel-name:%d){: .scope-hunter .small}
-'''
-FG_SCOPE = '''
-**fg scope:**{: .keyword} %s
-[(copy)](copy-fg-sel-scope:%d){: .scope-hunter .small}
-'''
-BG_NAME = '''
-**bg name:**{: .keyword} %s
-[(copy)](copy-bg-sel-name:%d){: .scope-hunter .small}
-'''
-BG_SCOPE = '''
-**bg scope:**{: .keyword} %s
-[(copy)](copy-bg-sel-scope:%d){: .scope-hunter .small}
-'''
-BOLD_NAME = '''
-**bold name:**{: .keyword} %s
-[(copy)](copy-bold-sel-name:%d){: .scope-hunter .small}
-'''
-BOLD_SCOPE = '''
-**bold scope:**{: .keyword} %s
-[(copy)](copy-bold-sel-scope:%d){: .scope-hunter .small}
-'''
-ITALIC_NAME = '''
-**italic name:**{: .keyword} %s
-[(copy)](copy-italic-sel-name:%d){: .scope-hunter .small}
-'''
-ITALIC_SCOPE = '''
-**italic scope:**{: .keyword} %s
-[(copy)](copy-italic-sel-scope:%d){: .scope-hunter .small}
-'''
+<!-- if var.selectors -->
+## Selectors
+**fg name:**{: .keyword} %(fg_name)s
+[(copy)](copy-fg-sel-name:%(fg_name_index)d){: .scope-hunter .small}
+**fg scope:**{: .keyword} %(fg_scope)s
+[(copy)](copy-fg-sel-scope:%(fg_scope_index)d){: .scope-hunter .small}
+**bg name:**{: .keyword} %(bg_name)s
+[(copy)](copy-bg-sel-name:%(bg_name_index)d){: .scope-hunter .small}
+**bg scope:**{: .keyword} %(bg_scope)s
+[(copy)](copy-bg-sel-scope:%(bg_scope_index)d){: .scope-hunter .small}
+  <!-- if var.bold -->
+**bold name:**{: .keyword} %(bold_name)s
+[(copy)](copy-bold-sel-name:%(bold_name_index)d){: .scope-hunter .small}
+**bold scope:**{: .keyword} %(bold_scope)s
+[(copy)](copy-bold-sel-scope:%(bold_scope_index)d){: .scope-hunter .small}
+  <!-- endif -->
+  <!-- if var.italic -->
+**italic name:**{: .keyword} %(italic_name)s
+[(copy)](copy-italic-sel-name:%(italic_name_index)d){: .scope-hunter .small}
+**italic scope:**{: .keyword} %(italic_scope)s
+[(copy)](copy-italic-sel-scope:%(italic_scope_index)d){: .scope-hunter .small}
+  <!-- endif -->
+<!-- endif -->
 
-FILE_HEADER = '\n## Files\n'
-SCHEME_FILE = '''
-**scheme:**{: .keyword} [%s](scheme)
-[(copy)](copy-scheme:%d){: .scope-hunter .small}
-'''
-SYNTAX_FILE = '''
-**syntax:**{: .keyword} [%s](syntax)
-[(copy)](copy-syntax:%d){: .scope-hunter .small}
+<!-- if var.files -->
+## Files
+**scheme:**{: .keyword} [%(scheme)s](scheme)
+[(copy)](copy-scheme:%(scheme_index)d){: .scope-hunter .small}
+**syntax:**{: .keyword} [%(syntax)s](syntax)
+[(copy)](copy-syntax:%(syntax_index)d){: .scope-hunter .small}
+<!-- endif -->
 '''
 
 COPY_ALL = '''
@@ -214,31 +212,6 @@ def copy_data(bfr, label, index, copy_format=None):
         notify("Copied: %s" % label)
 
 
-def get_color_box(view, color, caption, link, index):
-    """Display an HTML color box using the given color."""
-
-    border = '#CCCCCC'
-    border2 = '#333333'
-    padding = int(view.settings().get('line_padding_top', 0))
-    padding += int(view.settings().get('line_padding_bottom', 0))
-    box_height = int(view.line_height()) - padding
-    check_size = int((box_height - 4) / 4)
-    if check_size < 2:
-        check_size = 2
-    return (
-        COLOR_BOX % (
-            caption,
-            mdpopups.color_box(
-                [color], border, border2, height=box_height,
-                width=box_height, border_size=2, check_size=check_size
-            ),
-            color.upper(),
-            link,
-            index
-        )
-    )
-
-
 class ScopeHunterEditCommand(sublime_plugin.TextCommand):
     """Edit a view."""
 
@@ -262,11 +235,110 @@ class ScopeHunterEditCommand(sublime_plugin.TextCommand):
 class GetSelectionScope(object):
     """Get the scope and the selection(s)."""
 
+    def init_template_vars(self):
+        """Initialize template variables."""
+
+        self.template_strings = {
+            "scope": '',
+            "scope_index": 0,
+            "extent_start": 0,
+            "extent_end": 0,
+            "extent_pt_index": 0,
+            "l_start": 0,
+            "c_start": 0,
+            "l_end": 0,
+            "c_end": 0,
+            "line_char_index": 0,
+            "fg": '',
+            "fg_preview": '',
+            "fg_color": '',
+            "fg_link": '',
+            "fg_index": 0,
+            "fg_sim": '',
+            "fg_sim_preview": '',
+            "fg_sim_color": '',
+            "fg_sim_link": '',
+            "fg_sim_index": 0,
+            "bg": '',
+            "bg_preview": '',
+            "bg_color": '',
+            "bg_link": '',
+            "bg_index": 0,
+            "bg_sim": '',
+            "bg_sim_preview": '',
+            "bg_sim_color": '',
+            "bg_sim_link": '',
+            "bg_sim_index": 0,
+            "style_tag": '',
+            "style": '',
+            "style_index": 0,
+            "fg_name": '',
+            "fg_name_index": 0,
+            "fg_scope": '',
+            "fg_scope_index": 0,
+            "bg_name": '',
+            "bg_name_index": 0,
+            "bg_scope": '',
+            "bg_scope_index": 0,
+            "bold_name": '',
+            "bold_name_index": 0,
+            "bold_scope": '',
+            "bold_scope_index": 0,
+            "italic_name": '',
+            "italic_name_index": 0,
+            "italic_scope": '',
+            "italic_scope_index": 0,
+            "scheme": '',
+            "scheme_index": 0,
+            "syntax": '',
+            "syntax_index": 0
+        }
+        self.template_vars = {
+            "appearance": False,
+            "fg_sim": False,
+            "bg_sim": False,
+            "files": False,
+            "selectors": False,
+            "bold": False,
+            "bold": False,
+            "pt_extent": False,
+            "rowcol_extent": False
+        }
+
+    def apply_template(self):
+        """Apply template."""
+
+        env = jinja2.Environment(
+            block_start_string='<!--', block_end_string='-->',
+            trim_blocks=True, lstrip_blocks=True
+        )
+        return env.from_string(POPUP % self.template_strings).render(var=self.template_vars)
+
     def next_index(self):
         """Get next index into scope buffer."""
 
         self.index += 1
         return self.index
+
+    def get_color_box(self, color, key, caption, link, index):
+        """Display an HTML color box using the given color."""
+
+        border = '#CCCCCC'
+        border2 = '#333333'
+        padding = int(self.view.settings().get('line_padding_top', 0))
+        padding += int(self.view.settings().get('line_padding_bottom', 0))
+        box_height = int(self.view.line_height()) - padding - 2
+        check_size = int((box_height - 4) / 4)
+        if check_size < 2:
+            check_size = 2
+        self.template_strings[key] = caption
+        self.template_strings['%s_preview' % key] = mdpopups.color_box(
+            [color], border, border2, height=box_height,
+            width=box_height, border_size=2, check_size=check_size
+        )
+        self.template_strings['%s_color' % key] = color.upper()
+        self.template_strings['%s_link' % key] = link
+        self.template_strings['%s_index' % key] = index
 
     def get_extents(self, pt):
         """Get the scope extent via the sublime API."""
@@ -301,11 +373,18 @@ class GetSelectionScope(object):
                 )
 
             if self.show_popup:
-                self.scope_bfr_tool.append(SCOPE_EXTENT_HEADER)
                 if self.points_info:
-                    self.scope_bfr_tool.append(PTS % (pts.begin(), pts.end(), self.next_index()))
+                    self.template_vars["pt_extent"] = True
+                    self.template_strings["extent_start"] = pts.begin()
+                    self.template_strings["extent_end"] = pts.end()
+                    self.template_strings["extent_pt_index"] = self.next_index()
                 if self.rowcol_info:
-                    self.scope_bfr_tool.append(CHAR_LINE % (row1 + 1, col1 + 1, row2 + 1, col2 + 1, self.next_index()))
+                    self.template_vars["rowcol_extent"] = True
+                    self.template_strings["l_start"] = row1 + 1
+                    self.template_strings["l_end"] = row2 + 1
+                    self.template_strings["c_start"] = col1 + 1
+                    self.template_strings["c_end"] = col2 + 1
+                    self.template_strings["line_char_index"] = self.next_index()
 
     def get_scope(self, pt):
         """Get the scope at the cursor."""
@@ -323,8 +402,8 @@ class GetSelectionScope(object):
         self.scope_bfr.append(ENTRY % (SCOPE_KEY + ':', self.view.scope_name(pt).strip().replace(" ", spacing)))
 
         if self.show_popup:
-            self.scope_bfr_tool.append(SCOPE_HEADER)
-            self.scope_bfr_tool.append(SCOPES % (self.view.scope_name(pt).strip(), self.next_index()))
+            self.template_strings['scope'] = self.view.scope_name(pt).strip()
+            self.template_strings['scope_index'] = self.next_index()
 
         return scope
 
@@ -342,17 +421,15 @@ class GetSelectionScope(object):
         self.scope_bfr.append(ENTRY % (STYLE_KEY + ":", style))
 
         if self.show_popup:
-            self.scope_bfr_tool.append(APPEARANCE_HEADER)
-            self.scope_bfr_tool.append(get_color_box(self.view, color, 'fg', 'copy-fg', self.next_index()))
+            self.template_vars['appearance'] = True
+            self.get_color_box(color, 'fg', 'fg', 'copy-fg', self.next_index())
             if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
-                self.scope_bfr_tool.append(
-                    get_color_box(color_sim, 'fg (simulated alpha)', 'copy-fg-sim', self.next_index())
-                )
-            self.scope_bfr_tool.append(get_color_box(self.view, bgcolor, 'bg', 'copy-bg', self.next_index()))
+                self.template_vars['fg_sim'] = True
+                self.get_color_box(color_sim, 'fg_sim', 'fg (simulated alpha)', 'copy-fg-sim', self.next_index())
+            self.get_color_box(bgcolor, 'bg', 'bg', 'copy-bg', self.next_index())
             if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
-                self.scope_bfr_tool.append(
-                    get_color_box(bgcolor_sim, 'bg (simulated alpha)', 'copy-bg-sim', self.next_index())
-                )
+                self.template_vars['bg_sim'] = True
+                self.get_color_box(bgcolor_sim, 'bg_sim', 'bg (simulated alpha)', 'copy-bg-sim', self.next_index())
 
             if style == "bold":
                 tag = "b"
@@ -362,7 +439,10 @@ class GetSelectionScope(object):
                 tag = "u"
             else:
                 tag = "span"
-            self.scope_bfr_tool.append(FONT_STYLE % {"type": style, "tag": tag, "index": self.next_index()})
+                style = "normal"
+            self.template_strings["style_tag"] = tag
+            self.template_strings["style"] = style
+            self.template_strings["style_index"] = self.next_index()
 
     def get_scheme_syntax(self):
         """Get color scheme and syntax file path."""
@@ -373,9 +453,11 @@ class GetSelectionScope(object):
         self.scope_bfr.append(ENTRY % (SYNTAX_KEY + ":", self.syntax_file))
 
         if self.show_popup:
-            self.scope_bfr_tool.append(FILE_HEADER)
-            self.scope_bfr_tool.append(SCHEME_FILE % (self.scheme_file, self.next_index()))
-            self.scope_bfr_tool.append(SYNTAX_FILE % (self.syntax_file, self.next_index()))
+            self.template_vars['files'] = True
+            self.template_strings["scheme"] = self.scheme_file
+            self.template_strings["scheme_index"] = self.next_index()
+            self.template_strings["syntax"] = self.syntax_file
+            self.template_strings["syntax_index"] = self.next_index()
 
     def get_selectors(self, color_selector, bg_selector, style_selectors):
         """Get the selectors used to determine color and/or style."""
@@ -393,18 +475,27 @@ class GetSelectionScope(object):
             self.scope_bfr.append(ENTRY % (ITALIC_SCOPE_KEY + ":", style_selectors["italic"].scope))
 
         if self.show_popup:
-            self.scope_bfr_tool.append(SELECTOR_HEADER)
-            self.scope_bfr_tool.append(FG_NAME % (color_selector.name, self.next_index()))
-            self.scope_bfr_tool.append(FG_SCOPE % (color_selector.scope, self.next_index()))
-            self.scope_bfr_tool.append(BG_NAME % (bg_selector.name, self.next_index()))
-            self.scope_bfr_tool.append(BG_SCOPE % (bg_selector.scope, self.next_index()))
+            self.template_vars['selectors'] = True
+            self.template_strings['fg_name'] = color_selector.name
+            self.template_strings['fg_name_index'] = self.next_index()
+            self.template_strings['fg_scope'] = color_selector.scope
+            self.template_strings['fg_scope_index'] = self.next_index()
+            self.template_strings['bg_name'] = bg_selector.name
+            self.template_strings['bg_name_index'] = self.next_index()
+            self.template_strings['bg_scope'] = bg_selector.scope
+            self.template_strings['bg_scope_index'] = self.next_index()
             if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
-                self.scope_bfr_tool.append(BOLD_NAME % (style_selectors["bold"].name, self.next_index()))
-                self.scope_bfr_tool.append(BOLD_SCOPE % (style_selectors["bold"].scope, self.next_index()))
+                self.template_vars['bold'] = True
+                self.template_strings['bold_name'] = style_selectors["bold"].name
+                self.template_strings['bold_name_index'] = self.next_index()
+                self.template_strings['bold_scope'] = style_selectors["bold"].scope
+                self.template_strings['bold_scope_index'] = self.next_index()
             if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
-                self.scope_bfr_tool.append(ITALIC_NAME % (style_selectors["italic"].name, self.next_index()))
-                self.scope_bfr_tool.append(ITALIC_SCOPE % (style_selectors["italic"].scope, self.next_index()))
-            self.scope_bfr_tool.append('\n')
+                self.template_vars['bold'] = True
+                self.template_strings['italic_name'] = style_selectors["italic"].name
+                self.template_strings['italic_name_index'] = self.next_index()
+                self.template_strings['italic_scope'] = style_selectors["italic"].scope
+                self.template_strings['italic_scope_index'] = self.next_index()
 
     def get_info(self, pt):
         """Get scope related info."""
@@ -443,6 +534,9 @@ class GetSelectionScope(object):
         # Divider
         self.next_index()
         self.scope_bfr.append("------")
+
+        if self.show_popup:
+            self.scope_bfr_tool.append(self.apply_template())
 
     def on_navigate(self, href):
         """Exceute link callback."""
@@ -558,9 +652,11 @@ class GetSelectionScope(object):
                 for sel in self.view.sel():
                     if count > 0 and self.show_popup:
                         self.scope_bfr_tool.append('\n---\n')
+                    self.init_template_vars()
                     self.get_info(sel.b)
                     count += 1
             else:
+                self.init_template_vars()
                 self.get_info(self.view.sel()[0].b)
 
         # Copy scopes to clipboard
