@@ -33,8 +33,9 @@ if TOOLTIP_SUPPORT:
         .scope-hunter .small { font-size: 0.7rem; }
         .scope-hunter .header { {{'.string'|css('color')}} }
         {%- else %}
-        .scope-hunter.content { margin: 0; padding: 0.5em; }
-        .scope-hunter .small { font-size: {{'*0.7px'|relativesize}}; }
+        .content { margin: 0; padding: 0.5em; }
+        .small { font-size: {{'*0.7px'|relativesize}}; }
+        .header { {{'.string'|css('color')}} }
         {%- endif %}
         '''
     )
