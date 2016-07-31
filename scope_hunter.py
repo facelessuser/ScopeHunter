@@ -681,7 +681,9 @@ class GetSelectionScope(object):
                 tail = COPY_ALL
             else:
                 tail = ''
-            md = '<div class="scope-hunter content">%s</div>' % mdpopups.md2html(self.view, ''.join(self.scope_bfr_tool) + tail)
+            md = '<div class="scope-hunter content">%s</div>' % mdpopups.md2html(
+                self.view, ''.join(self.scope_bfr_tool) + tail
+            )
             mdpopups.show_popup(
                 self.view,
                 md,

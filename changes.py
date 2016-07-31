@@ -10,6 +10,7 @@ CSS = '''
 .scope-hunter blockquote { {{'.comment'|css('color')}} }
 '''
 
+
 class ScopeHunterChangesCommand(sublime_plugin.WindowCommand):
     """Changelog command."""
 
