@@ -1,18 +1,14 @@
 [
     {
-        "caption": "Preferences",
-        "mnemonic": "n",
         "id": "preferences",
         "children":
         [
             {
                 "caption": "Package Settings",
-                "mnemonic": "P",
                 "id": "package-settings",
                 "children":
                 [
                     {
-                        "id": "ScopeHunter",
                         "caption": "ScopeHunter",
                         "children":
                         [
@@ -29,7 +25,18 @@
                                     "file": "${packages}/User/scope_hunter.sublime-settings"
                                 },
                                 "caption": "Settings – User"
-                            }
+                            },
+                            { "caption": "-" },
+                            {
+                                "caption": "Changelog",
+                                "command": "scope_hunter_changes"
+                            },
+                            { "caption": "-" },
+                            {
+                                "caption": "Support Info",
+                                "command": "scope_hunter_support_info"
+                            },
+                            { "caption": "-" }
                         ]
                     }
                 ]
