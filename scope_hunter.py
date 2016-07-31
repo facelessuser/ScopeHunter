@@ -12,13 +12,12 @@ from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.scope_hunter_notify import notify, error
 import traceback
 from textwrap import dedent
+from ScopeHunter import support
 
+LATEST_SUPPORTED_MDPOPUPS = (1, 9, 0)
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3080
 if TOOLTIP_SUPPORT:
     import mdpopups
-    import jinja2
-    RELATIVE_FONT_SUPPORT = mdpopups.version() >= (1, 7, 2)
-    BETTER_RELATIVE_FONT_SUPPORT = mdpopups.version() >= (1, 8, 0)
 
 if 'sh_thread' not in globals():
     sh_thread = None
@@ -26,105 +25,91 @@ if 'sh_thread' not in globals():
 scheme_matcher = None
 sh_settings = {}
 
-if TOOLTIP_SUPPORT and BETTER_RELATIVE_FONT_SUPPORT:
+if TOOLTIP_SUPPORT:
     ADD_CSS = dedent(
         '''
-        {% if var.sublime_version >= 3119 %}
-        .scope-hunter.content { margin: 0; padding: 0.5rem; }
-        .scope-hunter.small { font-size: 0.7rem; }
-        {% else %}
+        {%- if var.sublime_version >= 3119 %}
+        .scope-hunter.content { padding: 0.5rem; }
+        .scope-hunter .small { font-size: 0.7rem; }
+        .scope-hunter .header { {{'.string'|css('color')}} }
+        {%- else %}
         .scope-hunter.content { margin: 0; padding: 0.5em; }
-        .scope-hunter.small { font-size: {{'*0.7px'|relativesize}}; }
-        {% endif %}
-        '''
-    )
-elif TOOLTIP_SUPPORT and RELATIVE_FONT_SUPPORT:
-    ADD_CSS = dedent(
-        '''
-        .scope-hunter.content { margin: 0; padding: 0.5em; }
-        .scope-hunter.small { font-size: {{'*0.7px'|relativesize}}; }
-        '''
-    )
-else:
-    ADD_CSS = dedent(
-        '''
-        .scope-hunter.content { margin: 0; padding: 0.5em; }
-        .scope-hunter.small { font-size: 0.8em; }
+        .scope-hunter .small { font-size: {{'*0.7px'|relativesize}}; }
+        {%- endif %}
         '''
     )
 
 POPUP = '''
-## Scope
+## Scope {: .header}
 %(scope)s
-[(copy)](copy-scope:%(scope_index)d){: .scope-hunter .small}
+[(copy)](copy-scope:%(scope_index)d){: .small}
 
 <!-- if var.pt_extent or var.rowcol_extent -->
-## Scope Extent
+## Scope Extent {: .header}
   <!-- if var.pt_extent -->
 **pts:**{: .keyword} (%(extent_start)d, %(extent_end)d)
-[(copy)](copy-points:%(extent_pt_index)d){: .scope-hunter .small}
+[(copy)](copy-points:%(extent_pt_index)d){: .small}
   <!-- endif -->
   <!-- if var.pt_extent or var.rowcol_extent -->
 **line/char:**{: .keyword} (**Line:** %(l_start)d **Char:** %(c_start)d, **Line:** %(l_end)d **Char:** %(c_end)d)
-[(copy)](copy-line-char:%(line_char_index)d){: .scope-hunter .small}
+[(copy)](copy-line-char:%(line_char_index)d){: .small}
   <!-- endif -->
 <!-- endif -->
 
 <!-- if var.appearance -->
-## Appearance
+## Appearance {: .header}
 **%(fg)s:**{: .keyword} %(fg_preview)s %(fg_color)s
-[(copy)](%(fg_link)s:%(fg_index)d){: .scope-hunter .small}
+[(copy)](%(fg_link)s:%(fg_index)d){: .small}
   <!-- if var.fg_sim -->
 **%(fg_sim)s:**{: .keyword} %(fg_sim_preview)s %(fg_sim_color)s
-[(copy)](%(fg_sim_link)s:%(fg_sim_index)d){: .scope-hunter .small}
+[(copy)](%(fg_sim_link)s:%(fg_sim_index)d){: .small}
   <!-- endif -->
 **%(bg)s:**{: .keyword} %(bg_preview)s %(bg_color)s
-[(copy)](%(bg_link)s:%(bg_index)d){: .scope-hunter .small}
+[(copy)](%(bg_link)s:%(bg_index)d){: .small}
   <!-- if var.bg_sim -->
 **%(bg_sim)s:**{: .keyword} %(bg_sim_preview)s %(bg_sim_color)s
 [(copy)](%(bg_sim_link)s:%(bg_sim_index)d){: .scope-hunter .small}
   <!-- endif -->
 **style:**{: .keyword} <%(style_tag)s>%(style)s</%(style_tag)s>
-[(copy)](copy-style:%(style_index)d){: .scope-hunter .small}
+[(copy)](copy-style:%(style_index)d){: .small}
 <!-- endif -->
 
 <!-- if var.selectors -->
-## Selectors
+## Selectors {: .header}
 **fg name:**{: .keyword} %(fg_name)s
-[(copy)](copy-fg-sel-name:%(fg_name_index)d){: .scope-hunter .small}
+[(copy)](copy-fg-sel-name:%(fg_name_index)d){: .small}
 **fg scope:**{: .keyword} %(fg_scope)s
-[(copy)](copy-fg-sel-scope:%(fg_scope_index)d){: .scope-hunter .small}
+[(copy)](copy-fg-sel-scope:%(fg_scope_index)d){: .small}
 **bg name:**{: .keyword} %(bg_name)s
-[(copy)](copy-bg-sel-name:%(bg_name_index)d){: .scope-hunter .small}
+[(copy)](copy-bg-sel-name:%(bg_name_index)d){: .small}
 **bg scope:**{: .keyword} %(bg_scope)s
-[(copy)](copy-bg-sel-scope:%(bg_scope_index)d){: .scope-hunter .small}
+[(copy)](copy-bg-sel-scope:%(bg_scope_index)d){: .small}
   <!-- if var.bold -->
 **bold name:**{: .keyword} %(bold_name)s
-[(copy)](copy-bold-sel-name:%(bold_name_index)d){: .scope-hunter .small}
+[(copy)](copy-bold-sel-name:%(bold_name_index)d){: .small}
 **bold scope:**{: .keyword} %(bold_scope)s
-[(copy)](copy-bold-sel-scope:%(bold_scope_index)d){: .scope-hunter .small}
+[(copy)](copy-bold-sel-scope:%(bold_scope_index)d){: .small}
   <!-- endif -->
   <!-- if var.italic -->
 **italic name:**{: .keyword} %(italic_name)s
-[(copy)](copy-italic-sel-name:%(italic_name_index)d){: .scope-hunter .small}
+[(copy)](copy-italic-sel-name:%(italic_name_index)d){: .small}
 **italic scope:**{: .keyword} %(italic_scope)s
-[(copy)](copy-italic-sel-scope:%(italic_scope_index)d){: .scope-hunter .small}
+[(copy)](copy-italic-sel-scope:%(italic_scope_index)d){: .small}
   <!-- endif -->
 <!-- endif -->
 
 <!-- if var.files -->
-## Files
+## Files {: .header}
 **scheme:**{: .keyword} [%(scheme)s](scheme)
-[(copy)](copy-scheme:%(scheme_index)d){: .scope-hunter .small}
+[(copy)](copy-scheme:%(scheme_index)d){: .small}
 **syntax:**{: .keyword} [%(syntax)s](syntax)
-[(copy)](copy-syntax:%(syntax_index)d){: .scope-hunter .small}
-<!-- endif -->
-'''
+[(copy)](copy-syntax:%(syntax_index)d){: .small}
+<!-- endif -->'''
 
 COPY_ALL = '''
 ---
 
-[(copy all)](copy-all){: .scope-hunter .small}
+[(copy all)](copy-all){: .small}
 '''
 
 # Text Entry
@@ -695,10 +680,10 @@ class GetSelectionScope(object):
                 tail = COPY_ALL
             else:
                 tail = ''
-            md = mdpopups.md2html(self.view, ''.join(self.scope_bfr_tool) + tail)
+            md = '<div class="scope-hunter content">%s</div>' % mdpopups.md2html(self.view, ''.join(self.scope_bfr_tool) + tail)
             mdpopups.show_popup(
                 self.view,
-                '<div class="scope-hunter content">%s</div>' % md,
+                md,
                 css=ADD_CSS,
                 max_width=1000, on_navigate=self.on_navigate
             )
@@ -930,6 +915,18 @@ def plugin_loaded():
     """Setup plugin."""
 
     init_plugin()
+
+    try:
+        from package_control import events
+
+        settings = sublime.load_settings('scope_hunter.sublime-settings')
+        if TOOLTIP_SUPPORT and events.post_upgrade(support.__pc_name__):
+            if not LATEST_SUPPORTED_MDPOPUPS and settings.get('upgrade_dependencies', True):
+                window = sublime.active_window()
+                if window:
+                    window.run_command('satisfy_dependencies')
+    except ImportError:
+        log('Could not import Package Control')
 
 
 def plugin_unloaded():
