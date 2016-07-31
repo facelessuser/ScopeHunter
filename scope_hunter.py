@@ -18,6 +18,7 @@ LATEST_SUPPORTED_MDPOPUPS = (1, 9, 0)
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3080
 if TOOLTIP_SUPPORT:
     import mdpopups
+    import jinja2
 
 if 'sh_thread' not in globals():
     sh_thread = None
