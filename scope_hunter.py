@@ -18,7 +18,6 @@ LATEST_SUPPORTED_MDPOPUPS = (1, 9, 0)
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3080
 if TOOLTIP_SUPPORT:
     import mdpopups
-    import jinja2
 
 if 'sh_thread' not in globals():
     sh_thread = None
@@ -45,37 +44,37 @@ POPUP = '''
 %(scope)s
 [(copy)](copy-scope:%(scope_index)d){: .small}
 
-<!-- if var.pt_extent or var.rowcol_extent -->
+<!-- if plugin.pt_extent or plugin.rowcol_extent -->
 ## Scope Extent {: .header}
-  <!-- if var.pt_extent -->
+  <!-- if plugin.pt_extent -->
 **pts:**{: .keyword} (%(extent_start)d, %(extent_end)d)
 [(copy)](copy-points:%(extent_pt_index)d){: .small}
   <!-- endif -->
-  <!-- if var.pt_extent or var.rowcol_extent -->
+  <!-- if plugin.pt_extent or plugin.rowcol_extent -->
 **line/char:**{: .keyword} (**Line:** %(l_start)d **Char:** %(c_start)d, **Line:** %(l_end)d **Char:** %(c_end)d)
 [(copy)](copy-line-char:%(line_char_index)d){: .small}
   <!-- endif -->
 <!-- endif -->
 
-<!-- if var.appearance -->
+<!-- if plugin.appearance -->
 ## Appearance {: .header}
 **%(fg)s:**{: .keyword} %(fg_preview)s %(fg_color)s
 [(copy)](%(fg_link)s:%(fg_index)d){: .small}
-  <!-- if var.fg_sim -->
+  <!-- if plugin.fg_sim -->
 **%(fg_sim)s:**{: .keyword} %(fg_sim_preview)s %(fg_sim_color)s
 [(copy)](%(fg_sim_link)s:%(fg_sim_index)d){: .small}
   <!-- endif -->
 **%(bg)s:**{: .keyword} %(bg_preview)s %(bg_color)s
 [(copy)](%(bg_link)s:%(bg_index)d){: .small}
-  <!-- if var.bg_sim -->
+  <!-- if plugin.bg_sim -->
 **%(bg_sim)s:**{: .keyword} %(bg_sim_preview)s %(bg_sim_color)s
-[(copy)](%(bg_sim_link)s:%(bg_sim_index)d){: .scope-hunter .small}
+[(copy)](%(bg_sim_link)s:%(bg_sim_index)d){: .small}
   <!-- endif -->
 **style:**{: .keyword} <%(style_tag)s>%(style)s</%(style_tag)s>
 [(copy)](copy-style:%(style_index)d){: .small}
 <!-- endif -->
 
-<!-- if var.selectors -->
+<!-- if plugin.selectors -->
 ## Selectors {: .header}
 **fg name:**{: .keyword} %(fg_name)s
 [(copy)](copy-fg-sel-name:%(fg_name_index)d){: .small}
@@ -85,13 +84,13 @@ POPUP = '''
 [(copy)](copy-bg-sel-name:%(bg_name_index)d){: .small}
 **bg scope:**{: .keyword} %(bg_scope)s
 [(copy)](copy-bg-sel-scope:%(bg_scope_index)d){: .small}
-  <!-- if var.bold -->
+  <!-- if plugin.bold -->
 **bold name:**{: .keyword} %(bold_name)s
 [(copy)](copy-bold-sel-name:%(bold_name_index)d){: .small}
 **bold scope:**{: .keyword} %(bold_scope)s
 [(copy)](copy-bold-sel-scope:%(bold_scope_index)d){: .small}
   <!-- endif -->
-  <!-- if var.italic -->
+  <!-- if plugin.italic -->
 **italic name:**{: .keyword} %(italic_name)s
 [(copy)](copy-italic-sel-name:%(italic_name_index)d){: .small}
 **italic scope:**{: .keyword} %(italic_scope)s
@@ -99,7 +98,7 @@ POPUP = '''
   <!-- endif -->
 <!-- endif -->
 
-<!-- if var.files -->
+<!-- if plugin.files -->
 ## Files {: .header}
 **scheme:**{: .keyword} [%(scheme)s](scheme)
 [(copy)](copy-scheme:%(scheme_index)d){: .small}
@@ -279,26 +278,7 @@ class GetSelectionScope(object):
             "syntax": '',
             "syntax_index": 0
         }
-        self.template_vars = {
-            "appearance": False,
-            "fg_sim": False,
-            "bg_sim": False,
-            "files": False,
-            "selectors": False,
-            "bold": False,
-            "bold": False,
-            "pt_extent": False,
-            "rowcol_extent": False
-        }
-
-    def apply_template(self):
-        """Apply template."""
-
-        env = jinja2.Environment(
-            block_start_string='<!--', block_end_string='-->',
-            trim_blocks=True, lstrip_blocks=True
-        )
-        return env.from_string(POPUP % self.template_strings).render(var=self.template_vars)
+        self.template_vars = {}
 
     def next_index(self):
         """Get next index into scope buffer."""
@@ -522,7 +502,7 @@ class GetSelectionScope(object):
         self.scope_bfr.append("------")
 
         if self.show_popup:
-            self.scope_bfr_tool.append(self.apply_template())
+            self.scope_bfr_tool.append(POPUP % self.template_strings)
 
     def on_navigate(self, href):
         """Exceute link callback."""
@@ -682,7 +662,14 @@ class GetSelectionScope(object):
             else:
                 tail = ''
             md = '<div class="scope-hunter content">%s</div>' % mdpopups.md2html(
-                self.view, ''.join(self.scope_bfr_tool) + tail
+                self.view, ''.join(self.scope_bfr_tool) + tail,
+                template_vars=self.template_vars,
+                template_env_options={
+                    "block_start_string": "<!--",
+                    "block_end_string": "-->",
+                    "trim_blocks": True,
+                    "lstrip_blocks": True
+                }
             )
             mdpopups.show_popup(
                 self.view,
