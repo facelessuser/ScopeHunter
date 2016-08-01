@@ -14,7 +14,7 @@ import traceback
 from textwrap import dedent
 from ScopeHunter import support
 
-LATEST_SUPPORTED_MDPOPUPS = (1, 9, 0)
+LATEST_SUPPORTED_MDPOPUPS = (1, 9, 1)
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3080
 GOOD_CSS_SUPPORT = int(sublime.version()) >= 3119
 if TOOLTIP_SUPPORT:
@@ -40,73 +40,6 @@ if TOOLTIP_SUPPORT:
         {%- endif %}
         '''
     )
-
-POPUP = '''
-## Scope {: %(old)s.header}
-%(scope)s
-[(copy)](copy-scope:%(scope_index)d){: %(old)s.small}
-
-<!-- if plugin.pt_extent or plugin.rowcol_extent -->
-## Scope Extent {: %(old)s.header}
-  <!-- if plugin.pt_extent -->
-**pts:**{: %(old)s.keyword} (%(extent_start)d, %(extent_end)d)
-[(copy)](copy-points:%(extent_pt_index)d){: %(old)s.small}
-  <!-- endif -->
-  <!-- if plugin.pt_extent or plugin.rowcol_extent -->
-**line/char:**{: %(old)s.keyword} (**Line:** %(l_start)d **Char:** %(c_start)d, **Line:** %(l_end)d **Char:** %(c_end)d)
-[(copy)](copy-line-char:%(line_char_index)d){: %(old)s.small}
-  <!-- endif -->
-<!-- endif -->
-
-<!-- if plugin.appearance -->
-## Appearance {: %(old)s.header}
-**%(fg)s:**{: %(old)s.keyword} %(fg_preview)s %(fg_color)s
-[(copy)](%(fg_link)s:%(fg_index)d){: %(old)s.small}
-  <!-- if plugin.fg_sim -->
-**%(fg_sim)s:**{: %(old)s.keyword} %(fg_sim_preview)s %(fg_sim_color)s
-[(copy)](%(fg_sim_link)s:%(fg_sim_index)d){: %(old)s.small}
-  <!-- endif -->
-**%(bg)s:**{: %(old)s.keyword} %(bg_preview)s %(bg_color)s
-[(copy)](%(bg_link)s:%(bg_index)d){: %(old)s.small}
-  <!-- if plugin.bg_sim -->
-**%(bg_sim)s:**{: %(old)s.keyword} %(bg_sim_preview)s %(bg_sim_color)s
-[(copy)](%(bg_sim_link)s:%(bg_sim_index)d){: %(old)s.small}
-  <!-- endif -->
-**style:**{: %(old)s.keyword} <%(style_tag)s>%(style)s</%(style_tag)s>
-[(copy)](copy-style:%(style_index)d){: %(old)s.small}
-<!-- endif -->
-
-<!-- if plugin.selectors -->
-## Selectors {: %(old)s.header}
-**fg name:**{: %(old)s.keyword} %(fg_name)s
-[(copy)](copy-fg-sel-name:%(fg_name_index)d){: %(old)s.small}
-**fg scope:**{: %(old)s.keyword} %(fg_scope)s
-[(copy)](copy-fg-sel-scope:%(fg_scope_index)d){: %(old)s.small}
-**bg name:**{: %(old)s.keyword} %(bg_name)s
-[(copy)](copy-bg-sel-name:%(bg_name_index)d){: %(old)s.small}
-**bg scope:**{: %(old)s.keyword} %(bg_scope)s
-[(copy)](copy-bg-sel-scope:%(bg_scope_index)d){: %(old)s.small}
-  <!-- if plugin.bold -->
-**bold name:**{: %(old)s.keyword} %(bold_name)s
-[(copy)](copy-bold-sel-name:%(bold_name_index)d){: %(old)s.small}
-**bold scope:**{: %(old)s.keyword} %(bold_scope)s
-[(copy)](copy-bold-sel-scope:%(bold_scope_index)d){: %(old)s.small}
-  <!-- endif -->
-  <!-- if plugin.italic -->
-**italic name:**{: %(old)s.keyword} %(italic_name)s
-[(copy)](copy-italic-sel-name:%(italic_name_index)d){: %(old)s.small}
-**italic scope:**{: %(old)s.keyword} %(italic_scope)s
-[(copy)](copy-italic-sel-scope:%(italic_scope_index)d){: %(old)s.small}
-  <!-- endif -->
-<!-- endif -->
-
-<!-- if plugin.files -->
-## Files {: %(old)s.header}
-**scheme:**{: %(old)s.keyword} [%(scheme)s](scheme)
-[(copy)](copy-scheme:%(scheme_index)d){: %(old)s.small}
-**syntax:**{: %(old)s.keyword} [%(syntax)s](syntax)
-[(copy)](copy-syntax:%(syntax_index)d){: %(old)s.small}
-<!-- endif -->'''
 
 COPY_ALL = '''
 ---
@@ -225,63 +158,9 @@ class GetSelectionScope(object):
     def init_template_vars(self):
         """Initialize template variables."""
 
-        self.template_strings = {
+        self.template_vars = {
             "old": ('' if GOOD_CSS_SUPPORT else '.scope-hunter '),
-            "scope": '',
-            "scope_index": 0,
-            "extent_start": 0,
-            "extent_end": 0,
-            "extent_pt_index": 0,
-            "l_start": 0,
-            "c_start": 0,
-            "l_end": 0,
-            "c_end": 0,
-            "line_char_index": 0,
-            "fg": '',
-            "fg_preview": '',
-            "fg_color": '',
-            "fg_link": '',
-            "fg_index": 0,
-            "fg_sim": '',
-            "fg_sim_preview": '',
-            "fg_sim_color": '',
-            "fg_sim_link": '',
-            "fg_sim_index": 0,
-            "bg": '',
-            "bg_preview": '',
-            "bg_color": '',
-            "bg_link": '',
-            "bg_index": 0,
-            "bg_sim": '',
-            "bg_sim_preview": '',
-            "bg_sim_color": '',
-            "bg_sim_link": '',
-            "bg_sim_index": 0,
-            "style_tag": '',
-            "style": '',
-            "style_index": 0,
-            "fg_name": '',
-            "fg_name_index": 0,
-            "fg_scope": '',
-            "fg_scope_index": 0,
-            "bg_name": '',
-            "bg_name_index": 0,
-            "bg_scope": '',
-            "bg_scope_index": 0,
-            "bold_name": '',
-            "bold_name_index": 0,
-            "bold_scope": '',
-            "bold_scope_index": 0,
-            "italic_name": '',
-            "italic_name_index": 0,
-            "italic_scope": '',
-            "italic_scope_index": 0,
-            "scheme": '',
-            "scheme_index": 0,
-            "syntax": '',
-            "syntax_index": 0
         }
-        self.template_vars = {}
 
     def next_index(self):
         """Get next index into scope buffer."""
@@ -300,14 +179,15 @@ class GetSelectionScope(object):
         check_size = int((box_height - 4) / 4)
         if check_size < 2:
             check_size = 2
-        self.template_strings[key] = caption
-        self.template_strings['%s_preview' % key] = mdpopups.color_box(
+        self.template_vars[key] = caption
+        self.template_vars[key] = caption
+        self.template_vars['%s_preview' % key] = mdpopups.color_box(
             [color], border, border2, height=box_height,
             width=box_height, border_size=2, check_size=check_size
         )
-        self.template_strings['%s_color' % key] = color.upper()
-        self.template_strings['%s_link' % key] = link
-        self.template_strings['%s_index' % key] = index
+        self.template_vars['%s_color' % key] = color.upper()
+        self.template_vars['%s_link' % key] = link
+        self.template_vars['%s_index' % key] = index
 
     def get_extents(self, pt):
         """Get the scope extent via the sublime API."""
@@ -344,16 +224,16 @@ class GetSelectionScope(object):
             if self.show_popup:
                 if self.points_info:
                     self.template_vars["pt_extent"] = True
-                    self.template_strings["extent_start"] = pts.begin()
-                    self.template_strings["extent_end"] = pts.end()
-                    self.template_strings["extent_pt_index"] = self.next_index()
+                    self.template_vars["extent_start"] = pts.begin()
+                    self.template_vars["extent_end"] = pts.end()
+                    self.template_vars["extent_pt_index"] = self.next_index()
                 if self.rowcol_info:
                     self.template_vars["rowcol_extent"] = True
-                    self.template_strings["l_start"] = row1 + 1
-                    self.template_strings["l_end"] = row2 + 1
-                    self.template_strings["c_start"] = col1 + 1
-                    self.template_strings["c_end"] = col2 + 1
-                    self.template_strings["line_char_index"] = self.next_index()
+                    self.template_vars["l_start"] = row1 + 1
+                    self.template_vars["l_end"] = row2 + 1
+                    self.template_vars["c_start"] = col1 + 1
+                    self.template_vars["c_end"] = col2 + 1
+                    self.template_vars["line_char_index"] = self.next_index()
 
     def get_scope(self, pt):
         """Get the scope at the cursor."""
@@ -371,8 +251,8 @@ class GetSelectionScope(object):
         self.scope_bfr.append(ENTRY % (SCOPE_KEY + ':', self.view.scope_name(pt).strip().replace(" ", spacing)))
 
         if self.show_popup:
-            self.template_strings['scope'] = self.view.scope_name(pt).strip()
-            self.template_strings['scope_index'] = self.next_index()
+            self.template_vars['scope'] = self.view.scope_name(pt).strip()
+            self.template_vars['scope_index'] = self.next_index()
 
         return scope
 
@@ -409,9 +289,9 @@ class GetSelectionScope(object):
             else:
                 tag = "span"
                 style = "normal"
-            self.template_strings["style_tag"] = tag
-            self.template_strings["style"] = style
-            self.template_strings["style_index"] = self.next_index()
+            self.template_vars["style_tag"] = tag
+            self.template_vars["style"] = style
+            self.template_vars["style_index"] = self.next_index()
 
     def get_scheme_syntax(self):
         """Get color scheme and syntax file path."""
@@ -423,10 +303,10 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             self.template_vars['files'] = True
-            self.template_strings["scheme"] = self.scheme_file
-            self.template_strings["scheme_index"] = self.next_index()
-            self.template_strings["syntax"] = self.syntax_file
-            self.template_strings["syntax_index"] = self.next_index()
+            self.template_vars["scheme"] = self.scheme_file
+            self.template_vars["scheme_index"] = self.next_index()
+            self.template_vars["syntax"] = self.syntax_file
+            self.template_vars["syntax_index"] = self.next_index()
 
     def get_selectors(self, color_selector, bg_selector, style_selectors):
         """Get the selectors used to determine color and/or style."""
@@ -445,26 +325,26 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             self.template_vars['selectors'] = True
-            self.template_strings['fg_name'] = color_selector.name
-            self.template_strings['fg_name_index'] = self.next_index()
-            self.template_strings['fg_scope'] = color_selector.scope
-            self.template_strings['fg_scope_index'] = self.next_index()
-            self.template_strings['bg_name'] = bg_selector.name
-            self.template_strings['bg_name_index'] = self.next_index()
-            self.template_strings['bg_scope'] = bg_selector.scope
-            self.template_strings['bg_scope_index'] = self.next_index()
+            self.template_vars['fg_name'] = color_selector.name
+            self.template_vars['fg_name_index'] = self.next_index()
+            self.template_vars['fg_scope'] = color_selector.scope
+            self.template_vars['fg_scope_index'] = self.next_index()
+            self.template_vars['bg_name'] = bg_selector.name
+            self.template_vars['bg_name_index'] = self.next_index()
+            self.template_vars['bg_scope'] = bg_selector.scope
+            self.template_vars['bg_scope_index'] = self.next_index()
             if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
                 self.template_vars['bold'] = True
-                self.template_strings['bold_name'] = style_selectors["bold"].name
-                self.template_strings['bold_name_index'] = self.next_index()
-                self.template_strings['bold_scope'] = style_selectors["bold"].scope
-                self.template_strings['bold_scope_index'] = self.next_index()
+                self.template_bars['bold_name'] = style_selectors["bold"].name
+                self.template_bars['bold_name_index'] = self.next_index()
+                self.template_bars['bold_scope'] = style_selectors["bold"].scope
+                self.template_bars['bold_scope_index'] = self.next_index()
             if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
-                self.template_vars['bold'] = True
-                self.template_strings['italic_name'] = style_selectors["italic"].name
-                self.template_strings['italic_name_index'] = self.next_index()
-                self.template_strings['italic_scope'] = style_selectors["italic"].scope
-                self.template_strings['italic_scope_index'] = self.next_index()
+                self.template_vars['italic'] = True
+                self.template_vars['italic_name'] = style_selectors["italic"].name
+                self.template_vars['italic_name_index'] = self.next_index()
+                self.template_vars['italic_scope'] = style_selectors["italic"].scope
+                self.template_vars['italic_scope_index'] = self.next_index()
 
     def get_info(self, pt):
         """Get scope related info."""
@@ -505,7 +385,17 @@ class GetSelectionScope(object):
         self.scope_bfr.append("------")
 
         if self.show_popup:
-            self.scope_bfr_tool.append(POPUP % self.template_strings)
+            self.scope_bfr_tool.append(
+                mdpopups.md2html(
+                    self.view,
+                    self.popup_template,
+                    template_vars=self.template_vars,
+                    template_env_options={
+                        "trim_blocks": True,
+                        "lstrip_blocks": True
+                    }
+                )
+            )
 
     def on_navigate(self, href):
         """Exceute link callback."""
@@ -588,6 +478,7 @@ class GetSelectionScope(object):
         self.scope_bfr_tool = []
         self.clips = []
         self.status = ""
+        self.popup_template = sublime.load_resource('Packages/ScopeHunter/popup.j2')
         self.scheme_file = None
         self.syntax_file = None
         self.show_statusbar = bool(sh_settings.get("show_statusbar", False))
@@ -661,23 +552,17 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
-                tail = COPY_ALL % ('' if GOOD_CSS_SUPPORT else '.scope-hunter ')
+                tail = mdpopups.md2html(self.view, COPY_ALL % ('' if GOOD_CSS_SUPPORT else '.scope-hunter '))
             else:
                 tail = ''
 
             mdpopups.show_popup(
                 self.view,
                 ''.join(self.scope_bfr_tool) + tail,
+                md=False,
                 css=ADD_CSS,
                 wrapper_class=('scope-hunter' if GOOD_CSS_SUPPORT else 'scope-hunter content'),
                 max_width=1000, on_navigate=self.on_navigate,
-                template_vars=self.template_vars,
-                template_env_options={
-                    "block_start_string": "<!--",
-                    "block_end_string": "-->",
-                    "trim_blocks": True,
-                    "lstrip_blocks": True
-                }
             )
 
 get_selection_scopes = GetSelectionScope()

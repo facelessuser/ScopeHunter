@@ -1,0 +1,65 @@
+## Scope {: {{plugin.old}}.header}
+{{plugin.scope}}
+[(copy)](copy-scope:{{plugin.scope_index}}){: {{plugin.old}}.small}
+
+{% if plugin.pt_extent or plugin.rowcol_extent %}
+## Scope Extent {: {{plugin.old}}.header}
+  {% if plugin.pt_extent %}
+**pts:**{: {{plugin.old}}.keyword} ({{plugin.extent_start}}, {{plugin.extent_end}})
+[(copy)](copy-points:{{plugin.extent_pt_index}}){: {{plugin.old}}.small}
+  {% endif %}
+  {% if plugin.pt_extent or plugin.rowcol_extent %}
+**line/char:**{: {{plugin.old}}.keyword} (**Line:** {{plugin.l_start}} **Char:** {{plugin.c_start}}, **Line:** {{plugin.l_end}} **Char:** {{plugin.c_end}})
+[(copy)](copy-line-char:{{plugin.line_char_index}}){: {{plugin.old}}.small}
+  {% endif %}
+{% endif %}
+
+{% if plugin.appearance %}
+## Appearance {: {{plugin.old}}.header}
+**{{plugin.fg}}:**{: {{plugin.old}}.keyword} {{plugin.fg_preview}} {{plugin.fg_color}}
+[(copy)]({{plugin.fg_link}}:{{plugin.fg_index}}){: {{plugin.old}}.small}
+  {% if plugin.fg_sim %}
+**{{plugin.fg_sim}}:**{: {{plugin.old}}.keyword} {{plugin.fg_sim_preview}} {{plugin.fg_sim_color}}
+[(copy)]({{plugin.fg_sim_link}}:{{plugin.fg_sim_index}}){: {{plugin.old}}.small}
+  {% endif %}
+**{{plugin.bg}}:**{: {{plugin.old}}.keyword} {{plugin.bg_preview}} {{plugin.bg_color}}
+[(copy)]({{plugin.bg_link}}:{{plugin.bg_index}}){: {{plugin.old}}.small}
+  {% if plugin.bg_sim %}
+**{{plugin.bg_sim}}:**{: {{plugin.old}}.keyword} {{plugin.bg_sim_preview}} {{plugin.bg_sim_color}}
+[(copy)]({{plugin.bg_sim_link}}:{{plugin.bg_sim_index}}){: {{plugin.old}}.small}
+  {% endif %}
+**style:**{: {{plugin.old}}.keyword} <{{plugin.style_tag}}>{{plugin.style}}</{{plugin.style_tag}}>
+[(copy)](copy-style:{{plugin.style_index}}){: {{plugin.old}}.small}
+{% endif %}
+
+{% if plugin.selectors %}
+## Selectors {: {{plugin.old}}.header}
+**fg name:**{: {{plugin.old}}.keyword} {{plugin.fg_name}}
+[(copy)](copy-fg-sel-name:{{plugin.fg_name_index}}){: {{plugin.old}}.small}
+**fg scope:**{: {{plugin.old}}.keyword} {{plugin.fg_scope}}
+[(copy)](copy-fg-sel-scope:{{plugin.fg_scope_index}}){: {{plugin.old}}.small}
+**bg name:**{: {{plugin.old}}.keyword} {{plugin.bg_name}}
+[(copy)](copy-bg-sel-name:{{plugin.bg_name_index}}){: {{plugin.old}}.small}
+**bg scope:**{: {{plugin.old}}.keyword} {{plugin.bg_scope}}
+[(copy)](copy-bg-sel-scope:{{plugin.bg_scope_index}}){: {{plugin.old}}.small}
+  {% if plugin.bold %}
+**bold name:**{: {{plugin.old}}.keyword} {{plugin.bold_name}}
+[(copy)](copy-bold-sel-name:{{plugin.bold_name_index}}){: {{plugin.old}}.small}
+**bold scope:**{: {{plugin.old}}.keyword} {{plugin.bold_scope}}
+[(copy)](copy-bold-sel-scope:{{plugin.bold_scope_index}}){: {{plugin.old}}.small}
+  {% endif %}
+  {% if plugin.italic %}
+**italic name:**{: {{plugin.old}}.keyword} {{plugin.italic_name}}
+[(copy)](copy-italic-sel-name:{{plugin.italic_name_index}}){: {{plugin.old}}.small}
+**italic scope:**{: {{plugin.old}}.keyword} {{plugin.italic_scope}}
+[(copy)](copy-italic-sel-scope:{{plugin.italic_scope_index}}){: {{plugin.old}}.small}
+  {% endif %}
+{% endif %}
+
+{% if plugin.files %}
+## Files {: {{plugin.old}}.header}
+**scheme:**{: {{plugin.old}}.keyword} [{{plugin.scheme}}](scheme)
+[(copy)](copy-scheme:{{plugin.scheme_index}}){: {{plugin.old}}.small}
+**syntax:**{: {{plugin.old}}.keyword} [{{plugin.syntax}}](syntax)
+[(copy)](copy-syntax:{{plugin.syntax_index}}){: {{plugin.old}}.small}
+{% endif %}
