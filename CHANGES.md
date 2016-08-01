@@ -10,4 +10,3 @@ desired mdpopups.  Really need to test that this actually does works :).
 `Satisfy Dependencies` command if not already present. May require restart after  
 update.
 - **FIX**: Formatting fixes.
-- **FIX**: Relies on mdpopups 1.9.0 for popups.  Please update.
