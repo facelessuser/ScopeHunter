@@ -1,7 +1,7 @@
 # ScopeHunter 2.5.3
 > Released Aug 1, 2016
 
-- **NEW**: Fix changelog typo :).
+- **FIX**: Fix changelog typo :).
 
 # ScopeHunter 2.5.2
 > Released Aug 1, 2016
