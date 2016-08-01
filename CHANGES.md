@@ -1,3 +1,8 @@
+# ScopeHunter 2.5.2
+> Released Aug 1, 2016
+
+- **FIX**: Incorrect logic regarding bold.
+
 # ScopeHunter 2.5.1
 > Released Jul 31, 2016
 
