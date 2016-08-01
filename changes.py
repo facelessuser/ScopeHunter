@@ -18,10 +18,10 @@ class ScopeHunterChangesCommand(sublime_plugin.WindowCommand):
         """Show the changelog in a new view."""
         text = sublime.load_resource('Packages/ScopeHunter/CHANGES.md')
         view = self.window.new_file()
-        view.set_name('ScopeHunter - Changlog')
+        view.set_name('ScopeHunter - Changelog')
         view.settings().set('gutter', False)
         html = '<div class="scope-hunter">%s</div>' % mdpopups.md2html(view, text)
-        mdpopups.add_phantom(view, 'chagelog', sublime.Region(0), html, sublime.LAYOUT_INLINE, css=CSS)
+        mdpopups.add_phantom(view, 'changelog', sublime.Region(0), html, sublime.LAYOUT_INLINE, css=CSS)
         view.set_read_only(True)
         view.set_scratch(True)
 
