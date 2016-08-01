@@ -1,3 +1,8 @@
+# ScopeHunter 2.5.1
+> Released Jul 31, 2016
+
+- **FIX**: Fix copy all link.
+
 # ScopeHunter 2.5.0
 > Released Jul 31, 2016
 

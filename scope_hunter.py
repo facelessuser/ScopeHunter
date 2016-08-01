@@ -111,7 +111,7 @@ POPUP = '''
 COPY_ALL = '''
 ---
 
-[(copy all)](copy-all){: %(old)s.small}
+[(copy all)](copy-all){: %s.small}
 '''
 
 # Text Entry
@@ -661,7 +661,7 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
-                tail = COPY_ALL
+                tail = COPY_ALL % ('' if GOOD_CSS_SUPPORT else '.scope-hunter ')
             else:
                 tail = ''
 
