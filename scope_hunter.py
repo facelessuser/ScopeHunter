@@ -168,7 +168,7 @@ class GetSelectionScope(object):
         self.index += 1
         return self.index
 
-    def get_color_box(self, color, key, caption, link, index):
+    def get_color_box(self, color, key, index):
         """Display an HTML color box using the given color."""
 
         border = '#CCCCCC'
@@ -179,14 +179,11 @@ class GetSelectionScope(object):
         check_size = int((box_height - 4) / 4)
         if check_size < 2:
             check_size = 2
-        self.template_vars[key] = caption
-        self.template_vars[key] = caption
         self.template_vars['%s_preview' % key] = mdpopups.color_box(
             [color], border, border2, height=box_height,
             width=box_height, border_size=2, check_size=check_size
         )
         self.template_vars['%s_color' % key] = color.upper()
-        self.template_vars['%s_link' % key] = link
         self.template_vars['%s_index' % key] = index
 
     def get_extents(self, pt):
@@ -271,14 +268,14 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             self.template_vars['appearance'] = True
-            self.get_color_box(color, 'fg', 'fg', 'copy-fg', self.next_index())
+            self.get_color_box(color, 'fg', self.next_index())
             if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
                 self.template_vars['fg_sim'] = True
-                self.get_color_box(color_sim, 'fg_sim', 'fg (simulated alpha)', 'copy-fg-sim', self.next_index())
-            self.get_color_box(bgcolor, 'bg', 'bg', 'copy-bg', self.next_index())
+                self.get_color_box(color_sim, 'fg_sim', self.next_index())
+            self.get_color_box(bgcolor, 'bg', self.next_index())
             if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
                 self.template_vars['bg_sim'] = True
-                self.get_color_box(bgcolor_sim, 'bg_sim', 'bg (simulated alpha)', 'copy-bg-sim', self.next_index())
+                self.get_color_box(bgcolor_sim, 'bg_sim', self.next_index())
 
             if style == "bold":
                 tag = "b"

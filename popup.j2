@@ -16,17 +16,17 @@
 
 {% if plugin.appearance %}
 ## Appearance {: {{plugin.old}}.header}
-**{{plugin.fg}}:**{: {{plugin.old}}.keyword} {{plugin.fg_preview}} {{plugin.fg_color}}
-[(copy)]({{plugin.fg_link}}:{{plugin.fg_index}}){: {{plugin.old}}.small}
+**fg:**{: {{plugin.old}}.keyword} {{plugin.fg_preview}} {{plugin.fg_color}}
+[(copy)](copy-fg:{{plugin.fg_index}}){: {{plugin.old}}.small}
   {% if plugin.fg_sim %}
-**{{plugin.fg_sim}}:**{: {{plugin.old}}.keyword} {{plugin.fg_sim_preview}} {{plugin.fg_sim_color}}
-[(copy)]({{plugin.fg_sim_link}}:{{plugin.fg_sim_index}}){: {{plugin.old}}.small}
+**fg (simulated alpha):**{: {{plugin.old}}.keyword} {{plugin.fg_sim_preview}} {{plugin.fg_sim_color}}
+[(copy)](copy-fg-sim:{{plugin.fg_sim_index}}){: {{plugin.old}}.small}
   {% endif %}
-**{{plugin.bg}}:**{: {{plugin.old}}.keyword} {{plugin.bg_preview}} {{plugin.bg_color}}
-[(copy)]({{plugin.bg_link}}:{{plugin.bg_index}}){: {{plugin.old}}.small}
+**bg:**{: {{plugin.old}}.keyword} {{plugin.bg_preview}} {{plugin.bg_color}}
+[(copy)](copy-bg:{{plugin.bg_index}}){: {{plugin.old}}.small}
   {% if plugin.bg_sim %}
-**{{plugin.bg_sim}}:**{: {{plugin.old}}.keyword} {{plugin.bg_sim_preview}} {{plugin.bg_sim_color}}
-[(copy)]({{plugin.bg_sim_link}}:{{plugin.bg_sim_index}}){: {{plugin.old}}.small}
+**bg (simulated alpha):**{: {{plugin.old}}.keyword} {{plugin.bg_sim_preview}} {{plugin.bg_sim_color}}
+[(copy)](copy-bg-sim:{{plugin.bg_sim_index}}){: {{plugin.old}}.small}
   {% endif %}
 **style:**{: {{plugin.old}}.keyword} <{{plugin.style_tag}}>{{plugin.style}}</{{plugin.style_tag}}>
 [(copy)](copy-style:{{plugin.style_index}}){: {{plugin.old}}.small}
