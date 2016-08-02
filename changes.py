@@ -1,7 +1,6 @@
 """Changelog."""
 import sublime
 import sublime_plugin
-import mdpopups
 
 CSS = '''
 .scope-hunter h1, .scope-hunter h2, .scope-hunter h3, .scope-hunter h4, .scope-hunter h5, .scope-hunter h6 {
@@ -16,6 +15,8 @@ class ScopeHunterChangesCommand(sublime_plugin.WindowCommand):
 
     def run(self):
         """Show the changelog in a new view."""
+        import mdpopups
+
         text = sublime.load_resource('Packages/ScopeHunter/CHANGES.md')
         view = self.window.new_file()
         view.set_name('ScopeHunter - Changelog')
@@ -27,6 +28,11 @@ class ScopeHunterChangesCommand(sublime_plugin.WindowCommand):
 
     def is_enabled(self):
         """Check if is enabled."""
+        try:
+            import mdpopups
+        except Exception:
+            return False
+
         return (mdpopups.version() >= (1, 7, 3)) and (int(sublime.version()) >= 3118)
 
     is_visible = is_enabled
