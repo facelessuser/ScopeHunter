@@ -1,3 +1,8 @@
+# ScopeHunter 2.5.4
+> Released Aug 1, 2016
+
+- **FIX**: Guard against loading mdpopups on old Sublime versions.
+
 # ScopeHunter 2.5.3
 > Released Aug 1, 2016
 
