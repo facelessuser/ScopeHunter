@@ -3,12 +3,12 @@ import sublime
 import sublime_plugin
 
 CSS = '''
-html { {{'.background'|css('background-color')}} }
-div.scope-hunter { display:block; padding: 0; margin: 0; {{'.background'|css('background-color')}} }
+html { {{'.background'|css}} }
+div.scope-hunter { padding: 0; margin: 0; {{'.background'|css}} }
 .scope-hunter h1, .scope-hunter h2, .scope-hunter h3, .scope-hunter h4, .scope-hunter h5, .scope-hunter h6 {
-    {{'.string'|css('color')}}
+    {{'.string'|css}}
 }
-.scope-hunter blockquote { {{'.comment'|css('color')}} }
+.scope-hunter blockquote { {{'.comment'|css}} }
 '''
 
 

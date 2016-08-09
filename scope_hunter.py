@@ -30,7 +30,7 @@ if TOOLTIP_SUPPORT:
     ADD_CSS = dedent(
         '''
         {%- if var.sublime_version >= 3119 %}
-        div.scope-hunter { display: block; padding: 0.2rem; }
+        div.scope-hunter { margin: 0; padding: 0.5rem; }
         .scope-hunter .small { font-size: 0.7rem; }
         .scope-hunter .header { {{'.string'|css('color')}} }
         {%- else %}
