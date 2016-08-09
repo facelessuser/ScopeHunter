@@ -1,3 +1,8 @@
+# ScopeHunter 2.5.5
+> Released Aug 8, 2016
+
+- **FIX**: Some CSS tweaks.
+
 # ScopeHunter 2.5.4
 > Released Aug 1, 2016
 
