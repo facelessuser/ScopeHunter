@@ -14,7 +14,7 @@ import traceback
 from textwrap import dedent
 from ScopeHunter import support
 
-LATEST_SUPPORTED_MDPOPUPS = (1, 9, 1)
+LATEST_SUPPORTED_MDPOPUPS = (1, 10, 0)
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3080
 GOOD_CSS_SUPPORT = int(sublime.version()) >= 3119
 if TOOLTIP_SUPPORT:
