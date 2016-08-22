@@ -10,6 +10,7 @@ div.scope-hunter { padding: 0; margin: 0; {{'.background'|css}} }
     {{'.string'|css}}
 }
 .scope-hunter blockquote { {{'.comment'|css}} }
+.scope-hunter a { text-decoration: none; }
 '''
 
 
