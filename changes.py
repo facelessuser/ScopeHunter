@@ -1,6 +1,7 @@
 """Changelog."""
 import sublime
 import sublime_plugin
+import webbrowser
 
 CSS = '''
 html { {{'.background'|css}} }
