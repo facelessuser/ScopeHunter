@@ -23,7 +23,7 @@ Contribution from the community is encouraged and can be done in a variety of wa
 
 2. When creating an issue on the repository, please provide as much info as possible:
 
-    - Sublime Text build.
+    - Provide environment information by running `Preferences->Package Settings->ScopeHunter->Support Info`.  The information will be copied to the clipboard; paste the info in issue.
     - Operating system.
     - Errors in console.
     - Detailed description of the problem.
