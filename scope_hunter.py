@@ -332,10 +332,10 @@ class GetSelectionScope(object):
             self.template_vars['bg_scope_index'] = self.next_index()
             if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
                 self.template_vars['bold'] = True
-                self.template_bars['bold_name'] = style_selectors["bold"].name
-                self.template_bars['bold_name_index'] = self.next_index()
-                self.template_bars['bold_scope'] = style_selectors["bold"].scope
-                self.template_bars['bold_scope_index'] = self.next_index()
+                self.template_vars['bold_name'] = style_selectors["bold"].name
+                self.template_vars['bold_name_index'] = self.next_index()
+                self.template_vars['bold_scope'] = style_selectors["bold"].scope
+                self.template_vars['bold_scope_index'] = self.next_index()
             if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
                 self.template_vars['italic'] = True
                 self.template_vars['italic_name'] = style_selectors["italic"].name
