@@ -3,7 +3,7 @@ import sublime
 import sublime_plugin
 import textwrap
 
-__version__ = "2.5.5"
+__version__ = "2.5.6"
 __pc_name__ = 'ScopeHunter'
 
 

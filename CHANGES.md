@@ -1,3 +1,8 @@
+# ScopeHunter 2.5.6
+> Released Oct 19, 2016
+
+- **FIX**: Failure when evaluating bold text [#33](https://github.com/facelessuser/ScopeHunter/pull/33)
+
 # ScopeHunter 2.5.5
 > Released Aug 8, 2016
 
