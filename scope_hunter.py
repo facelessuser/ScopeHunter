@@ -562,6 +562,7 @@ class GetSelectionScope(object):
                 max_width=1000, on_navigate=self.on_navigate,
             )
 
+
 get_selection_scopes = GetSelectionScope()
 
 
