@@ -629,6 +629,9 @@ class SelectionScopeListener(sublime_plugin.EventListener):
     def on_selection_modified(self, view):
         """Clean up regions or let thread know there was a modification."""
 
+        if sh_thread is None:
+            return
+
         enabled = sh_thread.is_enabled(view)
         view_enable = view.settings().get('scope_hunter.view_enable', False)
         if (not sh_thread.instant_scoper and not view_enable) or not enabled:
@@ -641,6 +644,9 @@ class SelectionScopeListener(sublime_plugin.EventListener):
 
     def on_activated(self, view):
         """Check color scheme on activated and update if needed."""
+
+        if sh_thread is None:
+            return
 
         if not view.settings().get('is_widget', False):
             scheme = view.settings().get("color_scheme")
