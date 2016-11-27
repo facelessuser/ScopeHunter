@@ -27,6 +27,7 @@ from __future__ import absolute_import
 import sublime
 import re
 from .rgba import RGBA
+from . import csscolors
 from os import path
 from collections import namedtuple
 from plistlib import readPlistFromBytes
@@ -92,7 +93,7 @@ class ColorSchemeMatcher(object):
                 break
 
         # Get general theme colors from color scheme file
-        bground, bground_sim = self.strip_color(
+        bground, bground_sim = self.process_color(
             color_settings.get("background", '#FFFFFF'), simple_strip=True
         )
 
@@ -101,14 +102,14 @@ class ColorSchemeMatcher(object):
             "background": {'color': bground, 'color_simulated': bground_sim}
         }
 
-        fground, fground_sim = self.strip_color(color_settings.get("foreground", '#000000'))
-        sbground = self.strip_color(color_settings.get("selection", fground))[0]
-        sbground_sim = self.strip_color(color_settings.get("selection", fground_sim))[1]
-        sfground, sfground_sim = self.strip_color(color_settings.get("selectionForeground", None))
-        gbground = self.strip_color(color_settings.get("gutter", bground))[0]
-        gbground_sim = self.strip_color(color_settings.get("gutter", bground_sim))[1]
-        gfground = self.strip_color(color_settings.get("gutterForeground", fground))[0]
-        gfground_sim = self.strip_color(color_settings.get("gutterForeground", fground_sim))[1]
+        fground, fground_sim = self.process_color(color_settings.get("foreground", '#000000'))
+        sbground = self.process_color(color_settings.get("selection", fground))[0]
+        sbground_sim = self.process_color(color_settings.get("selection", fground_sim))[1]
+        sfground, sfground_sim = self.process_color(color_settings.get("selectionForeground", None))
+        gbground = self.process_color(color_settings.get("gutter", bground))[0]
+        gbground_sim = self.process_color(color_settings.get("gutter", bground_sim))[1]
+        gfground = self.process_color(color_settings.get("gutterForeground", fground))[0]
+        gfground_sim = self.process_color(color_settings.get("gutterForeground", fground_sim))[1]
 
         self.special_colors["foreground"] = {'color': fground, 'color_simulated': fground_sim}
         self.special_colors["background"] = {'color': bground, 'color_simulated': bground_sim}
@@ -133,8 +134,8 @@ class ColorSchemeMatcher(object):
                             style.append(s)
 
             if scope is not None and (color is not None or bgcolor is not None):
-                fg, fg_sim = self.strip_color(color)
-                bg, bg_sim = self.strip_color(bgcolor)
+                fg, fg_sim = self.process_color(color)
+                bg, bg_sim = self.process_color(bgcolor)
                 self.colors[scope] = {
                     "name": name,
                     "scope": scope,
@@ -145,7 +146,7 @@ class ColorSchemeMatcher(object):
                     "style": style
                 }
 
-    def strip_color(self, color, simple_strip=False):
+    def process_color(self, color, simple_strip=False):
         """
         Strip transparency from the color value.
 
@@ -156,6 +157,11 @@ class ColorSchemeMatcher(object):
 
         if color is None or color.strip() == "":
             return None, None
+
+        if not color.startswith('#'):
+            color = csscolors.name2hex(color)
+            if color is None:
+                return None, None
 
         rgba = RGBA(color.replace(" ", ""))
         if not simple_strip:
