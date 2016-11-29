@@ -27,7 +27,7 @@ from __future__ import absolute_import
 import sublime
 import re
 from .rgba import RGBA
-from . import csscolors
+from . import x11colors
 from os import path
 from collections import namedtuple
 from plistlib import readPlistFromBytes
@@ -159,7 +159,7 @@ class ColorSchemeMatcher(object):
             return None, None
 
         if not color.startswith('#'):
-            color = csscolors.name2hex(color)
+            color = x11colors.name2hex(color)
             if color is None:
                 return None, None
 
