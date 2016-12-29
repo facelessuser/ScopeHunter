@@ -26,3 +26,5 @@ markdown_extensions:
   - pymdownx.tasklist
   - pymdownx.progressbar
   - pymdownx.headeranchor
+extra_css:
+  - css/theme_custom.css

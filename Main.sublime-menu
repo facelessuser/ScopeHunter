@@ -31,12 +31,32 @@
                                 "caption": "Changelog",
                                 "command": "scope_hunter_changes"
                             },
+                            {
+                                "caption": "Documentation",
+                                "command": "scope_hunter_open_site",
+                                "args": {
+                                    "url": "http://facelessuser.github.io/ScopeHunter/"
+                                }
+                            },
+                            // {
+                            //     "caption": "Quick Start Guide",
+                            //     "command": "scope_hunter_doc",
+                            //     "args": {
+                            //         "page": "${packages}/ScopeHunter/quickstart.md"
+                            //     }
+                            // },
                             { "caption": "-" },
                             {
                                 "caption": "Support Info",
                                 "command": "scope_hunter_support_info"
                             },
-                            { "caption": "-" }
+                            {
+                                "caption": "Issues",
+                                "command": "scope_hunter_open_site",
+                                "args": {
+                                    "url": "https://github.com/facelessuser/ScopeHunter/issues"
+                                }
+                            }
                         ]
                     }
                 ]

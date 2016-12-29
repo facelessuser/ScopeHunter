@@ -2,9 +2,22 @@
 import sublime
 import sublime_plugin
 import textwrap
+import webbrowser
+import re
 
-__version__ = "2.5.6"
+__version__ = "2.6.0"
 __pc_name__ = 'ScopeHunter'
+
+
+CSS = '''
+div.scope-hunter { padding: 10px; margin: 0; }
+.scope-hunter h1, .scope-hunter h2, .scope-hunter h3,
+.scope-hunter h4, .scope-hunter h5, .scope-hunter h6 {
+    {{'.string'|css}}
+}
+.scope-hunter blockquote { {{'.comment'|css}} }
+.scope-hunter a { text-decoration: none; }
+'''
 
 
 def list2string(obj):
@@ -90,3 +103,96 @@ class ScopeHunterSupportInfoCommand(sublime_plugin.ApplicationCommand):
 
         sublime.message_dialog(msg + '\nInfo has been copied to the clipboard.')
         sublime.set_clipboard(msg)
+
+
+class ScopeHunterOpenSiteCommand(sublime_plugin.ApplicationCommand):
+    """Open site links."""
+
+    def run(self, url):
+        """Open the url."""
+
+        webbrowser.open_new_tab(url)
+
+
+class ScopeHunterDocCommand(sublime_plugin.WindowCommand):
+    """Open doc page."""
+
+    re_pkgs = re.compile(r'^Packages')
+
+    def on_navigate(self, href):
+        """Handle links."""
+
+        if href.startswith('sub://Packages'):
+            sublime.run_command('open_file', {"file": self.re_pkgs.sub('${packages}', href[6:])})
+        else:
+            webbrowser.open_new_tab(href)
+
+    def run(self, page):
+        """Open page."""
+
+        try:
+            import mdpopups
+            has_phantom_support = (mdpopups.version() >= (1, 10, 0)) and (int(sublime.version()) >= 3118)
+        except Exception:
+            has_phantom_support = False
+
+        if not has_phantom_support:
+            sublime.run_command('open_file', {"file": page})
+        else:
+            text = sublime.load_resource(page.replace('${packages}', 'Packages'))
+            view = self.window.new_file()
+            view.set_name('ScopeHunter - Quick Start')
+            view.settings().set('gutter', False)
+            view.settings().set('word_wrap', False)
+            if has_phantom_support:
+                mdpopups.add_phantom(
+                    view,
+                    'quickstart',
+                    sublime.Region(0),
+                    text,
+                    sublime.LAYOUT_INLINE,
+                    css=CSS,
+                    wrapper_class="scope-hunter",
+                    on_navigate=self.on_navigate
+                )
+            else:
+                view.run_command('insert', {"characters": text})
+            view.set_read_only(True)
+            view.set_scratch(True)
+
+
+class ScopeHunterChangesCommand(sublime_plugin.WindowCommand):
+    """Changelog command."""
+
+    def run(self):
+        """Show the changelog in a new view."""
+        try:
+            import mdpopups
+            has_phantom_support = (mdpopups.version() >= (1, 10, 0)) and (int(sublime.version()) >= 3118)
+        except Exception:
+            has_phantom_support = False
+
+        text = sublime.load_resource('Packages/ScopeHunter/CHANGES.md')
+        view = self.window.new_file()
+        view.set_name('ScopeHunter - Changelog')
+        view.settings().set('gutter', False)
+        view.settings().set('word_wrap', False)
+        if has_phantom_support:
+            mdpopups.add_phantom(
+                view,
+                'changelog',
+                sublime.Region(0),
+                text,
+                sublime.LAYOUT_INLINE,
+                wrapper_class="scope-hunter",
+                css=CSS,
+                on_navigate=self.on_navigate
+            )
+        else:
+            view.run_command('insert', {"characters": text})
+        view.set_read_only(True)
+        view.set_scratch(True)
+
+    def on_navigate(self, href):
+        """Open links."""
+        webbrowser.open_new_tab(href)
