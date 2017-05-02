@@ -12,7 +12,6 @@ from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.scope_hunter_notify import notify, error
 import traceback
 from textwrap import dedent
-from ScopeHunter import support
 
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3124
 if TOOLTIP_SUPPORT:
