@@ -14,9 +14,7 @@ import traceback
 from textwrap import dedent
 from ScopeHunter import support
 
-LATEST_SUPPORTED_MDPOPUPS = (1, 10, 0)
-TOOLTIP_SUPPORT = int(sublime.version()) >= 3080
-GOOD_CSS_SUPPORT = int(sublime.version()) >= 3119
+TOOLTIP_SUPPORT = int(sublime.version()) >= 3124
 if TOOLTIP_SUPPORT:
     import mdpopups
 
@@ -44,7 +42,7 @@ if TOOLTIP_SUPPORT:
 COPY_ALL = '''
 ---
 
-[(copy all)](copy-all){: %s.small}
+[(copy all)](copy-all){: .small}
 '''
 
 # Text Entry
@@ -158,9 +156,7 @@ class GetSelectionScope(object):
     def init_template_vars(self):
         """Initialize template variables."""
 
-        self.template_vars = {
-            "old": ('' if GOOD_CSS_SUPPORT else '.scope-hunter '),
-        }
+        self.template_vars = {}
 
     def next_index(self):
         """Get next index into scope buffer."""
@@ -549,7 +545,7 @@ class GetSelectionScope(object):
 
         if self.show_popup:
             if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
-                tail = mdpopups.md2html(self.view, COPY_ALL % ('' if GOOD_CSS_SUPPORT else '.scope-hunter '))
+                tail = mdpopups.md2html(self.view, COPY_ALL)
             else:
                 tail = ''
 
@@ -558,7 +554,7 @@ class GetSelectionScope(object):
                 ''.join(self.scope_bfr_tool) + tail,
                 md=False,
                 css=ADD_CSS,
-                wrapper_class=('scope-hunter' if GOOD_CSS_SUPPORT else 'scope-hunter content'),
+                wrapper_class=('scope-hunter'),
                 max_width=1000, on_navigate=self.on_navigate,
             )
 
@@ -667,7 +663,9 @@ class ScopeHunterGenerateCssCommand(sublime_plugin.WindowCommand):
         """Generate the CSS for theme scopes."""
 
         if scheme_matcher is not None:
-            generated_css = mdpopups.st_scheme_template.Scheme2CSS(scheme_matcher.color_scheme.replace('\\', '/')).text
+            generated_css = mdpopups.st_scheme_template.Scheme2CSS(
+                scheme_matcher.color_scheme.replace('\\', '/')
+            ).get_css()
             view = self.window.create_output_panel('scopehunter.gencss', unlisted=True)
             view.sel().clear()
             view.sel().add(sublime.Region(0, view.size()))
@@ -796,18 +794,6 @@ def plugin_loaded():
     """Setup plugin."""
 
     init_plugin()
-
-    try:
-        from package_control import events
-
-        settings = sublime.load_settings('scope_hunter.sublime-settings')
-        if TOOLTIP_SUPPORT and events.post_upgrade(support.__pc_name__):
-            if not LATEST_SUPPORTED_MDPOPUPS and settings.get('upgrade_dependencies', True):
-                window = sublime.active_window()
-                if window:
-                    window.run_command('satisfy_dependencies')
-    except ImportError:
-        log('Could not import Package Control')
 
 
 def plugin_unloaded():
