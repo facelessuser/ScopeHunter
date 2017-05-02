@@ -133,9 +133,15 @@ class ColorSchemeMatcher(object):
                         if s == "bold" or s == "italic":  # or s == "underline":
                             style.append(s)
 
-            if scope is not None and (color is not None or bgcolor is not None):
-                fg, fg_sim = self.process_color(color)
-                bg, bg_sim = self.process_color(bgcolor)
+            if scope is not None:
+                if color is not None:
+                    fg, fg_sim = self.process_color(color)
+                else:
+                    fg, fg_sim = None, None
+                if bgcolor is not None:
+                    bg, bg_sim = self.process_color(bgcolor)
+                else:
+                    bg, bg_sim = None, None
                 self.colors[scope] = {
                     "name": name,
                     "scope": scope,
