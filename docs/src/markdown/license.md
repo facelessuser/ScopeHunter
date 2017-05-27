@@ -1,6 +1,4 @@
-# License {: .doctitle}
-
----
+# License
 
 Scope Hunter is released under the MIT license.
 

@@ -13,18 +13,12 @@
                         "children":
                         [
                             {
-                                "command": "open_file", "args":
+                                "command": "edit_settings", "args":
                                 {
-                                    "file": "${packages}/ScopeHunter/scope_hunter.sublime-settings"
+                                    "base_file": "${packages}/ScopeHunter/scope_hunter.sublime-settings",
+                                    "default": "{\n\t$0\n}\n"
                                 },
-                                "caption": "Settings – Default"
-                            },
-                            {
-                                "command": "open_file", "args":
-                                {
-                                    "file": "${packages}/User/scope_hunter.sublime-settings"
-                                },
-                                "caption": "Settings – User"
+                                "caption": "Settings"
                             },
                             { "caption": "-" },
                             {

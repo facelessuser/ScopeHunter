@@ -26,15 +26,13 @@ sh_settings = {}
 if TOOLTIP_SUPPORT:
     ADD_CSS = dedent(
         '''
-        {%- if var.sublime_version >= 3119 %}
+        {%- if var.mdpopups_version >= (2, 0, 0) %}
         div.scope-hunter { margin: 0; padding: 0.5rem; }
-        .scope-hunter .small { font-size: 0.7rem; }
-        .scope-hunter .header { {{'.string'|css('color')}} }
         {%- else %}
-        .scoper-hunter.content { margin: 0; padding: 0.5em; }
-        .scope-hunter.small { font-size: {{'*0.7px'|relativesize}}; }
-        .scope-hunter.header { {{'.string'|css('color')}} }
+        div.scope-hunter { margin: 0; padding: 0; }
         {%- endif %}
+        .scope-hunter .small { font-size: 0.8rem; }
+        .scope-hunter .header { {{'.string'|css('color')}} }
         '''
     )
 

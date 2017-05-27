@@ -1,18 +1,16 @@
-# ScopeHunter {: .doctitle}
-Syntax Scope Viewer in Sublime Text.
+# ScopeHunter
 
----
+## Overview
 
-## ScopeHunter
 This is a simple plugin that can get the scope under the cursor(s) in Sublime Text.  This plugin is useful for plugin development.
 
 Dark theme with simple output:
 
-![Tooltip Dark](https://dl.dropboxusercontent.com/u/342698/ScopeHunter/tooltip-simple-dark.png)
+![Tooltip Dark](./images/tooltip-simple-dark.png)
 
 Light theme with advanced output:
 
-![Tooltip Light](https://dl.dropboxusercontent.com/u/342698/ScopeHunter/tooltip-copy.png)
+![Tooltip Light](./images/tooltip-copy.png)
 
 ## Features
 All features are configurable via the settings file
@@ -27,4 +25,6 @@ All features are configurable via the settings file
 - Optionally highlight and/or log scope extent.
 - Optionally log color scheme colors and selectors.
 - Optionally log location of Scheme file and Syntax.
-- Supports [SubNotify](https://github.com/facelessuser/SubNotify) messages.
+- Supports [SubNotify][subnotify] messages.
+
+--8<-- "refs.md"

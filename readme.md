@@ -6,11 +6,11 @@ This is a simple plugin that can get the scope under the cursor(s) in Sublime Te
 
 Dark theme with simple output:
 
-![Tooltip Dark](https://dl.dropboxusercontent.com/u/342698/ScopeHunter/tooltip-simple-dark.png)
+![Tooltip Dark](docs/src/markdown/tooltip-simple-dark.png)
 
 Light theme with advanced output:
 
-![Tooltip Light](https://dl.dropboxusercontent.com/u/342698/ScopeHunter/tooltip-copy.png)
+![Tooltip Light](docs/src/markdown/tooltip-copy.png)
 
 # Features
 All features are configurable via the settings file

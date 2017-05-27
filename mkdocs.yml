@@ -2,29 +2,73 @@ site_name: ScopeHunter Documentation
 repo_url: https://github.com/facelessuser/ScopeHunter
 site_description: Syntax Scope Viewer in Sublime Text.
 copyright: Copyright &copy; 2012 - 2015 <a href="https://github.com/facelessuser">Isaac Muse</a>
+
 pages:
   - About ScopeHunter: index.md
   - Installation: installation.md
   - User Guide: usage.md
   - Contributing &amp; Support: contributing.md
   - License: license.md
-theme: readthedocs
-theme_dir: doc_theme
+
+theme: material
+docs_dir: docs/src/markdown
+theme_dir: docs/theme
+
 markdown_extensions:
-  - markdown.extensions.admonition
-  - markdown.extensions.smarty
-  - markdown.extensions.nl2br
-  - markdown.extensions.codehilite:
-      guess_lang: false
-  - pymdownx.extra
-  - pymdownx.inlinehilite
-  - pymdownx.magiclink
-  - pymdownx.tilde
-  - pymdownx.caret
-  - pymdownx.smartsymbols
-  - pymdownx.githubemoji
-  - pymdownx.tasklist
-  - pymdownx.progressbar
-  - pymdownx.headeranchor
+  - markdown.extensions.toc:
+      slugify: !!python/name:pymdownx.slugs.uslugify
+      permalink: 
+  - markdown.extensions.admonition:
+  - markdown.extensions.smarty:
+      smart_quotes: false
+  - pymdownx.betterem:
+  - markdown.extensions.attr_list:
+  - markdown.extensions.def_list:
+  - markdown.extensions.tables:
+  - markdown.extensions.abbr:
+  - pymdownx.extrarawhtml:
+  - pymdownx.superfences:
+  - pymdownx.highlight:
+      css_class: codehilite
+      extend_pygments_lang:
+        - name: php-inline
+          lang: php
+          options:
+            startinline: true
+  - pymdownx.inlinehilite:
+  - pymdownx.magiclink:
+      repo_url_shortener: true
+      base_repo_url: https://github.com/facelessuser/ScopeHunter
+  - pymdownx.tilde:
+  - pymdownx.caret:
+  - pymdownx.smartsymbols:
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_png
+  - pymdownx.escapeall:
+      hardbreak: true
+      nbsp: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.progressbar:
+  - pymdownx.plainhtml:
+      strip_attributes: ''
+  - pymdownx.snippets:
+      base_path: docs/src/markdown/_snippets
+  - pymdownx.keys:
+      separator: ＋
+  - pymdownx.spoilers:
+
+extra:
+  palette:
+    primary: blue
+    accent: purple
+  font:
+    text: Roboto
+    code: Roboto Mono
+  social:
+    - type: github
+      link: https://github.com/facelessuser
 extra_css:
-  - css/theme_custom.css
+  - extra-effadd97dd.css
+extra_javascript:
+  - extra-0d49409391.js
