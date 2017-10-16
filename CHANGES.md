@@ -1,3 +1,7 @@
+# ScopeHunter 2.8.0
+
+- **NEW**: Add support for `.sublime-color-scheme`.
+
 # ScopeHunter 2.7.0
 
 > Released May 27, 2017
