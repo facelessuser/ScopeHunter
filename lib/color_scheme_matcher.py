@@ -26,15 +26,18 @@ Algorithm has been split out into a separate library and been enhanced with a nu
 from __future__ import absolute_import
 import sublime
 import re
-from .rgba import RGBA, clamp, round_int, fmt_float
+from .rgba import RGBA, clamp, round_int
 from . import x11colors
 from os import path
 from collections import namedtuple
 from plistlib import readPlistFromBytes
 from .file_strip.json import sanitize_json
 import json
+import decimal
 
 # For new Sublime format
+FLOAT_TRIM_RE = re.compile(r'^(?P<keep>\d+)(?P<trash>\.0+|(?P<keep2>\.\d*[1-9])0+)$')
+
 COLOR_PARTS = {
     "percent": r"[+\-]?(?:(?:\d*\.\d+)|\d+)%",
     "float": r"[+\-]?(?:(?:\d*\.\d+)|\d+)"
@@ -87,17 +90,32 @@ COLOR_RGB_SPACE_RE = re.compile(
 COLOR_MOD_RE = re.compile(
     r'''(?x)
     color\(\s*
-        (?P<base>\#[\dA-Fa-f]{6}|\#[\dA-Fa-f]{8})
+        (?P<base>\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})
         \s+(?P<type>blenda?)\(
-            (?P<color>\#[\dA-Fa-f]{6}|\#[\dA-Fa-f]{8})
+            (?P<color>\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})
             \s+(?P<percent>%(percent)s)
         \)
         (?P<other>
-            (?:\s+blenda?\((?:\#[\dA-Fa-f]{6}|\#[\dA-Fa-f]{8})\s+%(percent)s\))+
+            (?:\s+blenda?\((?:\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})\s+%(percent)s\))+
         )?
     \s*\)
     ''' % COLOR_PARTS
 )
+
+
+def fmt_float(f, p=0):
+    """Set float precision and trim precision zeros."""
+
+    string = str(
+        decimal.Decimal(f).quantize(decimal.Decimal('0.' + ('0' * p) if p > 0 else '0'), decimal.ROUND_HALF_UP)
+    )
+
+    m = FLOAT_TRIM_RE.match(string)
+    if m:
+        string = m.group('keep')
+        if m.group('keep2'):
+            string += m.group('keep2')
+    return string
 
 
 def alpha_dec_normalize(dec):
@@ -124,20 +142,20 @@ def blend(m):
     base = m.group('base')
     color = m.group('color')
     blend_type = m.group('type')
-    if blend_type == 'blend':
-        percent = m.group('percent')
-        if percent.endswith('%'):
-            percent = float(percent.strip('%'))
-        else:
-            percent = int(alpha_dec_normalize(percent), 16) * (100.0 / 255.0)
-        rgba = RGBA(base)
-        rgba.blend(color, percent)
-        color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
-        if m.group('other'):
-            color = "color(%s %s)" % (color, m.group('other'))
+    percent = m.group('percent')
+    if percent.endswith('%'):
+        percent = float(percent.strip('%'))
     else:
-        # TODO: blenda
-        color = base
+        percent = int(alpha_dec_normalize(percent), 16) * (100.0 / 255.0)
+    rgba = RGBA(base)
+    if blend_type == 'blend':
+        rgba.blend(color, percent)
+    else:
+        rgba.blend(color, percent)
+        # rgba.blenda(color, percent)
+    color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
+    if m.group('other'):
+        color = "color(%s %s)" % (color, m.group('other'))
     return color
 
 
@@ -152,12 +170,6 @@ def translate_color(m, var, var_src):
         color = "#%02x%02x%02x" % (
             int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
         )
-    elif groups.get('hexa_compresseds.get'):
-        content = m.group('hexa_compressed_content')
-        color = "#%02x%02x%02x" % (
-            int(content[1:2] * 2, 16), int(content[2:3] * 2, 16), int(content[3:] * 2, 16)
-        )
-        alpha = content[0:1]
     elif groups.get('hexa_compressed'):
         content = m.group('hexa_compressed_content')
         color = "#%02x%02x%02x" % (
@@ -174,18 +186,6 @@ def translate_color(m, var, var_src):
             color = "#%02x%02x%02x" % (
                 int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
             )
-    elif groups.get('hexa'):
-        content = m.group('hexa_content')
-        if len(content) == 8:
-            color = "#%02x%02x%02x" % (
-                int(content[2:4], 16), int(content[4:6], 16), int(content[6:], 16)
-            )
-            alpha = content[0:2]
-        else:
-            color = "#%02x%02x%02x" % (
-                int(content[1:2] * 2, 16), int(content[2:3] * 2, 16), int(content[3:] * 2, 16)
-            )
-            alpha = content[0:1]
     elif groups.get('hexa'):
         content = m.group('hexa_content')
         if len(content) == 8:
@@ -410,6 +410,7 @@ class ColorSchemeMatcher(object):
         else:
             # Create scope colors mapping from color scheme file
             for item in self.scheme_obj["rules"]:
+                name = item.get('name', '')
                 scope = item.get('scope', None)
                 color = None
                 bgcolor = None

@@ -10,7 +10,10 @@ import decimal
 
 RGB_CHANNEL_SCALE = 1.0 / 255.0
 HUE_SCALE = 1.0 / 360.0
-BLEND_CONVERSION = 255.0 / 100.0
+PERCENT_TO_CHANNEL = 255.0 / 100.0
+CHANNEL_TO_PERCENT = 100.0 / 255.0
+SCALE_PERCENT = 1 / 100.0
+SCALE_HALF_PERCENT = 1 / 50.0
 
 
 def tx_alpha(cf, af, cb, ab):
@@ -126,10 +129,30 @@ class RGBA(object):
 
         self.b = round_int(clamp(self.b + (255.0 * factor) - 255.0, 0.0, 255.0))
 
+    # def blenda(self, color, percent):
+    #     """Blend color with alpha."""
+
+    #     # Adjust weight
+    #     factor = clamp(round_int(clamp(float(percent), 0.0, 100.0) * PERCENT_TO_CHANNEL), 0, 255)
+    #     a = clamp((self.a - factor) * SCALE_PERCENT, -1.0, 1.0)
+    #     w = clamp((percent - 50.0) * SCALE_HALF_PERCENT, -1.0, 1.0)
+    #     if (w * a) == -1.0:
+    #         weight = w
+    #     else:
+    #         weight = (w + a) / (1 + w * a)
+    #     percent = clamp((weight * 50.0) + 50.0, 0.0, 100.0)
+
+    #     # Blend
+    #     self.blend(color, percent)
+
+    #     # Calculate alpha channel
+    #     a = self._split_channels(color)[-1]
+    #     self.a = clamp(round_int((self.a + a) / 2.0), 0, 255)
+
     def blend(self, color, percent):
         """Blend color."""
 
-        factor = clamp(round_int(clamp(float(percent), 0.0, 100.0) * BLEND_CONVERSION), 0, 255)
+        factor = clamp(round_int(clamp(float(percent), 0.0, 100.0) * PERCENT_TO_CHANNEL), 0, 255)
         r, g, b = self._split_channels(color)[:3]
 
         self.r = tx_alpha(self.r, factor, r, 255)
