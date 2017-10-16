@@ -148,10 +148,7 @@ def blend(m):
     else:
         percent = int(alpha_dec_normalize(percent), 16) * (100.0 / 255.0)
     rgba = RGBA(base)
-    if blend_type == 'blend':
-        rgba.blend(color, percent)
-    else:
-        rgba.blenda(color, percent)
+    rgba.blend(color, percent, alpha=(blend_type == 'blenda'))
     color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
     if m.group('other'):
         color = "color(%s %s)" % (color, m.group('other'))

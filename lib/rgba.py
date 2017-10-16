@@ -16,8 +16,18 @@ SCALE_PERCENT = 1 / 100.0
 SCALE_HALF_PERCENT = 1 / 50.0
 
 
-def tx_alpha(cf, af, cb, ab):
-    """Translate the color channel with the alpha channel and background channel color."""
+def mix_channel(cf, af, cb, ab):
+    """
+    Mix the color channel.
+
+    cf: Channel foreground
+    af: Alpha foreground
+    cb: Channel background
+    ab: Alpha background
+
+    The foreground is overlayed on the secondary color it is to be mixed with.
+    The alpha channels are applied and the colors mix.
+    """
 
     return clamp(
         round_int(
@@ -38,7 +48,7 @@ def clamp(value, mn, mx):
 def round_int(dec):
     """Round float to nearest int using expected rounding."""
 
-    return int(decimal.Decimal(dec).quantize(decimal.Decimal('0'), decimal.ROUND_HALF_UP))
+    return int(decimal.Decimal(dec).quantize(decimal.Decimal('0'), decimal.ROUND_HALF_DOWN))
 
 
 class RGBA(object):
@@ -92,9 +102,9 @@ class RGBA(object):
         if self.a < 0xFF:
             r, g, b, a = self._split_channels(background)
 
-            self.r = tx_alpha(self.r, self.a, r, a)
-            self.g = tx_alpha(self.g, self.a, g, a)
-            self.b = tx_alpha(self.b, self.a, b, a)
+            self.r = mix_channel(self.r, self.a, r, a)
+            self.g = mix_channel(self.g, self.a, g, a)
+            self.b = mix_channel(self.b, self.a, b, a)
 
         return self.get_rgb()
 
@@ -129,43 +139,17 @@ class RGBA(object):
 
         self.b = round_int(clamp(self.b + (255.0 * factor) - 255.0, 0.0, 255.0))
 
-    def blenda(self, color, percent):
-        """
-        Blend color with alpha.
-
-        Sublime doesn't seem to blend proper. Figure out alpha blend algorithm.
-        """
-
-        # a = self._split_channels(color)[-1]
-        # # Adjust weight
-        # factor = clamp(round_int(clamp(float(percent), 0.0, 100.0) * PERCENT_TO_CHANNEL), 0, 255)
-        # a = clamp((self.a - a) * CHANNEL_TO_PERCENT * SCALE_PERCENT, -1.0, 1.0)
-        # w = clamp((percent - 50.0) * SCALE_HALF_PERCENT, -1.0, 1.0)
-
-        # if (w * a) == -1.0:
-        #     weight = w
-        # else:
-        #     weight = (w + a) / (1 + w * a)
-
-        # percent = clamp((weight * 50.0) + 50.0, 0.0, 100.0)
-
-        # Blend
-        self.blend(color, percent)
-
-        # Calculate alpha channel
-        # a = self._split_channels(color)[-1]
-        # factor = clamp(round_int(clamp(float(percent), 0.0, 100.0) * PERCENT_TO_CHANNEL), 0, 255)
-        # self.a = clamp(round_int((a * RGB_CHANNEL_SCALE) * factor + (self.a * RGB_CHANNEL_SCALE) * (1 - factor)), 0, 255)
-
-    def blend(self, color, percent):
+    def blend(self, color, percent, alpha=False):
         """Blend color."""
 
         factor = clamp(round_int(clamp(float(percent), 0.0, 100.0) * PERCENT_TO_CHANNEL), 0, 255)
-        r, g, b = self._split_channels(color)[:3]
+        r, g, b, a = self._split_channels(color)
 
-        self.r = tx_alpha(self.r, factor, r, 255)
-        self.g = tx_alpha(self.g, factor, g, 255)
-        self.b = tx_alpha(self.b, factor, b, 255)
+        self.r = mix_channel(self.r, factor, r, 255)
+        self.g = mix_channel(self.g, factor, g, 255)
+        self.b = mix_channel(self.b, factor, b, 255)
+        if alpha:
+            self.a = mix_channel(self.a, factor, a, 255)
 
     def luminance(self, factor):
         """Get true luminance."""
