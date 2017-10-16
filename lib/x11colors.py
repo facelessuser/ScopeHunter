@@ -664,10 +664,10 @@ name2hex_map = {
 hex2name_map = dict([(v, k) for k, v in name2hex_map.items()])
 
 
-def hex2name(hex):
+def hex2name(value):
     """Convert X11 hex to webcolor name."""
 
-    return hex2name_map.get(hex.lower(), None)
+    return hex2name_map.get(value.lower(), None)
 
 
 def name2hex(name):
