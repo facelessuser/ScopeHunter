@@ -151,8 +151,7 @@ def blend(m):
     if blend_type == 'blend':
         rgba.blend(color, percent)
     else:
-        rgba.blend(color, percent)
-        # rgba.blenda(color, percent)
+        rgba.blenda(color, percent)
     color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
     if m.group('other'):
         color = "color(%s %s)" % (color, m.group('other'))

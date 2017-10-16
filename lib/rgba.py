@@ -129,25 +129,33 @@ class RGBA(object):
 
         self.b = round_int(clamp(self.b + (255.0 * factor) - 255.0, 0.0, 255.0))
 
-    # def blenda(self, color, percent):
-    #     """Blend color with alpha."""
+    def blenda(self, color, percent):
+        """
+        Blend color with alpha.
 
-    #     # Adjust weight
-    #     factor = clamp(round_int(clamp(float(percent), 0.0, 100.0) * PERCENT_TO_CHANNEL), 0, 255)
-    #     a = clamp((self.a - factor) * SCALE_PERCENT, -1.0, 1.0)
-    #     w = clamp((percent - 50.0) * SCALE_HALF_PERCENT, -1.0, 1.0)
-    #     if (w * a) == -1.0:
-    #         weight = w
-    #     else:
-    #         weight = (w + a) / (1 + w * a)
-    #     percent = clamp((weight * 50.0) + 50.0, 0.0, 100.0)
+        Sublime doesn't seem to blend proper. Figure out alpha blend algorithm.
+        """
 
-    #     # Blend
-    #     self.blend(color, percent)
+        # a = self._split_channels(color)[-1]
+        # # Adjust weight
+        # factor = clamp(round_int(clamp(float(percent), 0.0, 100.0) * PERCENT_TO_CHANNEL), 0, 255)
+        # a = clamp((self.a - a) * CHANNEL_TO_PERCENT * SCALE_PERCENT, -1.0, 1.0)
+        # w = clamp((percent - 50.0) * SCALE_HALF_PERCENT, -1.0, 1.0)
 
-    #     # Calculate alpha channel
-    #     a = self._split_channels(color)[-1]
-    #     self.a = clamp(round_int((self.a + a) / 2.0), 0, 255)
+        # if (w * a) == -1.0:
+        #     weight = w
+        # else:
+        #     weight = (w + a) / (1 + w * a)
+
+        # percent = clamp((weight * 50.0) + 50.0, 0.0, 100.0)
+
+        # Blend
+        self.blend(color, percent)
+
+        # Calculate alpha channel
+        # a = self._split_channels(color)[-1]
+        # factor = clamp(round_int(clamp(float(percent), 0.0, 100.0) * PERCENT_TO_CHANNEL), 0, 255)
+        # self.a = clamp(round_int((a * RGB_CHANNEL_SCALE) * factor + (self.a * RGB_CHANNEL_SCALE) * (1 - factor)), 0, 255)
 
     def blend(self, color, percent):
         """Blend color."""
