@@ -35,6 +35,8 @@ from .file_strip.json import sanitize_json
 import json
 import decimal
 
+FONT_STYLE = "font_style" if int(sublime.version()) >= 3151 else "fontStyle"
+
 # For new Sublime format
 FLOAT_TRIM_RE = re.compile(r'^(?P<keep>\d+)(?P<trash>\.0+|(?P<keep2>\.\d*[1-9])0+)$')
 
@@ -418,10 +420,10 @@ class ColorSchemeMatcher(object):
                     bgcolor = item.get('background', None)
                     if bgcolor is not None:
                         bgcolor = translate_color(COLOR_RE.match(bgcolor.strip()), self.variables, {})
-                    if item.get('bold', False) is True:
-                        style.append('bold')
-                    if item.get('italic', False) is True:
-                        style.append('italic')
+                    if FONT_STYLE in item:
+                        for s in item[FONT_STYLE].split(' '):
+                            if s == "bold" or s == "italic":  # or s == "underline":
+                                style.append(s)
 
                 if scope is not None:
                     self.add_entry(name, scope, color, bgcolor, style)
