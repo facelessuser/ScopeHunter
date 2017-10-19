@@ -6,14 +6,52 @@ Copyright (c) 2012 - 2016 Isaac Muse <isaacmuse@gmail.com>
 """
 import sublime
 import sublime_plugin
+import os
 from time import time, sleep
 import threading
-from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 from ScopeHunter.scope_hunter_notify import notify, error
 import traceback
 from textwrap import dedent
 
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3124
+NEW_SCHEMES = int(sublime.version()) >= 3150
+POPUP_TEMPLATE = 'popup' if NEW_SCHEMES else 'legacy_popup'
+
+if not NEW_SCHEMES:
+    from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
+else:
+
+    from ScopeHunter.lib.color_scheme_matcher import SchemeColors
+
+    class ColorSchemeMatcher():
+        """Colorscheme matcher."""
+
+        def __init__(self, scheme_file):
+            """Initialize."""
+
+            self.color_scheme = os.path.normpath(scheme_file)
+            self.scheme_file = os.path.basename(self.color_scheme)
+
+        def guess_color(self, view, scope):
+            """Guess color."""
+
+            global_style = view.style()
+            results = view.style_for_scope(scope)
+
+            color = results.get('foreground', global_style.get('foreground', '#000000'))
+            bgcolor = results.get('background', global_style.get('background', '#ffffff'))
+            style = []
+            if results['bold']:
+                style.append('bold')
+            if results['italic']:
+                style.append('italic')
+
+            return SchemeColors(
+                color, None, bgcolor, None, ' '.join(style),
+                None, None, None
+            )
+
+
 if TOOLTIP_SUPPORT:
     import mdpopups
 
@@ -270,17 +308,31 @@ class GetSelectionScope(object):
                 self.template_vars['bg_sim'] = True
                 self.get_color_box(bgcolor_sim, 'bg_sim', self.next_index())
 
-            if style == "bold":
-                tag = "b"
-            elif style == "italic":
-                tag = "i"
-            elif style == "underline":
-                tag = "u"
-            else:
+            tag = None
+            tag2 = None
+            style_label = set()
+            for s in style.split(' '):
+                if style == "bold":
+                    if tag is None:
+                        tag = "b"
+                    elif tag2 is None:
+                        tag2 = "b"
+                    style_label.add('bold')
+                elif style == "italic":
+                    if tag is None:
+                        tag = "i"
+                    elif tag2 is None:
+                        tag2 = "i"
+                    style_label.add('italic')
+            if len(style_label) == 0:
+                style_label.add('normal')
+            if tag is None:
                 tag = "span"
-                style = "normal"
+            if tag2 is None:
+                tag2 = "span"
+            self.template_vars["style_tag2"] = tag2
             self.template_vars["style_tag"] = tag
-            self.template_vars["style"] = style
+            self.template_vars["style"] = ' '.join(list(style_label))
             self.template_vars["style_index"] = self.next_index()
 
     def get_scheme_syntax(self):
@@ -346,7 +398,10 @@ class GetSelectionScope(object):
 
         if (self.appearance_info or self.selector_info) and scheme_matcher is not None:
             try:
-                match = scheme_matcher.guess_color(scope)
+                if NEW_SCHEMES:
+                    match = scheme_matcher.guess_color(self.view, scope)
+                else:
+                    match = scheme_matcher.guess_color(scope)
                 color = match.fg
                 bgcolor = match.bg
                 color_sim = match.fg_simulated
@@ -468,7 +523,7 @@ class GetSelectionScope(object):
         self.scope_bfr_tool = []
         self.clips = []
         self.status = ""
-        self.popup_template = sublime.load_resource('Packages/ScopeHunter/popup.j2')
+        self.popup_template = sublime.load_resource('Packages/ScopeHunter/%s.j2' % POPUP_TEMPLATE)
         self.scheme_file = None
         self.syntax_file = None
         self.show_statusbar = bool(sh_settings.get("show_statusbar", False))
@@ -487,9 +542,9 @@ class GetSelectionScope(object):
         self.rowcol_info = bool(sh_settings.get("extent_line_char", False))
         self.points_info = bool(sh_settings.get("extent_points", False))
         self.appearance_info = bool(sh_settings.get("styling", False))
-        self.show_simulated = bool(sh_settings.get("show_simulated_alpha_colors", False))
+        self.show_simulated = bool(sh_settings.get("show_simulated_alpha_colors", False)) and not NEW_SCHEMES
         self.file_path_info = bool(sh_settings.get("file_paths", False))
-        self.selector_info = bool(sh_settings.get("selectors", False))
+        self.selector_info = bool(sh_settings.get("selectors", False)) and not NEW_SCHEMES
         self.scheme_info = self.appearance_info or self.selector_info
         self.first = True
         self.extents = []
@@ -651,28 +706,6 @@ class SelectionScopeListener(sublime_plugin.EventListener):
             if scheme_matcher is not None and scheme is not None:
                 if scheme != scheme_matcher.scheme_file:
                     reinit_plugin()
-
-
-class ScopeHunterGenerateCssCommand(sublime_plugin.WindowCommand):
-    """Command to generate scope CSS."""
-
-    def run(self):
-        """Generate the CSS for theme scopes."""
-
-        if scheme_matcher is not None:
-            generated_css = mdpopups.st_scheme_template.Scheme2CSS(
-                scheme_matcher.color_scheme.replace('\\', '/')
-            ).get_css()
-            view = self.window.create_output_panel('scopehunter.gencss', unlisted=True)
-            view.sel().clear()
-            view.sel().add(sublime.Region(0, view.size()))
-            view.run_command('insert', {'characters': generated_css})
-            self.window.run_command("show_panel", {"panel": "output.scopehunter.gencss"})
-
-    def is_enabled(self):
-        """Check if command is enabled."""
-
-        return TOOLTIP_SUPPORT and scheme_matcher is not None
 
 
 class ShThread(threading.Thread):

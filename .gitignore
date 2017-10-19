@@ -1,4 +1,5 @@
 *.pyc
-
+*.patch
 site/*
 *.DS_Store
+build/*
