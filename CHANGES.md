@@ -1,4 +1,5 @@
 # ScopeHunter 2.8.0
+
 Oct 18, 2017
 
 - **NEW**: Add support for `.sublime-color-scheme` (some features may not be available as scheme handling has changed).
