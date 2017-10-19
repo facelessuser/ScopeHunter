@@ -1,4 +1,4 @@
-# RegReplace 2.7.0
+# RegReplace 2.8.0
 
 New release!
 

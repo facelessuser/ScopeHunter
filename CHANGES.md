@@ -1,6 +1,10 @@
 # ScopeHunter 2.8.0
 
-- **NEW**: Add support for `.sublime-color-scheme`.
+- **NEW**: Add support for `.sublime-color-scheme` (some features may not be available as scheme handling has changed).
+- **NEW**: Remove "Generate CSS" command as this feature is no longer relevant as schemes have drastically changed.
+- **NEW**: Update dependencies.
+- **FIX**: Ensure both bold and italic is shown for style when both are set for a selector.
+- **FIX**: Small fixes in color matcher lib for builds <3150.
 
 # ScopeHunter 2.7.0
 
