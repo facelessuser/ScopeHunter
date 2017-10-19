@@ -11,42 +11,6 @@ Show scope under cursor or cursors (depending whether multi-select is enabled).
 
 Toggle scoping under cursor constantly, but only for the current active file view.
 
-### Scope Hunter: Generate Color Scheme CSS
-
-Generate CSS from valid scopes in color scheme.  This is great for dropping in Sublime tooltips.
-
-Example output:
-
-```css
-.foreground { color: #CCCCCC; }
-.background { background-color: #232628; }
-.comment { color: #888888; }
-.constant.other { color: #CCCCCC; }
-.entity.name.tag { color: #F2777A; }
-.entity.other.attribute-name { color: #F2777A; }
-.constant.numeric { color: #F99157; }
-.support.constant { color: #F99157; }
-.constant.character { color: #F99157; }
-.variable.parameter { color: #F99157; }
-.support.type { color: #FFCC66; }
-.support.class { color: #FFCC66; }
-.string { color: #99CC99; }
-.entity.other.inherited-class { color: #99CC99; }
-.markup.heading { color: #99CC99; }
-.keyword.operator { color: #66CCCC; }
-.entity.name.function { color: #6699CC; }
-.support.function { color: #6699CC; }
-.keyword { color: #CC99CC; }
-.storage { color: #CC99CC; }
-.storage.type { color: #CC99CC; }
-.invalid { color: #FAFDFF; background-color: #F2777A; }
-.invalid.deprecated { color: #FAFDFF; background-color: #CC99CC; }
-.variable.language { color: #FFCC66; }
-.markup.underline.link { color: #99CCCC; }
-.markup.bold { color: #CC99CC; font-weight: bold; }
-.markup.italic { color: #CC99CC; font-style: italic; }
-```
-
 ## Scope Hunter: User Settings
 
 In order to change the standard settings of Scope Hunter, please go to `Preferences -> Package Settings -> Scope Hunter` and click on `Settings - User`.  Repeat that for `Settings - Default`, copy all the settings that you wish to change from the default settings to the user settings file.
@@ -108,6 +72,9 @@ This is useful if you are doing something like `show_statusbar`.  You can keep t
 
 For modes like `show_panel`, `console_log`, and `show_popup` you can control the info displayed.  You can keep it just to the scope, or you can extend it show other useful info.
 
+!!! warning "Sublime 3150+"
+    ScopeHunter currently will ignore `show_simulated_alpha_colors` and `selectors` as the color scheme format has drastically changed. These settings may be removed in the future.
+
 ```js
     ///////////////////////////
     // Additional Scope Info
@@ -157,11 +124,11 @@ Show not only the color value, but also the scope and text styling.
 
 #### `show_simulated_alpha_colors`
 
-When showing color values, ScopeHunter can show the perceived color value of transparent colors.  It mixes the transparent foreground with the background giving the color value you are actually seeing.
+For Sublime <3150, when showing color values, ScopeHunter can show the perceived color value of transparent colors.  It mixes the transparent foreground with the background giving the color value you are actually seeing.
 
 #### `selectors`
 
-Show the color scheme selectors that are responsible for applying the visible color and styles.
+For Sublime <3150, this shows the color scheme selectors that are responsible for applying the visible color and styles.
 
 #### `file_paths`
 
