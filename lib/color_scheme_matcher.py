@@ -31,11 +31,11 @@ from . import x11colors
 from os import path
 from collections import namedtuple
 from plistlib import readPlistFromBytes
-from .file_strip.json import sanitize_json
-import json
 import decimal
 
+NEW_SCHEMES = int(sublime.version()) >= 3150
 FONT_STYLE = "font_style" if int(sublime.version()) >= 3151 else "fontStyle"
+GLOBAL_OPTIONS = "globals" if int(sublime.version()) >= 3152 else "defaults"
 
 # For new Sublime format
 FLOAT_TRIM_RE = re.compile(r'^(?P<keep>\d+)(?P<trash>\.0+|(?P<keep2>\.\d*[1-9])0+)$')
@@ -309,11 +309,11 @@ class ColorSchemeMatcher(object):
         """Initialize."""
         if color_filter is None:
             color_filter = self.filter
-        self.legacy = not scheme_file.lower().endswith('.sublime-color-scheme')
+        self.legacy = not scheme_file.lower().endswith('.sublime-color-scheme') if NEW_SCHEMES else True
         self.color_scheme = path.normpath(scheme_file)
         self.scheme_file = path.basename(self.color_scheme)
         if self.legacy:
-            self.scheme_obj = color_filter(
+            scheme_obj = color_filter(
                 readPlistFromBytes(
                     re.sub(
                         br"^[\r\n\s]*<!--[\s\S]*?-->[\s\r\n]*|<!--[\s\S]*?-->", b'',
@@ -321,18 +321,64 @@ class ColorSchemeMatcher(object):
                     )
                 )
             )
+            self.convert_format(scheme_obj)
         else:
-            self.scheme_obj = json.loads(
-                sanitize_json(
-                    sublime.load_resource(sublime_format_path(self.color_scheme)),
-                    preserve_lines=True
-                )
-            )
+            self.scheme_obj = sublime.decode_value(sublime.load_resource(sublime_format_path(self.color_scheme)))
+            if 'variables' not in self.scheme_obj:
+                self.scheme_obj['variables'] = {}
+            if GLOBAL_OPTIONS not in self.scheme_obj:
+                self.scheme_obj[GLOBAL_OPTIONS] = {}
+            if 'rules' not in self.scheme_obj:
+                self.scheme_obj['rules'] = []
+        self.overrides = []
+        if NEW_SCHEMES:
+            self.merge_overrides()
         self.scheme_file = scheme_file
         self.matched = {}
         self.variables = {}
 
         self.parse_scheme()
+
+    def convert_format(self, obj):
+        """Convert tmTheme object to new format."""
+
+        self.scheme_obj = {
+            "variables": {},
+            GLOBAL_OPTIONS: {},
+            "rules": []
+        }
+        for item in obj["settings"]:
+            if item.get('scope', None) is None and item.get('name', None) is None:
+                self.scheme_obj[GLOBAL_OPTIONS] = item["settings"]
+            if 'settings' in item and item.get('scope') is not None:
+                self.scheme_obj['rules'].append(
+                    {
+                        "name": item.get('name', ''),
+                        "scope": item.get('scope'),
+                        "foreground": item['settings'].get('foreground'),
+                        "background": item['settings'].get('background'),
+                        FONT_STYLE: item['settings'].get('fontStyle', '')
+                    }
+                )
+
+    def merge_overrides(self):
+        """Merge override schemes."""
+
+        current_file = sublime_format_path(self.color_scheme)
+        for override in sublime.find_resources('%s.sublime-color-scheme' % path.splitext(self.scheme_file)[0]):
+            if override != current_file:
+                ojson = sublime.decode_value(sublime.load_resource(override))
+
+                for k, v in ojson.get('variables', {}).items():
+                    self.scheme_obj['variables'][k] = v
+
+                for k, v in ojson.get(GLOBAL_OPTIONS, {}).items():
+                    self.scheme_obj[GLOBAL_OPTIONS][k] = v
+
+                for item in ojson.get('rules', []):
+                    self.scheme_obj['rules'].append(item)
+
+                self.overrides.append(override)
 
     def filter(self, plist):
         """Dummy filter call that does nothing."""
@@ -342,22 +388,15 @@ class ColorSchemeMatcher(object):
     def parse_scheme(self):
         """Parse the color scheme."""
 
-        if self.legacy:
-            color_settings = {}
-            for item in self.scheme_obj["settings"]:
-                if item.get('scope', None) is None and item.get('name', None) is None:
-                    color_settings = item["settings"]
-                    break
-        else:
-            for k, v in self.scheme_obj.get('variables', {}).items():
-                m = COLOR_RE.match(v.strip())
-                self.variables[k] = translate_color(m, self.variables, self.scheme_obj.get('variables'))
+        for k, v in self.scheme_obj.get('variables', {}).items():
+            m = COLOR_RE.match(v.strip())
+            self.variables[k] = translate_color(m, self.variables, self.scheme_obj.get('variables'))
 
-            color_settings = {}
-            for k, v in self.scheme_obj["defaults"].items():
-                m = COLOR_RE.match(v.strip())
-                if m is not None:
-                    color_settings[k] = translate_color(m, self.variables, {})
+        color_settings = {}
+        for k, v in self.scheme_obj[GLOBAL_OPTIONS].items():
+            m = COLOR_RE.match(v.strip())
+            if m is not None:
+                color_settings[k] = translate_color(m, self.variables, {})
 
         # Get general theme colors from color scheme file
         bground, bground_sim = self.process_color(
@@ -386,47 +425,27 @@ class ColorSchemeMatcher(object):
         self.special_colors["gutterForeground"] = {'color': gfground, 'color_simulated': gfground_sim}
 
         self.colors = {}
-        if self.legacy:
-            # Create scope colors mapping from color scheme file
-            for item in self.scheme_obj["settings"]:
-                name = item.get('name', '')
-                scope = item.get('scope', None)
-                color = None
-                bgcolor = None
-                style = []
-                if 'settings' in item and scope is not None:
-                    color = item['settings'].get('foreground', None)
-                    bgcolor = item['settings'].get('background', None)
-                    if 'fontStyle' in item['settings']:
-                        for s in item['settings']['fontStyle'].split(' '):
-                            if s == "bold" or s == "italic":  # or s == "underline":
-                                style.append(s)
+        # Create scope colors mapping from color scheme file
+        for item in self.scheme_obj["rules"]:
+            name = item.get('name', '')
+            scope = item.get('scope', None)
+            color = None
+            bgcolor = None
+            style = []
+            if scope is not None:
+                color = item.get('foreground', None)
+                if color is not None:
+                    color = translate_color(COLOR_RE.match(color.strip()), self.variables, {})
+                bgcolor = item.get('background', None)
+                if bgcolor is not None:
+                    bgcolor = translate_color(COLOR_RE.match(bgcolor.strip()), self.variables, {})
+                if FONT_STYLE in item:
+                    for s in item.get(FONT_STYLE, '').split(' '):
+                        if s == "bold" or s == "italic":  # or s == "underline":
+                            style.append(s)
 
-                if scope is not None:
-                    self.add_entry(name, scope, color, bgcolor, style)
-
-        else:
-            # Create scope colors mapping from color scheme file
-            for item in self.scheme_obj["rules"]:
-                name = item.get('name', '')
-                scope = item.get('scope', None)
-                color = None
-                bgcolor = None
-                style = []
-                if scope is not None:
-                    color = item.get('foreground', None)
-                    if color is not None:
-                        color = translate_color(COLOR_RE.match(color.strip()), self.variables, {})
-                    bgcolor = item.get('background', None)
-                    if bgcolor is not None:
-                        bgcolor = translate_color(COLOR_RE.match(bgcolor.strip()), self.variables, {})
-                    if FONT_STYLE in item:
-                        for s in item[FONT_STYLE].split(' '):
-                            if s == "bold" or s == "italic":  # or s == "underline":
-                                style.append(s)
-
-                if scope is not None:
-                    self.add_entry(name, scope, color, bgcolor, style)
+            if scope is not None:
+                self.add_entry(name, scope, color, bgcolor, style)
 
     def add_entry(self, name, scope, color, bgcolor, style):
         """Add color entry."""
@@ -462,12 +481,7 @@ class ColorSchemeMatcher(object):
             return None, None
 
         if not color.startswith('#'):
-            if self.legacy:
-                color = x11colors.name2hex(color)
-                if color is None:
-                    return None, None
-            else:
-                return None, None
+            return None, None
 
         rgba = RGBA(color.replace(" ", ""))
         if not simple_strip:

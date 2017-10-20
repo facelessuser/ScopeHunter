@@ -1,3 +1,14 @@
+# ScopeHunter 2.9.0
+
+Oct 19, 2017
+
+- **NEW**: Handle overrides for new color scheme styles and bring back scope info for style attributes.
+- **NEW**: Hide names if no names available.
+- **NEW**: Small popup format tweaks.
+- **NEW**: Add option to manually refresh color scheme in cache.
+- **NEW**: Show overrides file names in panel and/or popup.
+- **FIX**: Font style read error when no font style.
+
 # ScopeHunter 2.8.0
 
 Oct 18, 2017
