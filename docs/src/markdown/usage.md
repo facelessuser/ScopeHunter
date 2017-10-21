@@ -72,9 +72,6 @@ This is useful if you are doing something like `show_statusbar`.  You can keep t
 
 For modes like `show_panel`, `console_log`, and `show_popup` you can control the info displayed.  You can keep it just to the scope, or you can extend it show other useful info.
 
-!!! warning "Sublime 3150+"
-    ScopeHunter currently will ignore `show_simulated_alpha_colors` and `selectors` as the color scheme format has drastically changed. These settings may be removed in the future.
-
 ```js
     ///////////////////////////
     // Additional Scope Info
@@ -124,11 +121,11 @@ Show not only the color value, but also the scope and text styling.
 
 #### `show_simulated_alpha_colors`
 
-For Sublime <3150, when showing color values, ScopeHunter can show the perceived color value of transparent colors.  It mixes the transparent foreground with the background giving the color value you are actually seeing.
+When showing color values, ScopeHunter can show the perceived color value of transparent colors.  It mixes the transparent foreground with the background giving the color value you are actually seeing.
 
 #### `selectors`
 
-For Sublime <3150, this shows the color scheme selectors that are responsible for applying the visible color and styles.
+This shows the color scheme selectors that are responsible for applying the visible color and styles.
 
 #### `file_paths`
 
