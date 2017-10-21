@@ -16,9 +16,9 @@ pages:
 
 docs_dir: docs/src/markdown
 
-theme:
-  name: material
-  custom_dir: docs/theme
+theme: material
+docs_dir: docs/src/markdown
+theme_dir: docs/theme
 
 markdown_extensions:
   - markdown.extensions.toc:
