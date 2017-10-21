@@ -313,12 +313,10 @@ class ColorSchemeMatcher(object):
         self.color_scheme = path.normpath(scheme_file)
         self.scheme_file = path.basename(self.color_scheme)
         if self.legacy:
-            scheme_obj = color_filter(
-                readPlistFromBytes(
-                    re.sub(
-                        br"^[\r\n\s]*<!--[\s\S]*?-->[\s\r\n]*|<!--[\s\S]*?-->", b'',
-                        sublime.load_binary_resource(sublime_format_path(self.color_scheme))
-                    )
+            scheme_obj = readPlistFromBytes(
+                re.sub(
+                    br"^[\r\n\s]*<!--[\s\S]*?-->[\s\r\n]*|<!--[\s\S]*?-->", b'',
+                    sublime.load_binary_resource(sublime_format_path(self.color_scheme))
                 )
             )
             self.convert_format(scheme_obj)
@@ -333,6 +331,7 @@ class ColorSchemeMatcher(object):
         self.overrides = []
         if NEW_SCHEMES:
             self.merge_overrides()
+        self.scheme_obj = color_filter(self.scheme_obj)
         self.scheme_file = scheme_file
         self.matched = {}
         self.variables = {}
@@ -380,10 +379,10 @@ class ColorSchemeMatcher(object):
 
                 self.overrides.append(override)
 
-    def filter(self, plist):
+    def filter(self, scheme):
         """Dummy filter call that does nothing."""
 
-        return plist
+        return scheme
 
     def parse_scheme(self):
         """Parse the color scheme."""
@@ -500,7 +499,7 @@ class ColorSchemeMatcher(object):
         return self.special_colors.get(name, {}).get('color_simulated' if simulate_transparency else 'color')
 
     def get_scheme_obj(self):
-        """Get the plist file used during the process."""
+        """Get the scheme file used during the process."""
 
         return self.scheme_obj
 
