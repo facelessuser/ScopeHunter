@@ -1,3 +1,9 @@
+# ScopeHunter 2.9.1
+
+Oct 21, 2017
+
+- **FIX**: Scheme parsing related fixes.
+
 # ScopeHunter 2.9.0
 
 Oct 19, 2017
