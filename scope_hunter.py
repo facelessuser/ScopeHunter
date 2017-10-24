@@ -777,7 +777,7 @@ def init_color_scheme():
 
 
 def reinit_plugin():
-    """Relaod scheme object and tooltip theme."""
+    """Reload scheme object and tooltip theme."""
 
     init_color_scheme()
 
@@ -817,6 +817,7 @@ def plugin_loaded():
 
 
 def plugin_unloaded():
-    """Kill the thead."""
+    """Kill the thread."""
 
+    pref_settings.clear_on_change('scopehunter_reload')
     sh_thread.kill()
