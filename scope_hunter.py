@@ -819,5 +819,7 @@ def plugin_loaded():
 def plugin_unloaded():
     """Kill the thread."""
 
+    pref_settings = sublime.load_settings('Preferences.sublime-settings')
     pref_settings.clear_on_change('scopehunter_reload')
+
     sh_thread.kill()
