@@ -271,7 +271,7 @@ def translate_color(m, var, var_src):
     elif groups.get('x11colors'):
         try:
             color = x11colors.name2hex(m.group('x11colors')).lower()
-        except:
+        except Exception:
             pass
     elif groups.get('color'):
         content = m.group('color')
