@@ -168,7 +168,6 @@ def blend(m):
 def translate_color(m, var, var_src):
     """Translate the match object to a color w/ alpha."""
 
-
     color = None
     alpha = None
     if m is not None:
@@ -412,16 +411,16 @@ class ColorSchemeMatcher(object):
 
         for k, v in self.scheme_obj.get('variables', {}).items():
             m = COLOR_RE.match(v.strip())
-            if m is not None:
-                self.variables[k] = translate_color(m, self.variables, self.scheme_obj.get('variables'))
-            else:
-                self.variables[k] = ""
+            var = translate_color(m, self.variables, self.scheme_obj.get('variables')) if m is not None else None
+            self.variables[k] = var if var is not None else ""
 
         color_settings = {}
         for k, v in self.scheme_obj[GLOBAL_OPTIONS].items():
             m = COLOR_RE.match(v.strip())
             if m is not None:
-                color_settings[k] = translate_color(m, self.variables, {})
+                global_color = translate_color(m, self.variables, {})
+                if global_color is not None:
+                    color_settings[k] = global_color
 
         # Get general theme colors from color scheme file
         bground, bground_sim = self.process_color(
