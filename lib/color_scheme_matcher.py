@@ -170,116 +170,122 @@ def translate_color(m, var, var_src):
 
     color = None
     alpha = None
-    groups = m.groupdict()
-    if groups.get('hex_compressed'):
-        content = m.group('hex_compressed_content')
-        color = "#%02x%02x%02x" % (
-            int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
-        )
-    elif groups.get('hexa_compressed'):
-        content = m.group('hexa_compressed_content')
-        color = "#%02x%02x%02x" % (
-            int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
-        )
-        alpha = content[3:]
-    elif groups.get('hex'):
-        content = m.group('hex_content')
-        if len(content) == 6:
-            color = "#%02x%02x%02x" % (
-                int(content[0:2], 16), int(content[2:4], 16), int(content[4:6], 16)
-            )
-        else:
+    if m is not None:
+        groups = m.groupdict()
+        if groups.get('hex_compressed'):
+            content = m.group('hex_compressed_content')
             color = "#%02x%02x%02x" % (
                 int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
             )
-    elif groups.get('hexa'):
-        content = m.group('hexa_content')
-        if len(content) == 8:
-            color = "#%02x%02x%02x" % (
-                int(content[0:2], 16), int(content[2:4], 16), int(content[4:6], 16)
-            )
-            alpha = content[6:]
-        else:
+        elif groups.get('hexa_compressed'):
+            content = m.group('hexa_compressed_content')
             color = "#%02x%02x%02x" % (
                 int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
             )
             alpha = content[3:]
-    elif groups.get('rgb'):
-        content = [x.strip() for x in m.group('rgb_content').split(',')]
-        if content[0].endswith('%'):
-            r = round_int(clamp(float(content[0].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-            g = round_int(clamp(float(content[1].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-            b = round_int(clamp(float(content[2].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-            color = "#%02x%02x%02x" % (r, g, b)
-        else:
-            color = "#%02x%02x%02x" % (
-                clamp(round_int(float(content[0])), 0, 255),
-                clamp(round_int(float(content[1])), 0, 255),
-                clamp(round_int(float(content[2])), 0, 255)
-            )
-    elif groups.get('rgba'):
-        content = [x.strip() for x in m.group('rgba_content').split(',')]
-        if content[0].endswith('%'):
-            r = round_int(clamp(float(content[0].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-            g = round_int(clamp(float(content[1].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-            b = round_int(clamp(float(content[2].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-            color = "#%02x%02x%02x" % (r, g, b)
-        else:
-            color = "#%02x%02x%02x" % (
-                clamp(round_int(float(content[0])), 0, 255),
-                clamp(round_int(float(content[1])), 0, 255),
-                clamp(round_int(float(content[2])), 0, 255)
-            )
-        if content[3].endswith('%'):
-            alpha = alpha_percent_normalize(content[3])
-        else:
-            alpha = alpha_dec_normalize(content[3])
-    elif groups.get('hsl'):
-        content = [x.strip() for x in m.group('hsl_content').split(',')]
-        rgba = RGBA()
-        hue = float(content[0])
-        if hue < 0.0 or hue > 360.0:
-            hue = hue % 360.0
-        h = hue / 360.0
-        s = clamp(float(content[1].strip('%')), 0.0, 100.0) / 100.0
-        l = clamp(float(content[2].strip('%')), 0.0, 100.0) / 100.0
-        rgba.fromhls(h, l, s)
-        color = rgba.get_rgb()
-    elif groups.get('hsla'):
-        content = [x.strip() for x in m.group('hsla_content').split(',')]
-        rgba = RGBA()
-        hue = float(content[0])
-        if hue < 0.0 or hue > 360.0:
-            hue = hue % 360.0
-        h = hue / 360.0
-        s = clamp(float(content[1].strip('%')), 0.0, 100.0) / 100.0
-        l = clamp(float(content[2].strip('%')), 0.0, 100.0) / 100.0
-        rgba.fromhls(h, l, s)
-        color = rgba.get_rgb()
-        if content[3].endswith('%'):
-            alpha = alpha_percent_normalize(content[3])
-        else:
-            alpha = alpha_dec_normalize(content[3])
-    elif groups.get('var'):
-        content = m.group('var_content')
-        if content in var:
-            color = var[content]
-        else:
-            v = var_src[content]
-            m = COLOR_RE.match(v.strip())
-            color = translate_color(m, var, var_src)
-    elif groups.get('x11colors'):
-        try:
-            color = x11colors.name2hex(m.group('x11colors')).lower()
-        except Exception:
-            pass
-    elif groups.get('color'):
-        content = m.group('color')
-        content = COLOR_RGB_SPACE_RE.sub((lambda match, v=var, vs=var_src: translate_color(match, v, vs)), content)
-        n = -1
-        while n:
-            content, n = COLOR_MOD_RE.subn(blend, content)
-        color = content
+        elif groups.get('hex'):
+            content = m.group('hex_content')
+            if len(content) == 6:
+                color = "#%02x%02x%02x" % (
+                    int(content[0:2], 16), int(content[2:4], 16), int(content[4:6], 16)
+                )
+            else:
+                color = "#%02x%02x%02x" % (
+                    int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
+                )
+        elif groups.get('hexa'):
+            content = m.group('hexa_content')
+            if len(content) == 8:
+                color = "#%02x%02x%02x" % (
+                    int(content[0:2], 16), int(content[2:4], 16), int(content[4:6], 16)
+                )
+                alpha = content[6:]
+            else:
+                color = "#%02x%02x%02x" % (
+                    int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
+                )
+                alpha = content[3:]
+        elif groups.get('rgb'):
+            content = [x.strip() for x in m.group('rgb_content').split(',')]
+            if content[0].endswith('%'):
+                r = round_int(clamp(float(content[0].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
+                g = round_int(clamp(float(content[1].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
+                b = round_int(clamp(float(content[2].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
+                color = "#%02x%02x%02x" % (r, g, b)
+            else:
+                color = "#%02x%02x%02x" % (
+                    clamp(round_int(float(content[0])), 0, 255),
+                    clamp(round_int(float(content[1])), 0, 255),
+                    clamp(round_int(float(content[2])), 0, 255)
+                )
+        elif groups.get('rgba'):
+            content = [x.strip() for x in m.group('rgba_content').split(',')]
+            if content[0].endswith('%'):
+                r = round_int(clamp(float(content[0].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
+                g = round_int(clamp(float(content[1].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
+                b = round_int(clamp(float(content[2].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
+                color = "#%02x%02x%02x" % (r, g, b)
+            else:
+                color = "#%02x%02x%02x" % (
+                    clamp(round_int(float(content[0])), 0, 255),
+                    clamp(round_int(float(content[1])), 0, 255),
+                    clamp(round_int(float(content[2])), 0, 255)
+                )
+            if content[3].endswith('%'):
+                alpha = alpha_percent_normalize(content[3])
+            else:
+                alpha = alpha_dec_normalize(content[3])
+        elif groups.get('hsl'):
+            content = [x.strip() for x in m.group('hsl_content').split(',')]
+            rgba = RGBA()
+            hue = float(content[0])
+            if hue < 0.0 or hue > 360.0:
+                hue = hue % 360.0
+            h = hue / 360.0
+            s = clamp(float(content[1].strip('%')), 0.0, 100.0) / 100.0
+            l = clamp(float(content[2].strip('%')), 0.0, 100.0) / 100.0
+            rgba.fromhls(h, l, s)
+            color = rgba.get_rgb()
+        elif groups.get('hsla'):
+            content = [x.strip() for x in m.group('hsla_content').split(',')]
+            rgba = RGBA()
+            hue = float(content[0])
+            if hue < 0.0 or hue > 360.0:
+                hue = hue % 360.0
+            h = hue / 360.0
+            s = clamp(float(content[1].strip('%')), 0.0, 100.0) / 100.0
+            l = clamp(float(content[2].strip('%')), 0.0, 100.0) / 100.0
+            rgba.fromhls(h, l, s)
+            color = rgba.get_rgb()
+            if content[3].endswith('%'):
+                alpha = alpha_percent_normalize(content[3])
+            else:
+                alpha = alpha_dec_normalize(content[3])
+        elif groups.get('var'):
+            content = m.group('var_content')
+            if content in var:
+                color = var[content]
+            else:
+                v = var_src[content]
+                m = COLOR_RE.match(v.strip())
+                color = translate_color(m, var, var_src)
+        elif groups.get('x11colors'):
+            try:
+                color = x11colors.name2hex(m.group('x11colors')).lower()
+            except Exception:
+                pass
+        elif groups.get('color'):
+            content = m.group('color')
+            try:
+                content = COLOR_RGB_SPACE_RE.sub(
+                    (lambda match, v=var, vs=var_src: translate_color(match, v, vs)), content
+                )
+                n = -1
+                while n:
+                    content, n = COLOR_MOD_RE.subn(blend, content)
+                color = content
+            except Exception:
+                pass
 
     if color is not None and alpha is not None:
         color += alpha
@@ -405,13 +411,16 @@ class ColorSchemeMatcher(object):
 
         for k, v in self.scheme_obj.get('variables', {}).items():
             m = COLOR_RE.match(v.strip())
-            self.variables[k] = translate_color(m, self.variables, self.scheme_obj.get('variables'))
+            var = translate_color(m, self.variables, self.scheme_obj.get('variables')) if m is not None else None
+            self.variables[k] = var if var is not None else ""
 
         color_settings = {}
         for k, v in self.scheme_obj[GLOBAL_OPTIONS].items():
             m = COLOR_RE.match(v.strip())
             if m is not None:
-                color_settings[k] = translate_color(m, self.variables, {})
+                global_color = translate_color(m, self.variables, {})
+                if global_color is not None:
+                    color_settings[k] = global_color
 
         # Get general theme colors from color scheme file
         bground, bground_sim = self.process_color(
