@@ -1,3 +1,9 @@
+# ScopeHunter 2.9.2
+
+Oct 27, 2017
+
+- **FIX**: Support for irregular `.sublime-color-scheme` values.
+
 # ScopeHunter 2.9.1
 
 Oct 21, 2017
