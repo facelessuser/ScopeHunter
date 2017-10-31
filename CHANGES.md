@@ -1,3 +1,9 @@
+# ScopeHunter 2.9.3
+
+Oct 30, 2017
+
+- **FIX**: Parse color schemes properly when extension is unexpected.
+
 # ScopeHunter 2.9.2
 
 Oct 27, 2017
