@@ -37,6 +37,10 @@ NEW_SCHEMES = int(sublime.version()) >= 3150
 FONT_STYLE = "font_style" if int(sublime.version()) >= 3151 else "fontStyle"
 GLOBAL_OPTIONS = "globals" if int(sublime.version()) >= 3152 else "defaults"
 
+# XML
+IS_XML_RE = re.compile(br'^[\r\n\s]*<')
+XML_COMMENT_RE = re.compile(br"^[\r\n\s]*<!--[\s\S]*?-->[\s\r\n]*|<!--[\s\S]*?-->")
+
 # For new Sublime format
 FLOAT_TRIM_RE = re.compile(r'^(?P<keep>\d+)(?P<trash>\.0+|(?P<keep2>\.\d*[1-9])0+)$')
 
@@ -323,19 +327,16 @@ class ColorSchemeMatcher(object):
         """Initialize."""
         if color_filter is None:
             color_filter = self.filter
-        self.legacy = not scheme_file.lower().endswith('.sublime-color-scheme') if NEW_SCHEMES else True
         self.color_scheme = path.normpath(scheme_file)
         self.scheme_file = path.basename(self.color_scheme)
-        if self.legacy:
-            scheme_obj = readPlistFromBytes(
-                re.sub(
-                    br"^[\r\n\s]*<!--[\s\S]*?-->[\s\r\n]*|<!--[\s\S]*?-->", b'',
-                    sublime.load_binary_resource(sublime_format_path(self.color_scheme))
-                )
-            )
-            self.convert_format(scheme_obj)
+
+        content = sublime.load_binary_resource(sublime_format_path(self.color_scheme))
+        if scheme_file.lower().endswith(('.tmtheme', '.hidden-tmtheme')) or IS_XML_RE.match(content) is not None:
+            self.legacy = True
+            self.convert_format(readPlistFromBytes(XML_COMMENT_RE.sub(b'', content)))
         else:
-            self.scheme_obj = sublime.decode_value(sublime.load_resource(sublime_format_path(self.color_scheme)))
+            self.legacy = False
+            self.scheme_obj = sublime.decode_value(content.decode('utf-8'))
             if 'variables' not in self.scheme_obj:
                 self.scheme_obj['variables'] = {}
             if GLOBAL_OPTIONS not in self.scheme_obj:
