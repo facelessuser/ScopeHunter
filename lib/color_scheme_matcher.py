@@ -697,6 +697,10 @@ class ColorSchemeMatcher(object):
             else:
                 style = ' '.join(style)
 
+            if not isinstance(color_gradient, list):
+                color_gradient = None
+                color_gradient_selector = None
+
             self.matched[scope_key] = {
                 "color": color,
                 "bgcolor": bgcolor,
@@ -711,7 +715,7 @@ class ColorSchemeMatcher(object):
                     "background": bg_selector,
                     "scolor": scolor_selector,
                     "style": style_selectors,
-                    "color_gradient": (color_gradient_selector if color_gradient else None)
+                    "color_gradient": color_gradient_selector
                 }
             }
 
