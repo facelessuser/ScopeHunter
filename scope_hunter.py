@@ -75,6 +75,8 @@ SYNTAX_KEY = "Syntax File"
 OVERRIDE_SCHEME_KEY = "Scheme"
 HASHED_FG_KEY = "Hashed Fg"
 HASHED_FG_SIM_KEY = "Hashed Fg (Simulated Alpha)"
+HASHED_FG_NAME_KEY = "Hashed Fg Name"
+HASHED_FG_SCOPE_KEY = "Hashed Fg Scope"
 
 
 def log(msg):
@@ -364,6 +366,9 @@ class GetSelectionScope(object):
 
         self.scope_bfr.append(ENTRY % (FG_NAME_KEY + ":", color_selector.name))
         self.scope_bfr.append(ENTRY % (FG_SCOPE_KEY + ":", color_selector.scope))
+        if color_gradient_selector:
+            self.scope_bfr.append(ENTRY % (HASHED_FG_NAME_KEY + ":", color_gradient_selector.name))
+            self.scope_bfr.append(ENTRY % (HASHED_FG_SCOPE_KEY + ":", color_gradient_selector.scope))
         self.scope_bfr.append(ENTRY % (BG_NAME_KEY + ":", bg_selector.name))
         self.scope_bfr.append(ENTRY % (BG_SCOPE_KEY + ":", bg_selector.scope))
         if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
@@ -380,6 +385,11 @@ class GetSelectionScope(object):
             self.template_vars['fg_name_index'] = self.next_index()
             self.template_vars['fg_scope'] = color_selector.scope
             self.template_vars['fg_scope_index'] = self.next_index()
+            if color_gradient_selector:
+                self.template_vars['fg_hash_name'] = color_gradient_selector.name
+                self.template_vars['fg_hash_name_index'] = self.next_index()
+                self.template_vars['fg_hash_scope'] = color_gradient_selector.scope
+                self.template_vars['fg_hash_scope_index'] = self.next_index()
             self.template_vars['bg_name'] = bg_selector.name
             self.template_vars['bg_name_index'] = self.next_index()
             self.template_vars['bg_scope'] = bg_selector.scope
@@ -457,12 +467,9 @@ class GetSelectionScope(object):
     def on_navigate(self, href):
         """Exceute link callback."""
 
-        print(href)
-
         params = href.split(':')
         key = params[0]
         index = int(params[1]) if len(params) > 1 else None
-        print(index)
         if key == 'reload':
             mdpopups.hide_popup(self.view)
             reinit_plugin()
@@ -499,6 +506,10 @@ class GetSelectionScope(object):
             copy_data(self.scope_bfr, FG_NAME_KEY, index)
         elif key == 'copy-fg-sel-scope':
             copy_data(self.scope_bfr, FG_SCOPE_KEY, index)
+        elif key == 'copy-fg-hash-sel-name':
+            copy_data(self.scope_bfr, HASHED_FG_NAME_KEY, index)
+        elif key == 'copy-fg-hash-sel-scope':
+            copy_data(self.scope_bfr, HASHED_FG_SCOPE_KEY, index)
         elif key == 'copy-bg-sel-name':
             copy_data(self.scope_bfr, BG_NAME_KEY, index)
         elif key == 'copy-bg-sel-scope':
