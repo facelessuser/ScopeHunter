@@ -38,7 +38,6 @@ FONT_STYLE = "font_style" if int(sublime.version()) >= 3151 else "fontStyle"
 GLOBAL_OPTIONS = "globals" if int(sublime.version()) >= 3152 else "defaults"
 
 # XML
-IS_XML_RE = re.compile(br'^[\r\n\s]*<')
 XML_COMMENT_RE = re.compile(br"^[\r\n\s]*<!--[\s\S]*?-->[\s\r\n]*|<!--[\s\S]*?-->")
 
 # For new Sublime format
@@ -333,19 +332,17 @@ class ColorSchemeMatcher(object):
         self.color_scheme = path.normpath(scheme_file)
         self.scheme_file = path.basename(self.color_scheme)
 
-        content = sublime.load_binary_resource(sublime_format_path(self.color_scheme))
-        if scheme_file.lower().endswith(('.tmtheme', '.hidden-tmtheme')) or IS_XML_RE.match(content) is not None:
+        if NEW_SCHEMES and scheme_file.endswith('.sublime-color-scheme'):
+            self.legacy = False
+            self.scheme_obj = {
+                'variables': {},
+                GLOBAL_OPTIONS: {},
+                'rules': []
+            }
+        else:
+            content = sublime.load_binary_resource(sublime_format_path(self.color_scheme))
             self.legacy = True
             self.convert_format(readPlistFromBytes(XML_COMMENT_RE.sub(b'', content)))
-        else:
-            self.legacy = False
-            self.scheme_obj = sublime.decode_value(content.decode('utf-8'))
-            if 'variables' not in self.scheme_obj:
-                self.scheme_obj['variables'] = {}
-            if GLOBAL_OPTIONS not in self.scheme_obj:
-                self.scheme_obj[GLOBAL_OPTIONS] = {}
-            if 'rules' not in self.scheme_obj:
-                self.scheme_obj['rules'] = []
         self.overrides = []
         if NEW_SCHEMES:
             self.merge_overrides()
@@ -389,7 +386,6 @@ class ColorSchemeMatcher(object):
     def merge_overrides(self):
         """Merge override schemes."""
 
-        current_file = sublime_format_path(self.color_scheme)
         package_overrides = []
         user_overrides = []
         for override in sublime.find_resources('%s.sublime-color-scheme' % path.splitext(self.scheme_file)[0]):
@@ -398,19 +394,18 @@ class ColorSchemeMatcher(object):
             else:
                 package_overrides.append(override)
         for override in (package_overrides + user_overrides):
-            if override != current_file:
-                ojson = sublime.decode_value(sublime.load_resource(override))
+            ojson = sublime.decode_value(sublime.load_resource(override))
 
-                for k, v in ojson.get('variables', {}).items():
-                    self.scheme_obj['variables'][k] = v
+            for k, v in ojson.get('variables', {}).items():
+                self.scheme_obj['variables'][k] = v
 
-                for k, v in ojson.get(GLOBAL_OPTIONS, {}).items():
-                    self.scheme_obj[GLOBAL_OPTIONS][k] = v
+            for k, v in ojson.get(GLOBAL_OPTIONS, {}).items():
+                self.scheme_obj[GLOBAL_OPTIONS][k] = v
 
-                for item in ojson.get('rules', []):
-                    self.scheme_obj['rules'].append(item)
+            for item in ojson.get('rules', []):
+                self.scheme_obj['rules'].append(item)
 
-                self.overrides.append(override)
+            self.overrides.append(override)
 
     def filter(self, scheme):
         """Dummy filter call that does nothing."""
