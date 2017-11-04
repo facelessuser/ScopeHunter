@@ -7,18 +7,25 @@ copyright: |
   Copyright &copy; 2012 - 2017 <a href="https://github.com/facelessuser">Isaac Muse</a>
   <br><span class="md-footer-custom-text">emoji provided free by </span><a href="http://www.emojione.com">EmojiOne</a>
 
+docs_dir: docs/src/markdown
+theme:
+  name: material
+  custom_dir: docs/theme
+  palette:
+    primary: blue
+    accent: blue
+  logo:
+    icon: description
+  font:
+    text: Roboto
+    code: Roboto Mono
+
 pages:
   - About ScopeHunter: index.md
   - Installation: installation.md
   - User Guide: usage.md
   - Contributing &amp; Support: contributing.md
   - License: license.md
-
-docs_dir: docs/src/markdown
-
-theme: material
-docs_dir: docs/src/markdown
-theme_dir: docs/theme
 
 markdown_extensions:
   - markdown.extensions.toc:
@@ -65,12 +72,6 @@ markdown_extensions:
   - pymdownx.details:
 
 extra:
-  palette:
-    primary: blue
-    accent: blue
-  font:
-    text: Roboto
-    code: Roboto Mono
   social:
     - type: github
       link: https://github.com/facelessuser

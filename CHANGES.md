@@ -1,3 +1,11 @@
+# ScopeHunter 2.10.0
+
+Nov 4, 2017
+
+- **NEW**: Add support `.sublime-color-scheme` hashed syntax highlighting.
+- **FIX**: Copy of color entries.
+- **FIX**: `.sublime-color-scheme` merge logic.
+
 # ScopeHunter 2.9.3
 
 Oct 30, 2017

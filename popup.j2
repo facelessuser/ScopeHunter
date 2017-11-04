@@ -25,6 +25,16 @@
 [(copy)](copy-fg-sim:{{plugin.fg_sim_index}}){: .small}
 
   {% endif %}
+  {% if plugin.fg_hash %}
+**hashed fg:**{: .keyword} {{plugin.fg_hash_preview}} {{plugin.fg_hash_color}}
+[(copy)](copy-fg-hash:{{plugin.fg_hash_index}}){: .small}
+
+  {% endif %}
+  {% if plugin.fg_hash_sim %}
+**hashed fg (simulated alpha):**{: .keyword} {{plugin.fg_hash_sim_preview}} {{plugin.fg_hash_sim_color}}
+[(copy)](copy-fg-hash-sim:{{plugin.fg_hash_sim_index}}){: .small}
+
+  {% endif %}
 **bg:**{: .keyword} {{plugin.bg_preview}} {{plugin.bg_color}}
 [(copy)](copy-bg:{{plugin.bg_index}}){: .small}
 
@@ -48,6 +58,16 @@
 **fg scope:**{: .keyword} {{plugin.fg_scope}}
 [(copy)](copy-fg-sel-scope:{{plugin.fg_scope_index}}){: .small}
 
+  {% if plugin.fg_hash_name %}
+**hashed fg name:**{: .keyword} {{plugin.fg_hash_name}}
+[(copy)](copy-fg-hash-sel-name:{{plugin.fg_hash_name_index}}){: .small}
+
+  {% endif %}
+  {% if plugin.fg_hash_scope %}
+**hashed fg scope:**{: .keyword} {{plugin.fg_hash_scope}}
+[(copy)](copy-fg-hash-sel-scope:{{plugin.fg_hash_scope_index}}){: .small}
+
+  {% endif %}
   {% if plugin.bg_name %}
 **bg name:**{: .keyword} {{plugin.bg_name}}
 [(copy)](copy-bg-sel-name:{{plugin.bg_name_index}}){: .small}
@@ -83,12 +103,14 @@
 **syntax:**{: .keyword} [{{plugin.syntax}}](syntax)
 [(copy)](copy-syntax:{{plugin.syntax_index}}){: .small}
 
-**scheme:**{: .keyword} [{{plugin.scheme}}](scheme)
+  {% if plugin.scheme %}
+**tmTheme:**{: .keyword} [{{plugin.scheme}}](scheme)
 [(copy)](copy-scheme:{{plugin.scheme_index}}){: .small}
+  {% endif %}
 
-{% for item in plugin.overrides %}
-**override scheme {{loop.index}}:**{: .keyword} [{{item}}](override:{{plugin.overrides_index}}:{{loop.index}})
+  {% for item in plugin.overrides %}
+**Scheme {{loop.index}}:**{: .keyword} [{{item}}](override:{{plugin.overrides_index}}:{{loop.index}})
 [(copy)](copy-overrides:{{plugin.overrides_index}}:{{loop.index}}){: .small}
 
-{% endfor %}
+  {% endfor %}
 {% endif %}

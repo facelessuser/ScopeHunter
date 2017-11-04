@@ -70,9 +70,13 @@ BOLD_NAME_KEY = "Bold Name"
 BOLD_SCOPE_KEY = "Bold Scope"
 ITALIC_NAME_KEY = "Italic Name"
 ITALIC_SCOPE_KEY = "Italic Scope"
-SCHEME_KEY = "Scheme File"
+SCHEME_KEY = "tmTheme File"
 SYNTAX_KEY = "Syntax File"
-OVERRIDE_SCHEME_KEY = "Override Scheme"
+OVERRIDE_SCHEME_KEY = "Scheme"
+HASHED_FG_KEY = "Hashed Fg"
+HASHED_FG_SIM_KEY = "Hashed Fg (Simulated Alpha)"
+HASHED_FG_NAME_KEY = "Hashed Fg Name"
+HASHED_FG_SCOPE_KEY = "Hashed Fg Scope"
 
 
 def log(msg):
@@ -179,13 +183,19 @@ class GetSelectionScope(object):
         padding += int(self.view.settings().get('line_padding_bottom', 0))
         box_height = int(self.view.line_height()) - padding - 2
         check_size = int((box_height - 4) / 4)
+        if isinstance(color, list):
+            box_width = box_height * (len(color) if len(color) >= 1 else 1)
+            colors = [c.upper() for c in color]
+        else:
+            box_width = box_height
+            colors = [color.upper()]
         if check_size < 2:
             check_size = 2
         self.template_vars['%s_preview' % key] = mdpopups.color_box(
-            [color], border, border2, height=box_height,
-            width=box_height, border_size=2, check_size=check_size
+            colors, border, border2, height=box_height,
+            width=box_width, border_size=2, check_size=check_size
         )
-        self.template_vars['%s_color' % key] = color.upper()
+        self.template_vars['%s_color' % key] = ', '.join(colors)
         self.template_vars['%s_index' % key] = index
 
     def get_extents(self, pt):
@@ -255,18 +265,31 @@ class GetSelectionScope(object):
 
         return scope
 
-    def get_appearance(self, color, color_sim, bgcolor, bgcolor_sim, style):
+    def get_appearance(self, color, color_sim, bgcolor, bgcolor_sim, style, color_gradient):
         """Get colors of foreground, background, and simulated transparency colors."""
 
         self.scope_bfr.append(ENTRY % (FG_KEY + ":", color))
         if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
             self.scope_bfr.append(ENTRY % (FG_SIM_KEY + ":", color_sim))
 
+        colors = []
+        colors_sim = []
+        show_sim = False
+        if color_gradient:
+            for c, cs in color_gradient:
+                colors.append(c)
+                if len(cs) == 9 and not cs.lower().endswith('ff'):
+                    show_sim = True
+                colors_sim.append(cs)
+            self.scope_bfr.append(ENTRY % (HASHED_FG_KEY + ":", ', '.join(colors)))
+            if self.show_simulated and show_sim:
+                self.scope_bfr.append(ENTRY % (HASHED_FG_SIM_KEY + ":", ', '.join(colors_sim)))
+
         self.scope_bfr.append(ENTRY % (BG_KEY + ":", bgcolor))
         if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
             self.scope_bfr.append(ENTRY % (BG_SIM_KEY + ":", bgcolor_sim))
 
-        self.scope_bfr.append(ENTRY % (STYLE_KEY + ":", style))
+        self.scope_bfr.append(ENTRY % (STYLE_KEY + ":", "normal" if not style else style))
 
         if self.show_popup:
             self.template_vars['appearance'] = True
@@ -274,6 +297,12 @@ class GetSelectionScope(object):
             if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
                 self.template_vars['fg_sim'] = True
                 self.get_color_box(color_sim, 'fg_sim', self.next_index())
+            if color_gradient:
+                self.template_vars['fg_hash'] = True
+                self.get_color_box(colors, 'fg_hash', self.next_index())
+                if self.show_simulated and show_sim:
+                    self.template_vars['fg_hash_sim'] = True
+                    self.get_color_box(colors_sim, 'fg_hash_sim', self.next_index())
             self.get_color_box(bgcolor, 'bg', self.next_index())
             if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
                 self.template_vars['bg_sim'] = True
@@ -312,9 +341,11 @@ class GetSelectionScope(object):
         self.overrides = scheme_matcher.overrides
 
         self.scheme_file = scheme_matcher.color_scheme.replace('\\', '/')
+        is_tmtheme = not self.scheme_file.endswith('.sublime-color-scheme')
         self.syntax_file = self.view.settings().get('syntax')
         self.scope_bfr.append(ENTRY % (SYNTAX_KEY + ":", self.syntax_file))
-        self.scope_bfr.append(ENTRY % (SCHEME_KEY + ":", self.scheme_file))
+        if is_tmtheme:
+            self.scope_bfr.append(ENTRY % (SCHEME_KEY + ":", self.scheme_file))
         text = []
         for idx, override in enumerate(self.overrides, 1):
             text.append(ENTRY % (OVERRIDE_SCHEME_KEY + (" %d:" % idx), override))
@@ -324,16 +355,20 @@ class GetSelectionScope(object):
             self.template_vars['files'] = True
             self.template_vars["syntax"] = self.syntax_file
             self.template_vars["syntax_index"] = self.next_index()
-            self.template_vars["scheme"] = self.scheme_file
-            self.template_vars["scheme_index"] = self.next_index()
+            if is_tmtheme:
+                self.template_vars["scheme"] = self.scheme_file
+                self.template_vars["scheme_index"] = self.next_index()
             self.template_vars["overrides"] = self.overrides
             self.template_vars["overrides_index"] = self.next_index()
 
-    def get_selectors(self, color_selector, bg_selector, style_selectors):
+    def get_selectors(self, color_selector, bg_selector, style_selectors, color_gradient_selector):
         """Get the selectors used to determine color and/or style."""
 
         self.scope_bfr.append(ENTRY % (FG_NAME_KEY + ":", color_selector.name))
         self.scope_bfr.append(ENTRY % (FG_SCOPE_KEY + ":", color_selector.scope))
+        if color_gradient_selector:
+            self.scope_bfr.append(ENTRY % (HASHED_FG_NAME_KEY + ":", color_gradient_selector.name))
+            self.scope_bfr.append(ENTRY % (HASHED_FG_SCOPE_KEY + ":", color_gradient_selector.scope))
         self.scope_bfr.append(ENTRY % (BG_NAME_KEY + ":", bg_selector.name))
         self.scope_bfr.append(ENTRY % (BG_SCOPE_KEY + ":", bg_selector.scope))
         if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
@@ -350,6 +385,11 @@ class GetSelectionScope(object):
             self.template_vars['fg_name_index'] = self.next_index()
             self.template_vars['fg_scope'] = color_selector.scope
             self.template_vars['fg_scope_index'] = self.next_index()
+            if color_gradient_selector:
+                self.template_vars['fg_hash_name'] = color_gradient_selector.name
+                self.template_vars['fg_hash_name_index'] = self.next_index()
+                self.template_vars['fg_hash_scope'] = color_gradient_selector.scope
+                self.template_vars['fg_hash_scope_index'] = self.next_index()
             self.template_vars['bg_name'] = bg_selector.name
             self.template_vars['bg_name_index'] = self.next_index()
             self.template_vars['bg_scope'] = bg_selector.scope
@@ -386,12 +426,18 @@ class GetSelectionScope(object):
                 bg_selector = match.bg_selector
                 color_selector = match.fg_selector
                 style_selectors = match.style_selectors
+                color_gradient = match.color_gradient
+                color_gradient_selector = match.color_gradient_selector
+
+                # if match.color_gradient is not None:
+                #     color = self.view.style_for_scope(scope)["foreground"]
+                #     color_sim = color
 
                 if self.appearance_info:
-                    self.get_appearance(color, color_sim, bgcolor, bgcolor_sim, style)
+                    self.get_appearance(color, color_sim, bgcolor, bgcolor_sim, style, color_gradient)
 
                 if self.selector_info:
-                    self.get_selectors(color_selector, bg_selector, style_selectors)
+                    self.get_selectors(color_selector, bg_selector, style_selectors, color_gradient_selector)
             except Exception:
                 log("Evaluating theme failed!  Ignoring theme related info.")
                 debug(str(traceback.format_exc()))
@@ -446,6 +492,10 @@ class GetSelectionScope(object):
             copy_data(self.scope_bfr, FG_KEY, index)
         elif key == 'copy-fg-sim':
             copy_data(self.scope_bfr, FG_SIM_KEY, index)
+        elif key == 'copy-fg-hash':
+            copy_data(self.scope_bfr, HASHED_FG_KEY, index)
+        elif key == 'copy-fg-hash-sim':
+            copy_data(self.scope_bfr, HASHED_FG_SIM_KEY, index)
         elif key == 'copy-bg':
             copy_data(self.scope_bfr, BG_KEY, index)
         elif key == 'copy-bg-sim':
@@ -456,6 +506,10 @@ class GetSelectionScope(object):
             copy_data(self.scope_bfr, FG_NAME_KEY, index)
         elif key == 'copy-fg-sel-scope':
             copy_data(self.scope_bfr, FG_SCOPE_KEY, index)
+        elif key == 'copy-fg-hash-sel-name':
+            copy_data(self.scope_bfr, HASHED_FG_NAME_KEY, index)
+        elif key == 'copy-fg-hash-sel-scope':
+            copy_data(self.scope_bfr, HASHED_FG_SCOPE_KEY, index)
         elif key == 'copy-bg-sel-name':
             copy_data(self.scope_bfr, BG_NAME_KEY, index)
         elif key == 'copy-bg-sel-scope':
