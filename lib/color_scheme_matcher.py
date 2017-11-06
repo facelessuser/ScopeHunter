@@ -372,16 +372,26 @@ class ColorSchemeMatcher(object):
                 for k, v in item["settings"].items():
                     self.scheme_obj[GLOBAL_OPTIONS][RE_CAMEL_CASE.sub(to_snake, k)] = v
             if 'settings' in item and item.get('scope') is not None:
-                self.scheme_obj['rules'].append(
-                    {
-                        "name": item.get('name', ''),
-                        "scope": item.get('scope'),
-                        "foreground": item['settings'].get('foreground'),
-                        "background": item['settings'].get('background'),
-                        "selection_foreground": item["settings"].get("selection_foreground"),
-                        FONT_STYLE: item['settings'].get('fontStyle', '')
-                    }
-                )
+                rule = {}
+                name = item.get('name')
+                if name is not None:
+                    rule['name'] = name
+                scope = item.get('scope')
+                if scope is not None:
+                    rule["scope"] = scope
+                fg = item['settings'].get('foreground')
+                if fg is not None:
+                    rule['foreground'] = item['settings'].get('foreground')
+                bg = item['settings'].get('background')
+                if bg is not None:
+                    rule['background'] = bg
+                selfg = item["settings"].get("selectionForeground")
+                if selfg is not None:
+                    rule["selection_foreground"] = selfg
+                font_style = item["settings"].get('fontStyle')
+                if font_style is not None:
+                    rule[FONT_STYLE] = font_style
+                self.scheme_obj['rules'].append(rule)
 
     def merge_overrides(self):
         """Merge override schemes."""
