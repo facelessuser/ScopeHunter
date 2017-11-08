@@ -1,3 +1,9 @@
+# ScopeHunter 2.10.1
+
+Nov 7, 2017
+
+- **FIX**: Parse legacy `foregroundSelection` properly.
+
 # ScopeHunter 2.10.0
 
 Nov 4, 2017
