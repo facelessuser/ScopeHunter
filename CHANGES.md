@@ -1,6 +1,6 @@
 # ScopeHunter 2.10.2
 
-> Nov 8, 2017
+Nov 8, 2017
 
 - **FIX**: Create fallback file read for resource race condition.
 
