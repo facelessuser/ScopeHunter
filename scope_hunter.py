@@ -341,7 +341,7 @@ class GetSelectionScope(object):
         self.overrides = scheme_matcher.overrides
 
         self.scheme_file = scheme_matcher.color_scheme.replace('\\', '/')
-        is_tmtheme = not self.scheme_file.endswith('.sublime-color-scheme')
+        is_tmtheme = not self.scheme_file.endswith(('.sublime-color-scheme', '.hidden-color-scheme'))
         self.syntax_file = self.view.settings().get('syntax')
         self.scope_bfr.append(ENTRY % (SYNTAX_KEY + ":", self.syntax_file))
         if is_tmtheme:
