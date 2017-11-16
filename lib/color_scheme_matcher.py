@@ -340,7 +340,7 @@ class ColorSchemeMatcher(object):
         self.color_scheme = scheme_file.replace('\\', '/')
         self.scheme_file = path.basename(self.color_scheme)
 
-        if NEW_SCHEMES and scheme_file.endswith('.sublime-color-scheme'):
+        if NEW_SCHEMES and scheme_file.endswith(('.sublime-color-scheme', '.hidden-color-scheme')):
             self.legacy = False
             self.scheme_obj = {
                 'variables': {},
@@ -411,7 +411,11 @@ class ColorSchemeMatcher(object):
 
         package_overrides = []
         user_overrides = []
-        for override in sublime.find_resources('%s.sublime-color-scheme' % path.splitext(self.scheme_file)[0]):
+        if self.scheme_file.endswith('.hidden-color-scheme'):
+            pattern = '%s.hidden-color-scheme'
+        else:
+            pattern = '%s.sublime-color-scheme'
+        for override in sublime.find_resources(pattern % path.splitext(self.scheme_file)[0]):
             if override.startswith('Packages/User/'):
                 user_overrides.append(override)
             else:
@@ -440,7 +444,7 @@ class ColorSchemeMatcher(object):
         # Rare case of being given a file but sublime hasn't indexed the files and can't find it
         if (
             not self.overrides and
-            self.color_scheme.endswith('.sublime-color-scheme') and
+            self.color_scheme.endswith(('.sublime-color-scheme', '.hidden-color-scheme')) and
             self.color_scheme.startswith('Packages/')
         ):
             with codecs.open(packages_path(self.color_scheme), 'r', encoding='utf-8') as f:
