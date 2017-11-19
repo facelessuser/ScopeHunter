@@ -19,6 +19,31 @@ div.scope-hunter { padding: 10px; margin: 0; }
 .scope-hunter a { text-decoration: none; }
 '''
 
+frontmatter = {
+    "markdown_extensions": [
+        "markdown.extensions.admonition",
+        "markdown.extensions.attr_list",
+        "markdown.extensions.def_list",
+        "markdown.extensions.nl2br",
+        # Smart quotes always have corner cases that annoy me, so don't bother with them.
+        {"markdown.extensions.smarty": {"smart_quotes": False}},
+        "pymdownx.betterem",
+        {
+            "pymdownx.magiclink": {
+                "repo_url_shortener": True,
+                "repo_url_shorthand": True,
+                "user": "facelessuser",
+                "repo": "HexViewer"
+            }
+        },
+        "pymdownx.extrarawhtml",
+        "pymdownx.keys",
+        {"pymdownx.escapeall": {"hardbreak": True, "nbsp": True}},
+        # Sublime doesn't support superscript, so no ordinal numbers
+        {"pymdownx.smartsymbols": {"ordinal_numbers": False}}
+    ]
+}
+
 
 def list2string(obj):
     """Convert list to string."""
@@ -132,8 +157,11 @@ class ScopeHunterDocCommand(sublime_plugin.WindowCommand):
 
         try:
             import mdpopups
+            import pymdownx
             has_phantom_support = (mdpopups.version() >= (1, 10, 0)) and (int(sublime.version()) >= 3124)
+            fmatter = mdpopups.format_frontmatter(frontmatter) if pymdownx.version_info[:3] >= (4, 3, 0) else ''
         except Exception:
+            fmatter = ''
             has_phantom_support = False
 
         if not has_phantom_support:
@@ -149,7 +177,7 @@ class ScopeHunterDocCommand(sublime_plugin.WindowCommand):
                     view,
                     'quickstart',
                     sublime.Region(0),
-                    text,
+                    fmatter + text,
                     sublime.LAYOUT_INLINE,
                     css=CSS,
                     wrapper_class="scope-hunter",
@@ -168,8 +196,11 @@ class ScopeHunterChangesCommand(sublime_plugin.WindowCommand):
         """Show the changelog in a new view."""
         try:
             import mdpopups
+            import pymdownx
             has_phantom_support = (mdpopups.version() >= (1, 10, 0)) and (int(sublime.version()) >= 3124)
+            fmatter = mdpopups.format_frontmatter(frontmatter) if pymdownx.version_info[:3] >= (4, 3, 0) else ''
         except Exception:
+            fmatter = ''
             has_phantom_support = False
 
         text = sublime.load_resource('Packages/ScopeHunter/CHANGES.md')
@@ -182,7 +213,7 @@ class ScopeHunterChangesCommand(sublime_plugin.WindowCommand):
                 view,
                 'changelog',
                 sublime.Region(0),
-                text,
+                fmatter + text,
                 sublime.LAYOUT_INLINE,
                 wrapper_class="scope-hunter",
                 css=CSS,

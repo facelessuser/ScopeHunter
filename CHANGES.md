@@ -77,13 +77,13 @@ Dec 29, 2016
 
 - **NEW**: Add support for X11 color names in color schemes.
 - **NEW**: Add new support commands.
-- **FIX**: Protect against race condition [#34](https://github.com/facelessuser/ScopeHunter/issues/34)
+- **FIX**: Protect against race condition (#34)
 
 # ScopeHunter 2.5.6
 
 Oct 19, 2016
 
-- **FIX**: Failure when evaluating bold text [#33](https://github.com/facelessuser/ScopeHunter/pull/33)
+- **FIX**: Failure when evaluating bold text (!33)
 
 # ScopeHunter 2.5.5
 
