@@ -1,3 +1,9 @@
+# ScopeHunter 2.11.1
+
+Nov 20, 2017
+
+- **FIX**: Allow `-` in variables names. Write color translations to main scheme object and ensure filtering is done after color translations.
+
 # ScopeHunter 2.11.0
 
 Nov 20, 2017
