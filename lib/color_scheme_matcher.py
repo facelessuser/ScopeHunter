@@ -98,13 +98,16 @@ COLOR_MOD_RE = re.compile(
     r'''(?x)
     color\(\s*
         (?P<base>\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})
-        \s+(?P<type>blenda?)\(
-            (?P<color>\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})
-            \s+(?P<percent>%(percent)s)
-        \)
-        (?P<other>
-            (?:\s+blenda?\((?:\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})\s+%(percent)s\))+
-        )?
+        \s+(?:
+            (?P<blend>blenda?)\((?P<color>\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})\s+(?P<percent>(?:%(percent)s|%(float)s))\) |
+            (?P<alpha>a(?:lpha)?)\((?P<apercent>(?:%(percent)s|%(float)s))\)
+        )
+        (?P<other>(?:
+            \s+(?:
+                blenda?\((?:\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})\s+(?:%(percent)s|%(float)s)\) |
+                a(?:lpha)?\((?:%(percent)s|%(float)s)\)
+            )
+        )+)?
     \s*\)
     ''' % COLOR_PARTS
 )
@@ -162,15 +165,26 @@ def blend(m):
 
     base = m.group('base')
     color = m.group('color')
-    blend_type = m.group('type')
-    percent = m.group('percent')
-    if percent.endswith('%'):
-        percent = float(percent.strip('%'))
+    if m.group('blend'):
+        blend_type = m.group('blend')
+        percent = m.group('percent')
+        if percent.endswith('%'):
+            percent = float(percent.strip('%'))
+        else:
+            percent = int(alpha_dec_normalize(percent), 16) * 100.0
+        rgba = RGBA(base)
+        rgba.blend(color, percent, alpha=(blend_type == 'blenda'))
+        color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
     else:
-        percent = int(alpha_dec_normalize(percent), 16) * (100.0 / 255.0)
-    rgba = RGBA(base)
-    rgba.blend(color, percent, alpha=(blend_type == 'blenda'))
-    color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
+        base = m.group('base')
+        percent = m.group('apercent')
+        if percent.endswith('%'):
+            percent = float(percent.strip('%'))
+        else:
+            percent = int(alpha_dec_normalize(percent), 16) * 100.0
+        rgba = RGBA(base)
+        rgba.blend(base, percent, alpha=True)
+        color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
     if m.group('other'):
         color = "color(%s %s)" % (color, m.group('other'))
     return color
@@ -461,7 +475,7 @@ class ColorSchemeMatcher(object):
 
                 self.overrides.append(self.color_scheme)
 
-    def filter(self, scheme):
+    def filter(self, scheme):  # noqa A003
         """Dummy filter call that does nothing."""
 
         return scheme
