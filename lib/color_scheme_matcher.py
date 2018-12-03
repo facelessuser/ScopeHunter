@@ -67,7 +67,8 @@ HSL_COLORS = r"""(?x)
 """ % COLOR_PARTS
 
 HWB_COLORS = r"""(?x)
-    \b(?P<hwb>hwb\(\s*(?P<hwb_content>%(float)s\s*,\s*%(percent)s\s*,\s*%(percent)s)\s*\))
+    \b(?P<hwb>hwb\(\s*(?P<hwb_content>%(float)s\s*,\s*%(percent)s\s*,\s*%(percent)s
+    (?:\s*,\s*(?:%(percent)s|%(float)s))?)\s*\))
 """ % COLOR_PARTS
 
 VARIABLES = r"""(?x)
@@ -303,6 +304,11 @@ def translate_color(m, var, var_src):
             b = clamp(float(content[2].strip('%')), 0.0, 100.0) / 100.0
             rgba.fromhwb(h, w, b)
             color = rgba.get_rgb()
+            if len(content) > 3:
+                if content[3].endswith('%'):
+                    alpha = alpha_percent_normalize(content[3])
+                else:
+                    alpha = alpha_dec_normalize(content[3])
         elif groups.get('var'):
             content = m.group('var_content')
             if content in var:
