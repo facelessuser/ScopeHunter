@@ -66,6 +66,10 @@ HSL_COLORS = r"""(?x)
     \b(?P<hsla>hsla\(\s*(?P<hsla_content>%(float)s\s*,\s*(?:%(percent)s\s*,\s*){2}(?:%(percent)s|%(float)s))\s*\))
 """ % COLOR_PARTS
 
+HWB_COLORS = r"""(?x)
+    \b(?P<hwb>hwb\(\s*(?P<hwb_content>%(float)s\s*,\s*%(percent)s\s*,\s*%(percent)s)\s*\))
+""" % COLOR_PARTS
+
 VARIABLES = r"""(?x)
     \b(?P<var>var\(\s*(?P<var_content>[-\w][-\w\d]*)\s*\))
 """
@@ -77,9 +81,10 @@ COLOR_MOD = r"""(?x)
 COLOR_NAMES = r'\b(?P<x11colors>%s)\b(?!\()' % '|'.join([name for name in x11colors.name2hex_map.keys()])
 
 COLOR_RE = re.compile(
-    r'(?x)(?i)(?:%s|%s|%s|%s|%s)' % (
+    r'(?x)(?i)(?:%s|%s|%s|%s|%s|%s)' % (
         RGB_COLORS,
         HSL_COLORS,
+        HWB_COLORS,
         VARIABLES,
         COLOR_MOD,
         COLOR_NAMES
@@ -87,8 +92,10 @@ COLOR_RE = re.compile(
 )
 
 COLOR_RGB_SPACE_RE = re.compile(
-    r'(?x)(?i)(?:%s|%s|%s)' % (
+    r'(?x)(?i)(?:%s|%s|%s|%s|%s)' % (
         RGB_COLORS,
+        HSL_COLORS,
+        HWB_COLORS,
         VARIABLES,
         COLOR_NAMES
     )
@@ -99,12 +106,12 @@ COLOR_MOD_RE = re.compile(
     color\(\s*
         (?P<base>\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})
         \s+(?:
-            (?P<blend>blenda?)\((?P<color>\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})\s+(?P<percent>(?:%(percent)s|%(float)s))\) |
-            (?P<alpha>a(?:lpha)?)\((?P<apercent>(?:%(percent)s|%(float)s))\)
+            (?P<blend>blenda?)\((?P<blend_color>\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})\s+(?P<blend_percent>%(percent)s)\) |
+            (?P<alpha>a(?:lpha)?)\((?P<alpha_value>(?:%(percent)s|%(float)s))\)
         )
         (?P<other>(?:
             \s+(?:
-                blenda?\((?:\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})\s+(?:%(percent)s|%(float)s)\) |
+                blenda?\((?:\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})\s+%(percent)s\) |
                 a(?:lpha)?\((?:%(percent)s|%(float)s)\)
             )
         )+)?
@@ -164,26 +171,25 @@ def blend(m):
     """Blend colors."""
 
     base = m.group('base')
-    color = m.group('color')
     if m.group('blend'):
         blend_type = m.group('blend')
-        percent = m.group('percent')
+        color = m.group('blend_color')
+        percent = m.group('blend_percent')
         if percent.endswith('%'):
             percent = float(percent.strip('%'))
         else:
-            percent = int(alpha_dec_normalize(percent), 16) * 100.0
+            percent = int(alpha_dec_normalize(percent), 16) * (100.0 / 255.0)
         rgba = RGBA(base)
         rgba.blend(color, percent, alpha=(blend_type == 'blenda'))
         color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
     else:
-        base = m.group('base')
-        percent = m.group('apercent')
+        percent = m.group('alpha_value')
         if percent.endswith('%'):
-            percent = float(percent.strip('%'))
+            alpha = int(alpha_percent_normalize(percent), 16)
         else:
-            percent = int(alpha_dec_normalize(percent), 16) * 100.0
+            alpha = int(alpha_dec_normalize(percent), 16)
         rgba = RGBA(base)
-        rgba.blend(base, percent, alpha=True)
+        rgba.a = alpha
         color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
     if m.group('other'):
         color = "color(%s %s)" % (color, m.group('other'))
@@ -286,6 +292,17 @@ def translate_color(m, var, var_src):
                 alpha = alpha_percent_normalize(content[3])
             else:
                 alpha = alpha_dec_normalize(content[3])
+        elif m.group('hwb'):
+            content = [x.strip() for x in m.group('hwb_content').split(',')]
+            rgba = RGBA()
+            hue = float(content[0])
+            if hue < 0.0 or hue > 360.0:
+                hue = hue % 360.0
+            h = hue / 360.0
+            w = clamp(float(content[1].strip('%')), 0.0, 100.0) / 100.0
+            b = clamp(float(content[2].strip('%')), 0.0, 100.0) / 100.0
+            rgba.fromhwb(h, w, b)
+            color = rgba.get_rgb()
         elif groups.get('var'):
             content = m.group('var_content')
             if content in var:
