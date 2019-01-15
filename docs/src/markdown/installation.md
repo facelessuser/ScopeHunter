@@ -212,4 +212,4 @@ For those who want to install ScopeHunter without package control, here are the 
 
 3. Restart Sublime Text.
 
---8<-- "refs.md"
+--8<-- "refs.txt"

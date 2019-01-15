@@ -27,4 +27,4 @@ All features are configurable via the settings file
 - Optionally log location of Scheme file and Syntax.
 - Supports [SubNotify][subnotify] messages.
 
---8<-- "refs.md"
+--8<-- "refs.txt"

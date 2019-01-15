@@ -185,4 +185,4 @@ For performance, ScopeHunter is limited to highlight regions less that a given s
 
 If you have the [SubNotify][subnotify] installed, this will enable or disable messages through it.
 
---8<-- "refs.md"
+--8<-- "refs.txt"
