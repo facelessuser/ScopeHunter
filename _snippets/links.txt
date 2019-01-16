@@ -1,0 +1,8 @@
+[mkdocs]: http://www.mkdocs.org
+[mkdocs-material]: https://github.com/squidfunk/mkdocs-material
+[package-control]: https://packagecontrol.io/
+[package-control-install]: https://packagecontrol.io/installation
+[pymdown-extensions]: https://github.com/facelessuser/pymdown-extensions
+[scopes]: http://facelessuser.github.io/sublime-markdown-popups/textmate_scopes/
+[subnotify]: https://github.com/facelessuser/SubNotify
+[template]: https://github.com/facelessuser/ScopeHunter/blob/master/.github/ISSUE_TEMPLATE.md
