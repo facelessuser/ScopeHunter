@@ -28,7 +28,7 @@ All features are configurable via the settings file
 - Supports [SubNotify](https://github.com/facelessuser/SubNotify) messages.
 
 # Documentation
-http://facelessuser.github.io/ScopeHunter/
+https://facelessuser.github.io/ScopeHunter/
 
 # License
 Scope Hunter is released under the MIT license.
