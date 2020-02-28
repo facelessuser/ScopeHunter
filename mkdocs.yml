@@ -4,13 +4,13 @@ repo_url: https://github.com/facelessuser/ScopeHunter
 edit_uri: tree/master/docs/src/markdown
 site_description: Syntax Scope Viewer in Sublime Text.
 copyright: |
-  Copyright &copy; 2012 - 2018 <a href="https://github.com/facelessuser">Isaac Muse</a>
-  <br><span class="md-footer-custom-text">emoji provided free by <a href="http://www.emojione.com">EmojiOne</a></span>
+  Copyright &copy; 2012 - 2020 <a href="https://github.com/facelessuser">Isaac Muse</a>
+  <br><span class="md-footer-custom-text">emoji provided free by </span>
+  <a href="https://github.com/twitter/twemoji">Twemoji</a>
 
 docs_dir: docs/src/markdown
 theme:
   name: material
-  custom_dir: docs/theme
   palette:
     primary: blue
     accent: blue
@@ -30,7 +30,7 @@ nav:
 markdown_extensions:
   - markdown.extensions.toc:
       slugify: !!python/name:pymdownx.slugs.uslugify
-      permalink: "\ue157"
+      permalink: ""
   - markdown.extensions.admonition:
   - markdown.extensions.smarty:
       smart_quotes: false
@@ -39,22 +39,9 @@ markdown_extensions:
   - markdown.extensions.def_list:
   - markdown.extensions.tables:
   - markdown.extensions.abbr:
-  - markdown.extensions.footnotes:
   - pymdownx.extrarawhtml:
   - pymdownx.superfences:
-      preserve_tabs: true
-      custom_fences: 
-        - name: flow
-          class: uml-flowchart
-          format: !!python/name:pymdownx.superfences.fence_code_format
-        - name: sequence
-          class: uml-sequence-diagram
-          format: !!python/name:pymdownx.superfences.fence_code_format
-        - name: math
-          class: arithmatex
-          format: !!python/name:pymdownx.arithmatex.fence_mathjax_format
   - pymdownx.highlight:
-      css_class: codehilite
       extend_pygments_lang:
         - name: php-inline
           lang: php
@@ -65,10 +52,6 @@ markdown_extensions:
           options:
             python3: true
   - pymdownx.inlinehilite:
-      custom_inline:
-        - name: math
-          class: arithmatex
-          format: !!python/name:pymdownx.arithmatex.inline_mathjax_format
   - pymdownx.magiclink:
       repo_url_shortener: true
       repo_url_shorthand: true
@@ -79,25 +62,29 @@ markdown_extensions:
   - pymdownx.caret:
   - pymdownx.smartsymbols:
   - pymdownx.emoji:
+      emoji_index: !!python/name:pymdownx.emoji.twemoji
       emoji_generator: !!python/name:pymdownx.emoji.to_png
   - pymdownx.escapeall:
-      hardbreak: true
-      nbsp: true
+      hardbreak: True
+      nbsp: True
   - pymdownx.tasklist:
       custom_checkbox: true
   - pymdownx.progressbar:
+  - pymdownx.mark:
   - pymdownx.striphtml:
   - pymdownx.snippets:
       base_path: docs/src/markdown/_snippets
   - pymdownx.keys:
       separator: "\uff0b"
   - pymdownx.details:
+  - pymdownx.tabbed:
 
 extra:
   social:
-    - type: github
+    - icon: brands/github
       link: https://github.com/facelessuser
-extra_css:
-  - extra-83f68d2c59.css
-extra_javascript:
-  - extra-0b9b22dd13.js
+
+plugins:
+  - search
+  - git-revision-date-localized
+  - mkdocs_pymdownx_material_extras
