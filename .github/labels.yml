@@ -1,0 +1,53 @@
+template: 'facelessuser:master-labels:labels.yml:master'
+
+# Wildcard labels
+
+brace_expansion: true
+extended_glob: true
+
+rules:
+  - labels: ['C: infrastructure']
+    patterns: ['*|-@(*.md|*.py|*.sublime-@(keymap|menu|settings|commands|color-scheme))', '.github/**']
+
+  - labels: ['C: source']
+    patterns: ['**/@(*.py|*.sublime-@(keymap|menu|settings|commands|color-scheme))|-tests']
+
+  - labels: ['C: docs']
+    patterns: ['**/*.md|docs/**']
+
+  - labels: ['C: tests']
+    patterns: ['tests/**']
+
+  - labels: ['C: popups']
+    patterns: ['*.j2']
+
+  - labels: ['C: scheme-handling']
+    patterns: ['lib/color_scheme*.py|lib/rgba.py|lib/x11colors.py']
+
+  - labels: ['C: notify']
+    patterns: ['scope_hunter_notify.py']
+
+  - labels: ['C: settings']
+    patterns: ['*.sublime-@(keymap|menu|settings|commands|color-scheme)']
+
+# Label management
+
+labels:
+- name: 'C: popups'
+  color: subcategory
+  description: Related popups.
+
+- name: 'C: scheme-handling'
+  renamed: scheme-handling
+  color: subcategory
+  description: Related to scheme handling.
+
+- name: 'C: notify'
+  renamed: notify
+  color: subcategory
+  description: Related to notifications.
+
+- name: 'C: settings'
+  renamed: settings
+  color: subcategory
+  description: Related to Sublime settings.
