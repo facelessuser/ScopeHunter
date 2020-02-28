@@ -11,6 +11,7 @@ Scoper
 SubNotify
 SubNotify
 Tooltip
+Twemoji
 URL
 builtins
 cmd

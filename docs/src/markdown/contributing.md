@@ -4,7 +4,7 @@
 
 Sublime\ Versions | Description
 ---------------- | -----------
-ST2              | Supported on a separate branch, but not actively.  Any further fixes or enhancements must come fromthe community.  Issues for versions less than ST3 will not be addressed moving forward by me.  Pull requests are welcome for back-porting features, enhancements, or fixes to the old branch, but the content of the pull **must** already exist on the main, actively developed branch.  I will not allow an older branch to exceed the main branch in regards to functionality.
+ST2              | Supported on a separate branch, but not actively.  Any further fixes or enhancements must come from the community.  Issues for versions less than ST3 will not be addressed moving forward by me.  Pull requests are welcome for back-porting features, enhancements, or fixes to the old branch, but the content of the pull **must** already exist on the main, actively developed branch.  I will not allow an older branch to exceed the main branch in regards to functionality.
 ST3              | Fully supported and actively maintained.
 
 Contribution from the community is encouraged and can be done in a variety of ways:
