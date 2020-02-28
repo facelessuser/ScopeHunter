@@ -1,4 +1,4 @@
-[![Unix Build Status][travis-image]][travis-link]
+[![Build][github-ci-image]][github-ci-link]
 [![Package Control Downloads][pc-image]][pc-link]
 ![License][license-image]
 # ScopeHunter
@@ -53,8 +53,8 @@ WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEM
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
 OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-[travis-image]: https://img.shields.io/travis/facelessuser/ScopeHunter/master.svg
-[travis-link]: https://travis-ci.org/facelessuser/ScopeHunter
-[pc-image]: https://img.shields.io/packagecontrol/dt/ScopeHunter.svg
+[github-ci-image]: https://github.com/facelessuser/ScopeHunter/workflows/build/badge.svg
+[github-ci-link]: https://github.com/facelessuser/ScopeHunter/actions?workflow=build
+[pc-image]: https://img.shields.io/packagecontrol/dt/ScopeHunter.svg?labelColor=333333&logo=sublime%20text
 [pc-link]: https://packagecontrol.io/packages/ScopeHunter
-[license-image]: https://img.shields.io/badge/license-MIT-blue.svg
+[license-image]: https://img.shields.io/badge/license-MIT-blue.svg?labelColor=333333
