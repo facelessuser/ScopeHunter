@@ -2,7 +2,8 @@
 
 ## Overview
 
-This is a simple plugin that can get the scope under the cursor(s) in Sublime Text.  This plugin is useful for plugin development.
+This is a simple plugin that can get the scope under the cursor(s) in Sublime Text.  This plugin is useful for plugin
+development.
 
 Dark theme with simple output:
 
