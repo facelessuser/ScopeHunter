@@ -29,7 +29,7 @@
                                 "caption": "Documentation",
                                 "command": "scope_hunter_open_site",
                                 "args": {
-                                    "url": "http://facelessuser.github.io/ScopeHunter/"
+                                    "url": "https://facelessuser.github.io/ScopeHunter/"
                                 }
                             },
                             // {
