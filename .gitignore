@@ -3,3 +3,6 @@
 site/*
 *.DS_Store
 build/*
+*.cache
+.pytest_cache
+.tox/**
