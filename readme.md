@@ -1,3 +1,4 @@
+[![Discord][discord-image]][discord-link]
 [![Build][github-ci-image]][github-ci-link]
 [![Package Control Downloads][pc-image]][pc-link]
 ![License][license-image]
@@ -55,6 +56,8 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 [github-ci-image]: https://github.com/facelessuser/ScopeHunter/workflows/build/badge.svg
 [github-ci-link]: https://github.com/facelessuser/ScopeHunter/actions?workflow=build
+[discord-image]: https://img.shields.io/discord/678289859768745989?logo=discord&logoColor=aaaaaa&color=mediumpurple&labelColor=333333
+[discord-link]: https://discord.gg/RKHTt2q
 [pc-image]: https://img.shields.io/packagecontrol/dt/ScopeHunter.svg?labelColor=333333&logo=sublime%20text
 [pc-link]: https://packagecontrol.io/packages/ScopeHunter
 [license-image]: https://img.shields.io/badge/license-MIT-blue.svg?labelColor=333333

@@ -83,6 +83,8 @@ extra:
   social:
     - icon: brands/github
       link: https://github.com/facelessuser
+    - icon: brands/discord
+      link: https://discord.gg/RKHTt2q
 
 plugins:
   - search
