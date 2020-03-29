@@ -1,12 +1,21 @@
 # ScopeHunter
 
+## 2.13.1
+
+- **FIX**: ST4 now handles `HSL` properly, remove workaround for build 4069.
+- **FIX**: `+`/`-` have to be followed by spaces in `saturation`, `lightness`, and `alpha` or they should be treated as
+  part of the number following them. `*` does not need a space.
+- **FIX**: Add support for `deg` unit type for the hue channel with `HSL` and `HWB`.
+- **FIX**: Sublime will ignore the unit types `rad`, `grad`, and `turn` for `HSL` and `HWB`, but add support for them in
+  case Sublime ever does.
+
 ## 2.13.0
 
 - **NEW**: Add support for blending colors in the `HSL` and `HWB` color spaces in color schemes. Sublime has a bug where
   it blends in these color spaces in a surprising way. We do not fully match it, but we will not currently fail anymore.
 - **NEW**: Support `+`, `-`, and `*` in `alpha()`/`a()`.
 - **NEW**: Support `lightness()` and `saturation()`.
-- **NEW**: Support `foreground_adjust` in color schemes. 
+- **NEW**: Support `foreground_adjust` in color schemes.
 
 ## 2.12.0
 

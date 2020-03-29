@@ -12,10 +12,10 @@ docs_dir: docs/src/markdown
 theme:
   name: material
   palette:
-    primary: blue
-    accent: blue
-  logo:
-    icon: description
+    primary: drac-purple
+    accent: drac-purple
+  icon:
+    logo: material/book-open-page-variant
   font:
     text: Roboto
     code: Roboto Mono
@@ -81,12 +81,14 @@ markdown_extensions:
 
 extra:
   social:
-    - icon: brands/github
+    - icon: fontawesome/brands/github
       link: https://github.com/facelessuser
-    - icon: brands/discord
+    - icon: fontawesome/brands/discord
       link: https://discord.gg/RKHTt2q
 
 plugins:
   - search
   - git-revision-date-localized
   - mkdocs_pymdownx_material_extras
+  - minify:
+      minify_html: true
