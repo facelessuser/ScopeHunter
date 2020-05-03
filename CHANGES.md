@@ -1,5 +1,10 @@
 # ScopeHunter
 
+## 2.14.0
+
+- **NEW**: Add support for `glow` and `underline` styles.
+- **FIX**: Fix font style reporting in popups.
+
 ## 2.13.1
 
 - **FIX**: ST4 now handles `HSL` properly, remove workaround for build 4069.

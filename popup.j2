@@ -43,7 +43,7 @@
 [(copy)](copy-bg-sim:{{plugin.bg_sim_index}}){: .small}
 
   {% endif %}
-**style:**{: .keyword} <{{plugin.style_tag2}}><{{plugin.style_tag}}>{{plugin.style}}</{{plugin.style_tag}}></{{plugin.style_tag2}}>
+**style:**{: .keyword} {{plugin.style_open}}{{plugin.style}}{{plugin.style_close}}
 [(copy)](copy-style:{{plugin.style_index}}){: .small}
 
 {% endif %}
@@ -94,6 +94,26 @@
     {% endif %}
 **italic scope:**{: .keyword} {{plugin.italic_scope}}
 [(copy)](copy-italic-sel-scope:{{plugin.italic_scope_index}}){: .small}
+
+  {% endif %}
+  {% if plugin.underline %}
+    {% if plugin.underline_name %}
+**underline name:**{: .keyword} {{plugin.underline_name}}
+[(copy)](copy-underline-sel-name:{{plugin.glow_underline_index}}){: .small}
+
+    {% endif %}
+**underline scope:**{: .keyword} {{plugin.underline_scope}}
+[(copy)](copy-underline-sel-scope:{{plugin.underline_scope_index}}){: .small}
+
+  {% endif %}
+  {% if plugin.glow %}
+    {% if plugin.glow_name %}
+**glow name:**{: .keyword} {{plugin.glow_name}}
+[(copy)](copy-glow-sel-name:{{plugin.glow_name_index}}){: .small}
+
+    {% endif %}
+**glow scope:**{: .keyword} {{plugin.glow_scope}}
+[(copy)](copy-glow-sel-scope:{{plugin.glow_scope_index}}){: .small}
 
   {% endif %}
 {% endif %}

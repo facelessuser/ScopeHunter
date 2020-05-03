@@ -34,6 +34,8 @@ if TOOLTIP_SUPPORT:
         {%- endif %}
         .scope-hunter .small { font-size: 0.8rem; }
         .scope-hunter .header { {{'.string'|css('color')}} }
+        ins { text-decoration: underline; }
+        span.glow { background-color: color(var(--foreground) a(0.2)); }
         '''
     )
 
@@ -70,6 +72,10 @@ BOLD_NAME_KEY = "Bold Name"
 BOLD_SCOPE_KEY = "Bold Scope"
 ITALIC_NAME_KEY = "Italic Name"
 ITALIC_SCOPE_KEY = "Italic Scope"
+UNDERLINE_NAME_KEY = "Underline Name"
+UNDERLINE_SCOPE_KEY = "Underline Scope"
+GLOW_NAME_KEY = "Glow Name"
+GLOW_SCOPE_KEY = "Glow Scope"
 SCHEME_KEY = "tmTheme File"
 SYNTAX_KEY = "Syntax File"
 OVERRIDE_SCHEME_KEY = "Scheme"
@@ -308,30 +314,33 @@ class GetSelectionScope(object):
                 self.template_vars['bg_sim'] = True
                 self.get_color_box(bgcolor_sim, 'bg_sim', self.next_index())
 
-            tag = None
-            tag2 = None
             style_label = set()
+            style_open = []
+            style_close = []
+
             for s in style.split(' '):
-                if style == "bold":
-                    if tag is None:
-                        tag = "b"
-                    elif tag2 is None:
-                        tag2 = "b"
+                if s == "bold":
+                    style_open.append('<b>')
+                    style_close.insert(0, '</b>')
                     style_label.add('bold')
-                elif style == "italic":
-                    if tag is None:
-                        tag = "i"
-                    elif tag2 is None:
-                        tag2 = "i"
+                elif s == "italic":
+                    style_open.append('<i>')
+                    style_close.insert(0, '</i>')
                     style_label.add('italic')
+                elif s == "underline":
+                    style_open.append('<ins>')
+                    style_close.insert(0, '</ins>')
+                    style_label.add('underline')
+                elif s == "glow":
+                    style_open.append('<span class="glow">')
+                    style_close.insert(0, '</span>')
+                    style_label.add('glow')
+
             if len(style_label) == 0:
                 style_label.add('normal')
-            if tag is None:
-                tag = "span"
-            if tag2 is None:
-                tag2 = "span"
-            self.template_vars["style_tag2"] = tag2
-            self.template_vars["style_tag"] = tag
+
+            self.template_vars["style_open"] = ''.join(style_open)
+            self.template_vars["style_close"] = ''.join(style_close)
             self.template_vars["style"] = ' '.join(list(style_label))
             self.template_vars["style_index"] = self.next_index()
 
@@ -379,6 +388,14 @@ class GetSelectionScope(object):
             self.scope_bfr.append(ENTRY % (ITALIC_NAME_KEY + ":", style_selectors["italic"].name))
             self.scope_bfr.append(ENTRY % (ITALIC_SCOPE_KEY + ":", style_selectors["italic"].scope))
 
+        if style_selectors["underline"].name != "" or style_selectors["underline"].scope != "":
+            self.scope_bfr.append(ENTRY % (UNDERLINE_NAME_KEY + ":", style_selectors["underline"].name))
+            self.scope_bfr.append(ENTRY % (UNDERLINE_SCOPE_KEY + ":", style_selectors["underline"].scope))
+
+        if style_selectors["glow"].name != "" or style_selectors["glow"].scope != "":
+            self.scope_bfr.append(ENTRY % (GLOW_NAME_KEY + ":", style_selectors["glow"].name))
+            self.scope_bfr.append(ENTRY % (GLOW_SCOPE_KEY + ":", style_selectors["glow"].scope))
+
         if self.show_popup:
             self.template_vars['selectors'] = True
             self.template_vars['fg_name'] = color_selector.name
@@ -406,6 +423,18 @@ class GetSelectionScope(object):
                 self.template_vars['italic_name_index'] = self.next_index()
                 self.template_vars['italic_scope'] = style_selectors["italic"].scope
                 self.template_vars['italic_scope_index'] = self.next_index()
+            if style_selectors["underline"].name != "" or style_selectors["underline"].scope != "":
+                self.template_vars['underline'] = True
+                self.template_vars['underline_name'] = style_selectors["underline"].name
+                self.template_vars['underline_name_index'] = self.next_index()
+                self.template_vars['underline_scope'] = style_selectors["underline"].scope
+                self.template_vars['underline_scope_index'] = self.next_index()
+            if style_selectors["glow"].name != "" or style_selectors["glow"].scope != "":
+                self.template_vars['glow'] = True
+                self.template_vars['glow_name'] = style_selectors["glow"].name
+                self.template_vars['glow_name_index'] = self.next_index()
+                self.template_vars['glow_scope'] = style_selectors["glow"].scope
+                self.template_vars['glow_scope_index'] = self.next_index()
 
     def get_info(self, pt):
         """Get scope related info."""
@@ -522,6 +551,14 @@ class GetSelectionScope(object):
             copy_data(self.scope_bfr, ITALIC_NAME_KEY, index)
         elif key == 'copy-italic-sel-scope':
             copy_data(self.scope_bfr, ITALIC_SCOPE_KEY, index)
+        elif key == 'copy-underline-sel-name':
+            copy_data(self.scope_bfr, UNDERLINE_NAME_KEY, index)
+        elif key == 'copy-underline-sel-scope':
+            copy_data(self.scope_bfr, UNDERLINE_SCOPE_KEY, index)
+        elif key == 'copy-glow-sel-name':
+            copy_data(self.scope_bfr, GLOW_NAME_KEY, index)
+        elif key == 'copy-glow-sel-scope':
+            copy_data(self.scope_bfr, GLOW_SCOPE_KEY, index)
         elif key == 'copy-scheme':
             copy_data(self.scope_bfr, SCHEME_KEY, index)
         elif key == 'copy-syntax':
