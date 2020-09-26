@@ -2,6 +2,15 @@
 {{plugin.scope}}
 [(copy)](copy-scope:{{plugin.scope_index}}){: .small}
 
+{% if plugin.context_backtrace %}
+## Scope Context Backtrace {: .header}
+  {% for ctx in plugin.context_backtrace_stack %}
+**{{loop.index}}:**{: .keyword} {{ctx}}
+
+  {% endfor %}
+[(copy)](copy-context-backtrace:{{plugin.context_backtrace_index}}){: .small}
+{% endif %}
+
 {% if plugin.pt_extent or plugin.rowcol_extent %}
 ## Scope Extent {: .header}
   {% if plugin.pt_extent %}

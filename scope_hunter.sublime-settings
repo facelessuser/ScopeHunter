@@ -31,6 +31,9 @@
     // Additional Scope Info
     ///////////////////////////
 
+    // Show the scope backtrace (ST >= 4087)
+    "context_backtrace": true,
+
     // Show scope extent in point format
     "extent_points": false,
 
