@@ -14,6 +14,7 @@ from textwrap import dedent
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 
 TOOLTIP_SUPPORT = int(sublime.version()) >= 3124
+SCOPE_CONTEXT_BACKTRACE_SUPPORT = int(sublime.version()) >= 4087
 
 if TOOLTIP_SUPPORT:
     import mdpopups
@@ -55,6 +56,7 @@ RELOAD = '''
 # Text Entry
 ENTRY = "%-30s %s"
 SCOPE_KEY = "Scope"
+CONTEXT_BACKTRACE_KEY = "Scope Context Backtrace"
 PTS_KEY = "Scope Extents (Pts)"
 PTS_VALUE = "(%d, %d)"
 CHAR_LINE_KEY = "Scope Extents (Line/Char)"
@@ -271,6 +273,30 @@ class GetSelectionScope(object):
 
         return scope
 
+    def get_scope_context_backtrace(self, pt):
+        """Get the context backtrace of the current scope."""
+
+        spacing = "\n" + (" " * 31)
+
+        if SCOPE_CONTEXT_BACKTRACE_SUPPORT:
+            stack = list(reversed(self.view.context_backtrace(pt)))
+        else:
+            stack = []
+
+        backtrace = ''
+        for i, ctx in enumerate(stack):
+            backtrace += '%s: %s' % (i, ctx)
+
+        if SCOPE_CONTEXT_BACKTRACE_SUPPORT and self.context_backtrace_info:
+            self.scope_bfr.append(ENTRY % (CONTEXT_BACKTRACE_KEY + ':', spacing.join(stack)))
+
+            if self.show_popup:
+                self.template_vars['context_backtrace'] = True
+                self.template_vars["context_backtrace_stack"] = stack
+                self.template_vars['context_backtrace_index'] = self.next_index()
+
+        return backtrace
+
     def get_appearance(self, color, color_sim, bgcolor, bgcolor_sim, style, color_gradient):
         """Get colors of foreground, background, and simulated transparency colors."""
 
@@ -441,6 +467,8 @@ class GetSelectionScope(object):
 
         scope = self.get_scope(pt)
 
+        self.get_scope_context_backtrace(pt)
+
         if self.rowcol_info or self.points_info or self.highlight_extent:
             self.get_extents(pt)
 
@@ -512,6 +540,13 @@ class GetSelectionScope(object):
                 SCOPE_KEY,
                 index,
                 lambda x: x.replace('\n' + ' ' * 31, ' ')
+            )
+        elif key == 'copy-context-backtrace':
+            copy_data(
+                self.scope_bfr,
+                CONTEXT_BACKTRACE_KEY,
+                index,
+                lambda x: x.replace('\n' + ' ' * 31, '\n')
             )
         elif key == 'copy-points':
             copy_data(self.scope_bfr, PTS_KEY, index)
@@ -620,6 +655,7 @@ class GetSelectionScope(object):
         self.highlight_scope = sh_settings.get("highlight_scope", 'invalid')
         self.highlight_style = sh_settings.get("highlight_style", 'outline')
         self.highlight_max_size = int(sh_settings.get("highlight_max_size", 100))
+        self.context_backtrace_info = bool(sh_settings.get("context_backtrace", False))
         self.rowcol_info = bool(sh_settings.get("extent_line_char", False))
         self.points_info = bool(sh_settings.get("extent_points", False))
         self.appearance_info = bool(sh_settings.get("styling", False))
