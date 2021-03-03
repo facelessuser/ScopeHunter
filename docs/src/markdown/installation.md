@@ -32,6 +32,7 @@ For those who want to install ScopeHunter without package control, here are the 
     - @packagecontrol/pygments -> `pygments`
     - @facelessuser/sublime-markdown-popups -> `mdpopups`
     - @facelessuser/sublime-markdown -> `python-markdown`
+    - @facelessuser/sublime-coloraide -> `coloraide`
 
 2. Download and unpack or git clone the latest ScopeHunter release and unpack as `ScopeHunter`:
 
@@ -41,7 +42,7 @@ For those who want to install ScopeHunter without package control, here are the 
 
     Copy the following code to `00-dependencies.py` (this code was taken from Package Control):
 
-    ``` python
+    ```{.py3 .md-max-height}
     import sys
     import os
     from os.path import dirname
@@ -195,6 +196,7 @@ For those who want to install ScopeHunter without package control, here are the 
     add_dependency('python-markdown')
     add_dependency('python-jinja2')
     add_dependency('mdpopups')
+    add_dependency('coloraide')
     ```
 
 4. Restart and enjoy.

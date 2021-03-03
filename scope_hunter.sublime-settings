@@ -5,22 +5,6 @@
     "debug": false,
 
     ///////////////////////////
-    // View Options
-    ///////////////////////////
-
-    // Show popup tooltip with info about scope
-    "show_popup": false,
-
-    // Show scope in status bar
-    "show_statusbar": false,
-
-    // Show scope in auto-popup panel
-    "show_panel": true,
-
-    // Show scopes in console
-    "console_log": false,
-
-    ///////////////////////////
     // Tooltip Configurations
     ///////////////////////////
 

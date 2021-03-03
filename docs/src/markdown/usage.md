@@ -33,49 +33,6 @@ These settings are for debugging issues.
 
 Turns on debug logging.
 
-### View options
-
-By default, ScopeHunter (on ST3) uses the output panel to communicate the scope.  But if you prefer a more subtle **or**
-flashier way of displaying the scope, ScopeHunter can be configured to do so.
-
-```js
-    ///////////////////////////
-    // View Options
-    ///////////////////////////
-
-    // Show popup tooltip with info about scope
-    "show_popup": false,
-
-    // Show scope in status bar
-    "show_statusbar": false,
-
-    // Show scope in auto-popup panel
-    "show_panel": true,
-
-    // Show scopes in console
-    "console_log": false,
-```
-
-#### `show_popup`
-
-This uses the new ST3 tooltip API to display and is my personal favorite.  It shows a styled tooltip with all the
-information about the scope of the current cursor(s).  You get previews of the colors, and you can click links to copy
-the info to the clipboard.
-
-#### `show_statusbar`
-
-This shows just the scope in the status bar.  Simple and subtle.
-
-#### `show_panel`
-
-This shows the scope and related info in an output panel.  This allows a user to directly copy and paste the info from
-the panel.
-
-#### `console_log`
-
-This is useful if you are doing something like `show_statusbar`.  You can keep the output subtle, but you can open the
-console and get more in depth info that you can copy and paste.
-
 ### Scope Info
 
 For modes like `show_panel`, `console_log`, and `show_popup` you can control the info displayed.  You can keep it just

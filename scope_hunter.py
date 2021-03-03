@@ -12,12 +12,9 @@ from ScopeHunter.scope_hunter_notify import notify, error
 import traceback
 from textwrap import dedent
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
+import mdpopups
 
-TOOLTIP_SUPPORT = int(sublime.version()) >= 3124
 SCOPE_CONTEXT_BACKTRACE_SUPPORT = int(sublime.version()) >= 4087
-
-if TOOLTIP_SUPPORT:
-    import mdpopups
 
 if 'sh_thread' not in globals():
     sh_thread = None
@@ -25,20 +22,19 @@ if 'sh_thread' not in globals():
 scheme_matcher = None
 sh_settings = {}
 
-if TOOLTIP_SUPPORT:
-    ADD_CSS = dedent(
-        '''
-        {%- if var.mdpopups_version >= (2, 0, 0) %}
-        div.scope-hunter { margin: 0; padding: 0.5rem; }
-        {%- else %}
-        div.scope-hunter { margin: 0; padding: 0; }
-        {%- endif %}
-        .scope-hunter .small { font-size: 0.8rem; }
-        .scope-hunter .header { {{'.string'|css('color')}} }
-        ins { text-decoration: underline; }
-        span.glow { background-color: color(var(--foreground) a(0.2)); }
-        '''
-    )
+ADD_CSS = dedent(
+    '''
+    {%- if var.mdpopups_version >= (2, 0, 0) %}
+    div.scope-hunter { margin: 0; padding: 0.5rem; }
+    {%- else %}
+    div.scope-hunter { margin: 0; padding: 0; }
+    {%- endif %}
+    .scope-hunter .small { font-size: 0.8rem; }
+    .scope-hunter .header { {{'.string'|css('color')}} }
+    ins { text-decoration: underline; }
+    span.glow { background-color: color(var(--foreground) a(0.2)); }
+    '''
+)
 
 COPY_ALL = '''
 ---
@@ -54,13 +50,13 @@ RELOAD = '''
 
 
 # Text Entry
-ENTRY = "%-30s %s"
+ENTRY = "{:30} {}"
 SCOPE_KEY = "Scope"
 CONTEXT_BACKTRACE_KEY = "Scope Context Backtrace"
 PTS_KEY = "Scope Extents (Pts)"
-PTS_VALUE = "(%d, %d)"
+PTS_VALUE = "({:d}, {:d})"
 CHAR_LINE_KEY = "Scope Extents (Line/Char)"
-CHAR_LINE_VALUE = "(line: %d char: %d, line: %d char: %d)"
+CHAR_LINE_VALUE = "(line: {:d} char: {:d}, line: {:d} char: {:d})"
 FG_KEY = "Fg"
 FG_SIM_KEY = "Fg (Simulated Alpha)"
 BG_KEY = "Bg"
@@ -89,7 +85,7 @@ HASHED_FG_SCOPE_KEY = "Hashed Fg Scope"
 
 def log(msg):
     """Logging."""
-    print("ScopeHunter: %s" % msg)
+    print("ScopeHunter: {}".format(msg))
 
 
 def debug(msg):
@@ -145,7 +141,7 @@ def copy_data(bfr, label, index, copy_format=None):
         if copy_format is not None:
             text = copy_format(text)
         sublime.set_clipboard(text)
-        notify("Copied: %s" % label)
+        notify("Copied: {}".format(label))
 
 
 class ScopeHunterEditCommand(sublime_plugin.TextCommand):
@@ -199,12 +195,12 @@ class GetSelectionScope(object):
             colors = [color.upper()]
         if check_size < 2:
             check_size = 2
-        self.template_vars['%s_preview' % key] = mdpopups.color_box(
+        self.template_vars['{}_preview'.format(key)] = mdpopups.color_box(
             colors, border, border2, height=box_height,
             width=box_width, border_size=2, check_size=check_size
         )
-        self.template_vars['%s_color' % key] = ', '.join(colors)
-        self.template_vars['%s_index' % key] = index
+        self.template_vars['{}_color'.format(key)] = ', '.join(colors)
+        self.template_vars['{}_index'.format(key)] = index
 
     def get_extents(self, pt):
         """Get the scope extent via the sublime API."""
@@ -232,25 +228,24 @@ class GetSelectionScope(object):
 
         if self.points_info or self.rowcol_info:
             if self.points_info:
-                self.scope_bfr.append(ENTRY % (PTS_KEY + ':', PTS_VALUE % (pts.begin(), pts.end())))
+                self.scope_bfr.append(ENTRY.format(PTS_KEY + ':', PTS_VALUE.format(pts.begin(), pts.end())))
             if self.rowcol_info:
                 self.scope_bfr.append(
-                    ENTRY % (CHAR_LINE_KEY + ':', CHAR_LINE_VALUE % (row1 + 1, col1 + 1, row2 + 1, col2 + 1))
+                    ENTRY.format(CHAR_LINE_KEY + ':', CHAR_LINE_VALUE.format(row1 + 1, col1 + 1, row2 + 1, col2 + 1))
                 )
 
-            if self.show_popup:
-                if self.points_info:
-                    self.template_vars["pt_extent"] = True
-                    self.template_vars["extent_start"] = pts.begin()
-                    self.template_vars["extent_end"] = pts.end()
-                    self.template_vars["extent_pt_index"] = self.next_index()
-                if self.rowcol_info:
-                    self.template_vars["rowcol_extent"] = True
-                    self.template_vars["l_start"] = row1 + 1
-                    self.template_vars["l_end"] = row2 + 1
-                    self.template_vars["c_start"] = col1 + 1
-                    self.template_vars["c_end"] = col2 + 1
-                    self.template_vars["line_char_index"] = self.next_index()
+            if self.points_info:
+                self.template_vars["pt_extent"] = True
+                self.template_vars["extent_start"] = pts.begin()
+                self.template_vars["extent_end"] = pts.end()
+                self.template_vars["extent_pt_index"] = self.next_index()
+            if self.rowcol_info:
+                self.template_vars["rowcol_extent"] = True
+                self.template_vars["l_start"] = row1 + 1
+                self.template_vars["l_end"] = row2 + 1
+                self.template_vars["c_start"] = col1 + 1
+                self.template_vars["c_end"] = col2 + 1
+                self.template_vars["line_char_index"] = self.next_index()
 
     def get_scope(self, pt):
         """Get the scope at the cursor."""
@@ -261,15 +256,10 @@ class GetSelectionScope(object):
         if self.clipboard:
             self.clips.append(scope)
 
-        if self.first and self.show_statusbar:
-            self.status = scope
-            self.first = False
+        self.scope_bfr.append(ENTRY.format(SCOPE_KEY + ':', self.view.scope_name(pt).strip().replace(" ", spacing)))
 
-        self.scope_bfr.append(ENTRY % (SCOPE_KEY + ':', self.view.scope_name(pt).strip().replace(" ", spacing)))
-
-        if self.show_popup:
-            self.template_vars['scope'] = self.view.scope_name(pt).strip()
-            self.template_vars['scope_index'] = self.next_index()
+        self.template_vars['scope'] = self.view.scope_name(pt).strip()
+        self.template_vars['scope_index'] = self.next_index()
 
         return scope
 
@@ -285,24 +275,23 @@ class GetSelectionScope(object):
 
         backtrace = ''
         for i, ctx in enumerate(stack):
-            backtrace += '%s: %s' % (i, ctx)
+            backtrace += '{}: {}'.format(i, ctx)
 
         if SCOPE_CONTEXT_BACKTRACE_SUPPORT and self.context_backtrace_info:
-            self.scope_bfr.append(ENTRY % (CONTEXT_BACKTRACE_KEY + ':', spacing.join(stack)))
+            self.scope_bfr.append(ENTRY.format(CONTEXT_BACKTRACE_KEY + ':', spacing.join(stack)))
 
-            if self.show_popup:
-                self.template_vars['context_backtrace'] = True
-                self.template_vars["context_backtrace_stack"] = stack
-                self.template_vars['context_backtrace_index'] = self.next_index()
+            self.template_vars['context_backtrace'] = True
+            self.template_vars["context_backtrace_stack"] = stack
+            self.template_vars['context_backtrace_index'] = self.next_index()
 
         return backtrace
 
     def get_appearance(self, color, color_sim, bgcolor, bgcolor_sim, style, color_gradient):
         """Get colors of foreground, background, and simulated transparency colors."""
 
-        self.scope_bfr.append(ENTRY % (FG_KEY + ":", color))
+        self.scope_bfr.append(ENTRY.format(FG_KEY + ":", color))
         if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
-            self.scope_bfr.append(ENTRY % (FG_SIM_KEY + ":", color_sim))
+            self.scope_bfr.append(ENTRY.format(FG_SIM_KEY + ":", color_sim))
 
         colors = []
         colors_sim = []
@@ -313,62 +302,61 @@ class GetSelectionScope(object):
                 if len(cs) == 9 and not cs.lower().endswith('ff'):
                     show_sim = True
                 colors_sim.append(cs)
-            self.scope_bfr.append(ENTRY % (HASHED_FG_KEY + ":", ', '.join(colors)))
+            self.scope_bfr.append(ENTRY.format(HASHED_FG_KEY + ":", ', '.join(colors)))
             if self.show_simulated and show_sim:
-                self.scope_bfr.append(ENTRY % (HASHED_FG_SIM_KEY + ":", ', '.join(colors_sim)))
+                self.scope_bfr.append(ENTRY.format(HASHED_FG_SIM_KEY + ":", ', '.join(colors_sim)))
 
-        self.scope_bfr.append(ENTRY % (BG_KEY + ":", bgcolor))
+        self.scope_bfr.append(ENTRY.format(BG_KEY + ":", bgcolor))
         if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
-            self.scope_bfr.append(ENTRY % (BG_SIM_KEY + ":", bgcolor_sim))
+            self.scope_bfr.append(ENTRY.format(BG_SIM_KEY + ":", bgcolor_sim))
 
-        self.scope_bfr.append(ENTRY % (STYLE_KEY + ":", "normal" if not style else style))
+        self.scope_bfr.append(ENTRY.format(STYLE_KEY + ":", "normal" if not style else style))
 
-        if self.show_popup:
-            self.template_vars['appearance'] = True
-            self.get_color_box(color, 'fg', self.next_index())
-            if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
-                self.template_vars['fg_sim'] = True
-                self.get_color_box(color_sim, 'fg_sim', self.next_index())
-            if color_gradient:
-                self.template_vars['fg_hash'] = True
-                self.get_color_box(colors, 'fg_hash', self.next_index())
-                if self.show_simulated and show_sim:
-                    self.template_vars['fg_hash_sim'] = True
-                    self.get_color_box(colors_sim, 'fg_hash_sim', self.next_index())
-            self.get_color_box(bgcolor, 'bg', self.next_index())
-            if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
-                self.template_vars['bg_sim'] = True
-                self.get_color_box(bgcolor_sim, 'bg_sim', self.next_index())
+        self.template_vars['appearance'] = True
+        self.get_color_box(color, 'fg', self.next_index())
+        if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
+            self.template_vars['fg_sim'] = True
+            self.get_color_box(color_sim, 'fg_sim', self.next_index())
+        if color_gradient:
+            self.template_vars['fg_hash'] = True
+            self.get_color_box(colors, 'fg_hash', self.next_index())
+            if self.show_simulated and show_sim:
+                self.template_vars['fg_hash_sim'] = True
+                self.get_color_box(colors_sim, 'fg_hash_sim', self.next_index())
+        self.get_color_box(bgcolor, 'bg', self.next_index())
+        if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
+            self.template_vars['bg_sim'] = True
+            self.get_color_box(bgcolor_sim, 'bg_sim', self.next_index())
 
-            style_label = set()
-            style_open = []
-            style_close = []
+        style_label = set()
+        style_open = []
+        style_close = []
 
-            for s in style.split(' '):
-                if s == "bold":
-                    style_open.append('<b>')
-                    style_close.insert(0, '</b>')
-                    style_label.add('bold')
-                elif s == "italic":
-                    style_open.append('<i>')
-                    style_close.insert(0, '</i>')
-                    style_label.add('italic')
-                elif s == "underline":
-                    style_open.append('<ins>')
-                    style_close.insert(0, '</ins>')
-                    style_label.add('underline')
-                elif s == "glow":
-                    style_open.append('<span class="glow">')
-                    style_close.insert(0, '</span>')
-                    style_label.add('glow')
+        for s in style.split(' '):
+            if s == "bold":
+                style_open.append('<b>')
+                style_close.insert(0, '</b>')
+                style_label.add('bold')
+            elif s == "italic":
+                style_open.append('<i>')
+                style_close.insert(0, '</i>')
+                style_label.add('italic')
+            elif s == "underline":
+                style_open.append('<ins>')
+                style_close.insert(0, '</ins>')
+                style_label.add('underline')
+            elif s == "glow":
+                style_open.append('<span class="glow">')
+                style_close.insert(0, '</span>')
+                style_label.add('glow')
 
-            if len(style_label) == 0:
-                style_label.add('normal')
+        if len(style_label) == 0:
+            style_label.add('normal')
 
-            self.template_vars["style_open"] = ''.join(style_open)
-            self.template_vars["style_close"] = ''.join(style_close)
-            self.template_vars["style"] = ' '.join(list(style_label))
-            self.template_vars["style_index"] = self.next_index()
+        self.template_vars["style_open"] = ''.join(style_open)
+        self.template_vars["style_close"] = ''.join(style_close)
+        self.template_vars["style"] = ' '.join(list(style_label))
+        self.template_vars["style_index"] = self.next_index()
 
     def get_scheme_syntax(self):
         """Get color scheme and syntax file path."""
@@ -378,89 +366,87 @@ class GetSelectionScope(object):
         self.scheme_file = scheme_matcher.color_scheme.replace('\\', '/')
         is_tmtheme = not self.scheme_file.endswith(('.sublime-color-scheme', '.hidden-color-scheme'))
         self.syntax_file = self.view.settings().get('syntax')
-        self.scope_bfr.append(ENTRY % (SYNTAX_KEY + ":", self.syntax_file))
+        self.scope_bfr.append(ENTRY.format(SYNTAX_KEY + ":", self.syntax_file))
         if is_tmtheme:
-            self.scope_bfr.append(ENTRY % (SCHEME_KEY + ":", self.scheme_file))
+            self.scope_bfr.append(ENTRY.format(SCHEME_KEY + ":", self.scheme_file))
         text = []
         for idx, override in enumerate(self.overrides, 1):
-            text.append(ENTRY % (OVERRIDE_SCHEME_KEY + (" %d:" % idx), override))
+            text.append(ENTRY.format(OVERRIDE_SCHEME_KEY + (" {}:".format(idx)), override))
         self.scope_bfr.append('\n'.join(text))
 
-        if self.show_popup:
-            self.template_vars['files'] = True
-            self.template_vars["syntax"] = self.syntax_file
-            self.template_vars["syntax_index"] = self.next_index()
-            if is_tmtheme:
-                self.template_vars["scheme"] = self.scheme_file
-                self.template_vars["scheme_index"] = self.next_index()
-            self.template_vars["overrides"] = self.overrides
-            self.template_vars["overrides_index"] = self.next_index()
+        self.template_vars['files'] = True
+        self.template_vars["syntax"] = self.syntax_file
+        self.template_vars["syntax_index"] = self.next_index()
+        if is_tmtheme:
+            self.template_vars["scheme"] = self.scheme_file
+            self.template_vars["scheme_index"] = self.next_index()
+        self.template_vars["overrides"] = self.overrides
+        self.template_vars["overrides_index"] = self.next_index()
 
     def get_selectors(self, color_selector, bg_selector, style_selectors, color_gradient_selector):
         """Get the selectors used to determine color and/or style."""
 
-        self.scope_bfr.append(ENTRY % (FG_NAME_KEY + ":", color_selector.name))
-        self.scope_bfr.append(ENTRY % (FG_SCOPE_KEY + ":", color_selector.scope))
+        self.scope_bfr.append(ENTRY.format(FG_NAME_KEY + ":", color_selector.name))
+        self.scope_bfr.append(ENTRY.format(FG_SCOPE_KEY + ":", color_selector.scope))
         if color_gradient_selector:
-            self.scope_bfr.append(ENTRY % (HASHED_FG_NAME_KEY + ":", color_gradient_selector.name))
-            self.scope_bfr.append(ENTRY % (HASHED_FG_SCOPE_KEY + ":", color_gradient_selector.scope))
-        self.scope_bfr.append(ENTRY % (BG_NAME_KEY + ":", bg_selector.name))
-        self.scope_bfr.append(ENTRY % (BG_SCOPE_KEY + ":", bg_selector.scope))
+            self.scope_bfr.append(ENTRY.format(HASHED_FG_NAME_KEY + ":", color_gradient_selector.name))
+            self.scope_bfr.append(ENTRY.format(HASHED_FG_SCOPE_KEY + ":", color_gradient_selector.scope))
+        self.scope_bfr.append(ENTRY.format(BG_NAME_KEY + ":", bg_selector.name))
+        self.scope_bfr.append(ENTRY.format(BG_SCOPE_KEY + ":", bg_selector.scope))
         if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
-            self.scope_bfr.append(ENTRY % (BOLD_NAME_KEY + ":", style_selectors["bold"].name))
-            self.scope_bfr.append(ENTRY % (BOLD_SCOPE_KEY + ":", style_selectors["bold"].scope))
+            self.scope_bfr.append(ENTRY.format(BOLD_NAME_KEY + ":", style_selectors["bold"].name))
+            self.scope_bfr.append(ENTRY.format(BOLD_SCOPE_KEY + ":", style_selectors["bold"].scope))
 
         if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
-            self.scope_bfr.append(ENTRY % (ITALIC_NAME_KEY + ":", style_selectors["italic"].name))
-            self.scope_bfr.append(ENTRY % (ITALIC_SCOPE_KEY + ":", style_selectors["italic"].scope))
+            self.scope_bfr.append(ENTRY.format(ITALIC_NAME_KEY + ":", style_selectors["italic"].name))
+            self.scope_bfr.append(ENTRY.format(ITALIC_SCOPE_KEY + ":", style_selectors["italic"].scope))
 
         if style_selectors["underline"].name != "" or style_selectors["underline"].scope != "":
-            self.scope_bfr.append(ENTRY % (UNDERLINE_NAME_KEY + ":", style_selectors["underline"].name))
-            self.scope_bfr.append(ENTRY % (UNDERLINE_SCOPE_KEY + ":", style_selectors["underline"].scope))
+            self.scope_bfr.append(ENTRY.format(UNDERLINE_NAME_KEY + ":", style_selectors["underline"].name))
+            self.scope_bfr.append(ENTRY.format(UNDERLINE_SCOPE_KEY + ":", style_selectors["underline"].scope))
 
         if style_selectors["glow"].name != "" or style_selectors["glow"].scope != "":
-            self.scope_bfr.append(ENTRY % (GLOW_NAME_KEY + ":", style_selectors["glow"].name))
-            self.scope_bfr.append(ENTRY % (GLOW_SCOPE_KEY + ":", style_selectors["glow"].scope))
+            self.scope_bfr.append(ENTRY.format(GLOW_NAME_KEY + ":", style_selectors["glow"].name))
+            self.scope_bfr.append(ENTRY.format(GLOW_SCOPE_KEY + ":", style_selectors["glow"].scope))
 
-        if self.show_popup:
-            self.template_vars['selectors'] = True
-            self.template_vars['fg_name'] = color_selector.name
-            self.template_vars['fg_name_index'] = self.next_index()
-            self.template_vars['fg_scope'] = color_selector.scope
-            self.template_vars['fg_scope_index'] = self.next_index()
-            if color_gradient_selector:
-                self.template_vars['fg_hash_name'] = color_gradient_selector.name
-                self.template_vars['fg_hash_name_index'] = self.next_index()
-                self.template_vars['fg_hash_scope'] = color_gradient_selector.scope
-                self.template_vars['fg_hash_scope_index'] = self.next_index()
-            self.template_vars['bg_name'] = bg_selector.name
-            self.template_vars['bg_name_index'] = self.next_index()
-            self.template_vars['bg_scope'] = bg_selector.scope
-            self.template_vars['bg_scope_index'] = self.next_index()
-            if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
-                self.template_vars['bold'] = True
-                self.template_vars['bold_name'] = style_selectors["bold"].name
-                self.template_vars['bold_name_index'] = self.next_index()
-                self.template_vars['bold_scope'] = style_selectors["bold"].scope
-                self.template_vars['bold_scope_index'] = self.next_index()
-            if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
-                self.template_vars['italic'] = True
-                self.template_vars['italic_name'] = style_selectors["italic"].name
-                self.template_vars['italic_name_index'] = self.next_index()
-                self.template_vars['italic_scope'] = style_selectors["italic"].scope
-                self.template_vars['italic_scope_index'] = self.next_index()
-            if style_selectors["underline"].name != "" or style_selectors["underline"].scope != "":
-                self.template_vars['underline'] = True
-                self.template_vars['underline_name'] = style_selectors["underline"].name
-                self.template_vars['underline_name_index'] = self.next_index()
-                self.template_vars['underline_scope'] = style_selectors["underline"].scope
-                self.template_vars['underline_scope_index'] = self.next_index()
-            if style_selectors["glow"].name != "" or style_selectors["glow"].scope != "":
-                self.template_vars['glow'] = True
-                self.template_vars['glow_name'] = style_selectors["glow"].name
-                self.template_vars['glow_name_index'] = self.next_index()
-                self.template_vars['glow_scope'] = style_selectors["glow"].scope
-                self.template_vars['glow_scope_index'] = self.next_index()
+        self.template_vars['selectors'] = True
+        self.template_vars['fg_name'] = color_selector.name
+        self.template_vars['fg_name_index'] = self.next_index()
+        self.template_vars['fg_scope'] = color_selector.scope
+        self.template_vars['fg_scope_index'] = self.next_index()
+        if color_gradient_selector:
+            self.template_vars['fg_hash_name'] = color_gradient_selector.name
+            self.template_vars['fg_hash_name_index'] = self.next_index()
+            self.template_vars['fg_hash_scope'] = color_gradient_selector.scope
+            self.template_vars['fg_hash_scope_index'] = self.next_index()
+        self.template_vars['bg_name'] = bg_selector.name
+        self.template_vars['bg_name_index'] = self.next_index()
+        self.template_vars['bg_scope'] = bg_selector.scope
+        self.template_vars['bg_scope_index'] = self.next_index()
+        if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
+            self.template_vars['bold'] = True
+            self.template_vars['bold_name'] = style_selectors["bold"].name
+            self.template_vars['bold_name_index'] = self.next_index()
+            self.template_vars['bold_scope'] = style_selectors["bold"].scope
+            self.template_vars['bold_scope_index'] = self.next_index()
+        if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
+            self.template_vars['italic'] = True
+            self.template_vars['italic_name'] = style_selectors["italic"].name
+            self.template_vars['italic_name_index'] = self.next_index()
+            self.template_vars['italic_scope'] = style_selectors["italic"].scope
+            self.template_vars['italic_scope_index'] = self.next_index()
+        if style_selectors["underline"].name != "" or style_selectors["underline"].scope != "":
+            self.template_vars['underline'] = True
+            self.template_vars['underline_name'] = style_selectors["underline"].name
+            self.template_vars['underline_name_index'] = self.next_index()
+            self.template_vars['underline_scope'] = style_selectors["underline"].scope
+            self.template_vars['underline_scope_index'] = self.next_index()
+        if style_selectors["glow"].name != "" or style_selectors["glow"].scope != "":
+            self.template_vars['glow'] = True
+            self.template_vars['glow_name'] = style_selectors["glow"].name
+            self.template_vars['glow_name_index'] = self.next_index()
+            self.template_vars['glow_scope'] = style_selectors["glow"].scope
+            self.template_vars['glow_scope_index'] = self.next_index()
 
     def get_info(self, pt):
         """Get scope related info."""
@@ -504,22 +490,17 @@ class GetSelectionScope(object):
         if self.file_path_info and scheme_matcher:
             self.get_scheme_syntax()
 
-        # Divider
-        self.next_index()
-        self.scope_bfr.append("------")
-
-        if self.show_popup:
-            self.scope_bfr_tool.append(
-                mdpopups.md2html(
-                    self.view,
-                    self.popup_template,
-                    template_vars=self.template_vars,
-                    template_env_options={
-                        "trim_blocks": True,
-                        "lstrip_blocks": True
-                    }
-                )
+        self.scope_bfr_tool.append(
+            mdpopups.md2html(
+                self.view,
+                self.popup_template,
+                template_vars=self.template_vars,
+                template_env_options={
+                    "trim_blocks": True,
+                    "lstrip_blocks": True
+                }
             )
+        )
 
     def on_navigate(self, href):
         """Exceute link callback."""
@@ -599,15 +580,22 @@ class GetSelectionScope(object):
         elif key == 'copy-syntax':
             copy_data(self.scope_bfr, SYNTAX_KEY, index)
         elif key == 'copy-overrides':
-            copy_data(self.scope_bfr, OVERRIDE_SCHEME_KEY, index, lambda text: self.overrides[int(params[2]) - 1])
+            copy_data(
+                self.scope_bfr,
+                "{} {}".format(OVERRIDE_SCHEME_KEY, params[2]),
+                index,
+                lambda text: self.overrides[int(params[2]) - 1]
+            )
         elif key == 'scheme' and self.scheme_file is not None:
             window = self.view.window()
             window.run_command(
                 'open_file',
                 {
-                    "file": "${packages}/%s" % self.scheme_file.replace(
-                        '\\', '/'
-                    ).replace('Packages/', '', 1)
+                    "file": "${{packages}}/{}".format(
+                        self.scheme_file.replace(
+                            '\\', '/'
+                        ).replace('Packages/', '', 1)
+                    )
                 }
             )
         elif key == 'syntax' and self.syntax_file is not None:
@@ -615,9 +603,11 @@ class GetSelectionScope(object):
             window.run_command(
                 'open_file',
                 {
-                    "file": "${packages}/%s" % self.syntax_file.replace(
-                        '\\', '/'
-                    ).replace('Packages/', '', 1)
+                    "file": "${{packages}}/{}".format(
+                        self.syntax_file.replace(
+                            '\\', '/'
+                        ).replace('Packages/', '', 1)
+                    )
                 }
             )
         elif key == 'override':
@@ -625,7 +615,9 @@ class GetSelectionScope(object):
             window.run_command(
                 'open_file',
                 {
-                    "file": "${packages}/%s" % self.overrides[int(params[2]) - 1].replace('Packages/', '', 1)
+                    "file": "${{packages}}/{}".format(
+                        self.overrides[int(params[2]) - 1].replace('Packages/', '', 1)
+                    )
                 }
             )
 
@@ -634,23 +626,15 @@ class GetSelectionScope(object):
 
         self.view = v
         self.window = self.view.window()
-        view = self.window.create_output_panel('scopehunter.results', unlisted=True)
         self.scope_bfr = []
         self.scope_bfr_tool = []
         self.clips = []
-        self.status = ""
         self.popup_template = sublime.load_resource('Packages/ScopeHunter/popup.j2')
         self.scheme_file = None
         self.syntax_file = None
-        self.show_statusbar = bool(sh_settings.get("show_statusbar", False))
-        self.show_panel = bool(sh_settings.get("show_panel", False))
-        if TOOLTIP_SUPPORT:
-            self.show_popup = bool(sh_settings.get("show_popup", False))
-        else:
-            self.show_popup = False
+        self.show_popup = bool(sh_settings.get("show_popup", False))
         self.clipboard = bool(sh_settings.get("clipboard", False))
         self.multiselect = bool(sh_settings.get("multiselect", False))
-        self.console_log = bool(sh_settings.get("console_log", False))
         self.highlight_extent = bool(sh_settings.get("highlight_extent", False))
         self.highlight_scope = sh_settings.get("highlight_scope", 'invalid')
         self.highlight_style = sh_settings.get("highlight_style", 'outline')
@@ -663,7 +647,6 @@ class GetSelectionScope(object):
         self.file_path_info = bool(sh_settings.get("file_paths", False))
         self.selector_info = bool(sh_settings.get("selectors", False))
         self.scheme_info = self.appearance_info or self.selector_info
-        self.first = True
         self.extents = []
 
         # Get scope info for each selection wanted
@@ -672,8 +655,8 @@ class GetSelectionScope(object):
             if self.multiselect:
                 count = 0
                 for sel in self.view.sel():
-                    if count > 0 and self.show_popup:
-                        self.scope_bfr_tool.append('\n---\n')
+                    if count > 0:
+                        self.scope_bfr_tool.append('\n<hr>\n')
                     self.init_template_vars()
                     self.get_info(sel.b)
                     count += 1
@@ -684,21 +667,6 @@ class GetSelectionScope(object):
         # Copy scopes to clipboard
         if self.clipboard:
             sublime.set_clipboard('\n'.join(self.clips))
-
-        # Display in status bar
-        if self.show_statusbar:
-            sublime.status_message(self.status)
-
-        # Show panel
-        if self.show_panel:
-            ScopeHunterEditCommand.bfr = '\n'.join(self.scope_bfr)
-            ScopeHunterEditCommand.pt = 0
-            view.run_command('scope_hunter_edit')
-            ScopeHunterEditCommand.clear()
-            self.window.run_command("show_panel", {"panel": "output.scopehunter.results"})
-
-        if self.console_log:
-            print('\n'.join(["Scope Hunter"] + self.scope_bfr))
 
         if self.highlight_extent:
             style = extent_style(self.highlight_style)
@@ -712,20 +680,19 @@ class GetSelectionScope(object):
                 style
             )
 
-        if self.show_popup:
-            if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
-                tail = mdpopups.md2html(self.view, COPY_ALL)
-            else:
-                tail = mdpopups.md2html(self.view, RELOAD)
+        if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
+            tail = mdpopups.md2html(self.view, COPY_ALL)
+        else:
+            tail = mdpopups.md2html(self.view, RELOAD)
 
-            mdpopups.show_popup(
-                self.view,
-                ''.join(self.scope_bfr_tool) + tail,
-                md=False,
-                css=ADD_CSS,
-                wrapper_class=('scope-hunter'),
-                max_width=1000, on_navigate=self.on_navigate,
-            )
+        mdpopups.show_popup(
+            self.view,
+            ''.join(self.scope_bfr_tool) + tail,
+            md=False,
+            css=ADD_CSS,
+            wrapper_class=('scope-hunter'),
+            max_width=1000, on_navigate=self.on_navigate,
+        )
 
 
 get_selection_scopes = GetSelectionScope()
@@ -769,8 +736,7 @@ class ToggleSelectionScopeCommand(sublime_plugin.TextCommand):
                 parent_win = view.window()
                 if parent_win:
                     parent_win.run_command('hide_panel', {'cancel': True})
-                if TOOLTIP_SUPPORT:
-                    mdpopups.hide_popup(self.view)
+                mdpopups.hide_popup(self.view)
                 if (
                     self.view is not None and
                     sh_thread.is_enabled(view) and

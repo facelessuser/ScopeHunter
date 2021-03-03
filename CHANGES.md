@@ -1,5 +1,13 @@
 # ScopeHunter
 
+## 2.15.0
+
+- **NEW**: Require new `coloraide` dependency.
+- **NEW**: ScopeHunter now only shows information in tooltip. Showing info in separate panel and console has been
+  dropped as tooltip functionality is available on all latest Sublime versions.
+- **NEW**: Backtrace info available in Sublime Text build 4087.
+- **FIX**: Fix bug with copying color scheme name.
+
 ## 2.14.0
 
 - **NEW**: Add support for `glow` and `underline` styles.
