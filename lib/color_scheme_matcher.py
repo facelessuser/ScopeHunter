@@ -28,13 +28,11 @@ import sublime
 import codecs
 import re
 from .file_strip.json import sanitize_json
-from .rgba import RGBA, clamp, round_int, CS_RGB, CS_HSL, CS_HWB, OP_SCALE, OP_ADD, OP_SUB, OP_NULL
-from . import x11colors
+from .st_colormod import Color
+from .tmtheme import ColorSRGBX11
 from os import path
 from collections import namedtuple
 from plistlib import readPlistFromBytes
-import decimal
-import math
 
 NEW_SCHEMES = int(sublime.version()) >= 3150
 FONT_STYLE = "font_style" if int(sublime.version()) >= 3151 else "fontStyle"
@@ -46,116 +44,10 @@ CONVERT_GRAD = 90 / 100
 # XML
 XML_COMMENT_RE = re.compile(br"^[\r\n\s]*<!--[\s\S]*?-->[\s\r\n]*|<!--[\s\S]*?-->")
 
-# For new Sublime format
-FLOAT_TRIM_RE = re.compile(r'^(?P<keep>\d+)(?P<trash>\.0+|(?P<keep2>\.\d*[1-9])0+)$')
-
-COLOR_PARTS = {
-    "percent": r"[+\-]?(?:(?:\d*\.\d+)|\d+)%",
-    "float": r"[+\-]?(?:(?:\d*\.\d+)|\d+)",
-    "angle": r"[+\-]?(?:(?:\d*\.\d+)|\d+)(deg|rad|turn|grad)?"
-}
-
-RGB_COLORS = r"""(?x)
-    (?P<hexa>\#(?P<hexa_content>[\dA-Fa-f]{8}))\b |
-    (?P<hex>\#(?P<hex_content>[\dA-Fa-f]{6}))\b |
-    (?P<hexa_compressed>\#(?P<hexa_compressed_content>[\dA-Fa-f]{4}))\b |
-    (?P<hex_compressed>\#(?P<hex_compressed_content>[\dA-Fa-f]{3}))\b |
-    \b(?P<rgb>rgb\(\s*(?P<rgb_content>(?:%(float)s\s*,\s*){2}%(float)s | (?:%(percent)s\s*,\s*){2}%(percent)s)\s*\)) |
-    \b(?P<rgba>rgba\(\s*(?P<rgba_content>
-        (?:%(float)s\s*,\s*){3}(?:%(percent)s|%(float)s) | (?:%(percent)s\s*,\s*){3}(?:%(percent)s|%(float)s)
-    )\s*\))
-""" % COLOR_PARTS
-
-HSL_COLORS = r"""(?x)
-    \b(?P<hsl>hsl\(\s*(?P<hsl_content>%(float)s\s*,\s*%(percent)s\s*,\s*%(percent)s)\s*\)) |
-    \b(?P<hsla>hsla\(\s*(?P<hsla_content>%(angle)s\s*,\s*(?:%(percent)s\s*,\s*){2}(?:%(percent)s|%(float)s))\s*\))
-""" % COLOR_PARTS
-
-HWB_COLORS = r"""(?x)
-    \b(?P<hwb>hwb\(\s*(?P<hwb_content>%(angle)s\s*,\s*%(percent)s\s*,\s*%(percent)s
-    (?:\s*,\s*(?:%(percent)s|%(float)s))?)\s*\))
-""" % COLOR_PARTS
-
-VARIABLES = r"""(?x)
-    \b(?P<var>var\(\s*(?P<var_content>[-\w][-\w\d]*)\s*\))
-"""
-
-COLOR_MOD = r"""(?x)
-    \b(?P<color>color\((?P<color_content>.*)\))
-"""
-
-COLOR_NAMES = r'\b(?P<x11colors>%s)\b(?!\()' % '|'.join([name for name in x11colors.name2hex_map.keys()])
-
-COLOR_RE = re.compile(
-    r'(?x)(?i)(?:%s|%s|%s|%s|%s|%s)' % (
-        RGB_COLORS,
-        HSL_COLORS,
-        HWB_COLORS,
-        VARIABLES,
-        COLOR_MOD,
-        COLOR_NAMES
-    )
-)
-
-COLOR_RGB_SPACE_RE = re.compile(
-    r'(?x)(?i)(?:%s|%s|%s|%s|%s)' % (
-        RGB_COLORS,
-        HSL_COLORS,
-        HWB_COLORS,
-        VARIABLES,
-        COLOR_NAMES
-    )
-)
-
-COLOR_MOD_RE = re.compile(
-    r'''(?x)
-    color\(\s*
-        (?P<base>\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})
-        \s+(?:
-            (?P<blend>blenda?)\(
-                (?P<blend_color>\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})\s+
-                (?P<blend_percent>%(percent)s)
-                (?:\s+(?P<blend_mode>hsl|rgb|hwb))?\) |
-            (?P<alpha>a(?:lpha)?)\(\s*(?P<alpha_op>[\+\-]\s+|\*\s*)?(?P<alpha_value>(?:%(percent)s|%(float)s))\s*\) |
-            (?P<sat>s(?:aturation)?)\(\s*(?P<sat_op>[\+\-]\s+|\*\s*)?(?P<sat_value>(?:%(percent)s))\s*\) |
-            (?P<lit>l(?:ightness)?)\(\s*(?P<lit_op>[\+\-]\s+|\*\s*)?(?P<lit_value>(?:%(percent)s))\s*\)
-        )
-        (?P<other>(?:
-            \s+(?:
-                blenda?\((?:\#[\dA-Fa-f]{8}|\#[\dA-Fa-f]{6})\s+%(percent)s(?:\s+(?:hsl|rgb|hwb))?\) |
-                a(?:lpha)?\(\s*(?:[\+\-]\s+|\*\s*)?(?:%(percent)s|%(float)s)\s*\) |
-                s(?:aturation)?\(\s*(?:[\+\-]\s+|\*\s*)?(?:%(percent)s)\s*\) |
-                l(?:ightness)?\(\s*(?:[\+\-]\s+|\*\s*)?(?:%(percent)s)\s*\)
-            )
-        )+)?
-    \s*\)
-    ''' % COLOR_PARTS
-)
-
 RE_CAMEL_CASE = re.compile('[A-Z]')
 
-OP_MAP = {
-    '': OP_NULL,
-    '*': OP_SCALE,
-    '+': OP_ADD,
-    '-': OP_SUB
-}
-
-
-def norm_angle(angle):
-    """Normalize angle units."""
-
-    if angle.endswith('turn'):
-        value = float(angle[:-4]) * CONVERT_TURN
-    elif angle.endswith('grad'):
-        value = float(angle[:-4]) * CONVERT_GRAD
-    elif angle.endswith('rad'):
-        value = math.degrees(float(angle[:-3]))
-    elif angle.endswith('deg'):
-        value = float(angle[:-3])
-    else:
-        value = float(angle)
-    return value
+HEX = {"hex": True, "alpha": True}
+HEX_NA = {"hex": True, "alpha": False}
 
 
 def packages_path(pth):
@@ -168,247 +60,6 @@ def to_snake(m):
     """Convert to snake case."""
 
     return '_' + m.group(0).lower()
-
-
-def fmt_float(f, p=0):
-    """Set float precision and trim precision zeros."""
-
-    string = str(
-        decimal.Decimal(f).quantize(decimal.Decimal('0.' + ('0' * p) if p > 0 else '0'), decimal.ROUND_HALF_UP)
-    )
-
-    m = FLOAT_TRIM_RE.match(string)
-    if m:
-        string = m.group('keep')
-        if m.group('keep2'):
-            string += m.group('keep2')
-    return string
-
-
-def alpha_dec_normalize(dec):
-    """Normalize a decimal alpha value."""
-
-    temp = float(dec)
-    if temp < 0.0 or temp > 1.0:
-        dec = fmt_float(clamp(float(temp), 0.0, 1.0), 3)
-    alpha = "%02x" % round_int(float(dec) * 255.0)
-    return alpha
-
-
-def alpha_percent_normalize(perc):
-    """Normalize a percent alpha value."""
-
-    alpha_float = clamp(float(perc.strip('%')), 0.0, 100.0) / 100.0
-    alpha = "%02x" % round_int(alpha_float * 255.0)
-    return alpha
-
-
-def blend_foreground(m):
-    """Blend foreground with limited capability."""
-
-    return blend(m, True)
-
-
-def blend(m, limit=False):
-    """Blend colors."""
-
-    base = m.group('base')
-    if m.group('blend') and not limit:
-        blend_type = m.group('blend')
-        color = m.group('blend_color')
-        percent = m.group('blend_percent')
-        mode = m.group('blend_mode')
-        if not mode:
-            color_space = CS_RGB
-        elif mode == 'rgb':
-            color_space = CS_RGB
-        elif mode == 'hsl':
-            color_space = CS_HSL
-        else:
-            color_space = CS_HWB
-
-        if percent.endswith('%'):
-            percent = float(percent.strip('%'))
-        else:
-            percent = int(alpha_dec_normalize(percent), 16) * (100.0 / 255.0)
-        rgba = RGBA(base)
-        rgba.blend(color, percent, alpha=(blend_type == 'blenda'), color_space=color_space)
-        color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
-    elif m.group('alpha_value') and not limit:
-        percent = m.group('alpha_value')
-        op = OP_MAP[m.group('alpha_op').strip() if m.group('alpha_op') else '']
-        if percent.endswith('%'):
-            alpha = percent = float(percent.rstrip('%')) / 100.0
-        else:
-            alpha = percent = float(percent)
-        rgba = RGBA(base)
-        rgba.alpha(alpha, op)
-        color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
-    elif m.group('sat_value'):
-        percent = m.group('sat_value')
-        op = OP_MAP[m.group('sat_op').strip() if m.group('sat_op') else '']
-        percent = float(percent.rstrip('%')) / 100.0
-        rgba = RGBA(base)
-        rgba.saturation(percent, op)
-        color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
-    elif m.group('lit_value'):
-        percent = m.group('lit_value')
-        op = OP_MAP[m.group('lit_op').strip() if m.group('lit_op') else '']
-        percent = float(percent.rstrip('%')) / 100.0
-        rgba = RGBA(base)
-        rgba.luminance(percent, op)
-        color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
-    else:
-        rgba = RGBA(base)
-        color = rgba.get_rgb() if rgba.a == 255 else rgba.get_rgba()
-
-    if m.group('other'):
-        color = "color(%s %s)" % (color, m.group('other'))
-    return color
-
-
-def translate_color(m, var, var_src):
-    """Translate the match object to a color w/ alpha."""
-
-    color = None
-    alpha = None
-    if m is not None:
-        groups = m.groupdict()
-        if groups.get('hex_compressed'):
-            content = m.group('hex_compressed_content')
-            color = "#%02x%02x%02x" % (
-                int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
-            )
-        elif groups.get('hexa_compressed'):
-            content = m.group('hexa_compressed_content')
-            color = "#%02x%02x%02x" % (
-                int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
-            )
-            alpha = content[3:]
-        elif groups.get('hex'):
-            content = m.group('hex_content')
-            if len(content) == 6:
-                color = "#%02x%02x%02x" % (
-                    int(content[0:2], 16), int(content[2:4], 16), int(content[4:6], 16)
-                )
-            else:
-                color = "#%02x%02x%02x" % (
-                    int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
-                )
-        elif groups.get('hexa'):
-            content = m.group('hexa_content')
-            if len(content) == 8:
-                color = "#%02x%02x%02x" % (
-                    int(content[0:2], 16), int(content[2:4], 16), int(content[4:6], 16)
-                )
-                alpha = content[6:]
-            else:
-                color = "#%02x%02x%02x" % (
-                    int(content[0:1] * 2, 16), int(content[1:2] * 2, 16), int(content[2:3] * 2, 16)
-                )
-                alpha = content[3:]
-        elif groups.get('rgb'):
-            content = [x.strip() for x in m.group('rgb_content').split(',')]
-            if content[0].endswith('%'):
-                r = round_int(clamp(float(content[0].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-                g = round_int(clamp(float(content[1].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-                b = round_int(clamp(float(content[2].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-                color = "#%02x%02x%02x" % (r, g, b)
-            else:
-                color = "#%02x%02x%02x" % (
-                    clamp(round_int(float(content[0])), 0, 255),
-                    clamp(round_int(float(content[1])), 0, 255),
-                    clamp(round_int(float(content[2])), 0, 255)
-                )
-        elif groups.get('rgba'):
-            content = [x.strip() for x in m.group('rgba_content').split(',')]
-            if content[0].endswith('%'):
-                r = round_int(clamp(float(content[0].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-                g = round_int(clamp(float(content[1].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-                b = round_int(clamp(float(content[2].strip('%')), 0.0, 255.0) * (255.0 / 100.0))
-                color = "#%02x%02x%02x" % (r, g, b)
-            else:
-                color = "#%02x%02x%02x" % (
-                    clamp(round_int(float(content[0])), 0, 255),
-                    clamp(round_int(float(content[1])), 0, 255),
-                    clamp(round_int(float(content[2])), 0, 255)
-                )
-            if content[3].endswith('%'):
-                alpha = alpha_percent_normalize(content[3])
-            else:
-                alpha = alpha_dec_normalize(content[3])
-        elif groups.get('hsl'):
-            content = [x.strip().lower() for x in m.group('hsl_content').split(',')]
-            rgba = RGBA()
-            hue = norm_angle(content[0])
-            if hue < 0.0 or hue > 360.0:
-                hue = hue % 360.0
-            h = hue / 360.0
-            s = clamp(float(content[1].strip('%')), 0.0, 100.0) / 100.0
-            l = clamp(float(content[2].strip('%')), 0.0, 100.0) / 100.0
-            rgba.fromhls(h, l, s)
-            color = rgba.get_rgb()
-        elif groups.get('hsla'):
-            content = [x.strip() for x in m.group('hsla_content').split(',')]
-            rgba = RGBA()
-            hue = float(content[0])
-            if hue < 0.0 or hue > 360.0:
-                hue = hue % 360.0
-            h = hue / 360.0
-            s = clamp(float(content[1].strip('%')), 0.0, 100.0) / 100.0
-            l = clamp(float(content[2].strip('%')), 0.0, 100.0) / 100.0
-            rgba.fromhls(h, l, s)
-            color = rgba.get_rgb()
-            if content[3].endswith('%'):
-                alpha = alpha_percent_normalize(content[3])
-            else:
-                alpha = alpha_dec_normalize(content[3])
-        elif m.group('hwb'):
-            content = [x.strip() for x in m.group('hwb_content').split(',')]
-            rgba = RGBA()
-            hue = float(content[0])
-            if hue < 0.0 or hue > 360.0:
-                hue = hue % 360.0
-            h = hue / 360.0
-            w = clamp(float(content[1].strip('%')), 0.0, 100.0) / 100.0
-            b = clamp(float(content[2].strip('%')), 0.0, 100.0) / 100.0
-            rgba.fromhwb(h, w, b)
-            color = rgba.get_rgb()
-            if len(content) > 3:
-                if content[3].endswith('%'):
-                    alpha = alpha_percent_normalize(content[3])
-                else:
-                    alpha = alpha_dec_normalize(content[3])
-        elif groups.get('var'):
-            content = m.group('var_content')
-            if content in var:
-                color = var[content]
-            else:
-                v = var_src[content]
-                m = COLOR_RE.match(v.strip())
-                color = translate_color(m, var, var_src)
-        elif groups.get('x11colors'):
-            try:
-                color = x11colors.name2hex(m.group('x11colors')).lower()
-            except Exception:
-                pass
-        elif groups.get('color'):
-            content = m.group('color')
-            try:
-                content = COLOR_RGB_SPACE_RE.sub(
-                    (lambda match, v=var, vs=var_src: translate_color(match, v, vs)), content
-                )
-                n = -1
-                while n:
-                    content, n = COLOR_MOD_RE.subn(blend, content)
-                color = content
-            except Exception:
-                pass
-
-    if color is not None and alpha is not None:
-        color += alpha
-
-    return color
 
 
 def sublime_format_path(pth):
@@ -490,6 +141,10 @@ class ColorSchemeMatcher(object):
         for item in obj["settings"]:
             if item.get('scope', None) is None and item.get('name', None) is None:
                 for k, v in item["settings"].items():
+                    try:
+                        v = ColorSRGBX11(v).to_string(hex=True)
+                    except Exception:
+                        pass
                     self.scheme_obj[GLOBAL_OPTIONS][RE_CAMEL_CASE.sub(to_snake, k)] = v
             if 'settings' in item and item.get('scope') is not None:
                 rule = {}
@@ -501,13 +156,13 @@ class ColorSchemeMatcher(object):
                     rule["scope"] = scope
                 fg = item['settings'].get('foreground')
                 if fg is not None:
-                    rule['foreground'] = item['settings'].get('foreground')
+                    rule['foreground'] = ColorSRGBX11(fg).to_string(hex=True)
                 bg = item['settings'].get('background')
                 if bg is not None:
-                    rule['background'] = bg
+                    rule['background'] = ColorSRGBX11(bg).to_string(hex=True)
                 selfg = item["settings"].get("selectionForeground")
                 if selfg is not None:
-                    rule["selection_foreground"] = selfg
+                    rule["selection_foreground"] = ColorSRGBX11(selfg).to_string(hex=True)
                 font_style = item["settings"].get('fontStyle')
                 if font_style is not None:
                     rule[FONT_STYLE] = font_style
@@ -578,20 +233,25 @@ class ColorSchemeMatcher(object):
 
         variables = self.scheme_obj.get('variables', {})
         for k, v in variables.items():
-            m = COLOR_RE.match(v.strip())
-            var = translate_color(m, self.variables, self.scheme_obj.get('variables')) if m is not None else ""
+            # m = COLOR_RE.match(v.strip())
+            try:
+                var = Color(v, variables=self.scheme_obj.get('variables'))
+            except Exception:
+                var = None
+            # var = translate_color(m, self.variables, self.scheme_obj.get('variables')) if m is not None else ""
             if var is None:
                 var = ""
-            self.variables[k] = var
-            variables[k] = var
+            self.variables[k] = var.convert("srgb").to_string(**HEX) if var else var
+            variables[k] = self.variables[k]
 
         global_options = self.scheme_obj[GLOBAL_OPTIONS]
         for k, v in global_options.items():
-            m = COLOR_RE.match(v.strip())
-            if m is not None:
-                global_color = translate_color(m, self.variables, {})
-                if global_color is not None:
-                    global_options[k] = global_color
+            try:
+                global_color = Color(v.strip(), variables=self.variables)
+            except Exception:
+                global_color = None
+            if global_color is not None:
+                global_options[k] = global_color.convert("srgb").to_string(**HEX)
 
         # Create scope colors mapping from color scheme file
         for item in self.scheme_obj["rules"]:
@@ -601,23 +261,28 @@ class ColorSchemeMatcher(object):
                 if isinstance(color, list):
                     # Hashed Syntax Highlighting
                     for index, c in enumerate(color):
-                        color[index] = translate_color(COLOR_RE.match(c.strip()), self.variables, {})
+                        color[index] = Color(
+                            c.strip(), variables=self.variables
+                        ).convert("srgb").to_string(**HEX)
                 elif isinstance(color, str):
-                    item['foreground'] = translate_color(COLOR_RE.match(color.strip()), self.variables, {})
+                    item['foreground'] = Color(
+                        color.strip(), variables=self.variables
+                    ).convert("srgb").to_string(**HEX)
                 # Background color
                 bgcolor = item.get('background', None)
                 if isinstance(bgcolor, str):
-                    item['background'] = translate_color(COLOR_RE.match(bgcolor.strip()), self.variables, {})
+                    item['background'] = Color(
+                        bgcolor.strip(), variables=self.variables
+                    ).convert("srgb").to_string(**HEX)
                     fgadj = item.get('foreground_adjust', None)
                     if isinstance(fgadj, str) and fgadj:
-                        content = COLOR_RGB_SPACE_RE.sub(
-                            (lambda match, v=self.variables, vs={}: translate_color(match, v, vs)), fgadj
-                        )
-                        item['foreground_adjust'] = content
+                        item['foreground_adjust'] = fgadj
                 # Selection foreground color
                 scolor = item.get('selection_foreground', None)
                 if isinstance(scolor, str):
-                    item['selection_foreground'] = translate_color(COLOR_RE.match(scolor.strip()), self.variables, {})
+                    item['selection_foreground'] = Color(
+                        scolor.strip(), variables=self.variables
+                    ).convert("srgb").to_string(**HEX)
 
     def setup_matcher(self):
         """Setup colors for color matcher."""
@@ -731,13 +396,13 @@ class ColorSchemeMatcher(object):
             if not color.startswith('#'):
                 continue
 
-            rgba = RGBA(color.replace(" ", ""))
+            rgb = Color(color.replace(" ", ""))
             if not simple_strip:
                 if bground is None:
                     bground = self.special_colors['background']['color_simulated']
-                rgba.apply_alpha(bground if bground != "" else "#FFFFFF")
+                rgb.overlay(Color(bground if bground != "" else "#FFFFFF"))
 
-            gradient.append((color, rgba.get_rgb()))
+            gradient.append((color, rgb.to_string(**HEX)))
         if gradient:
             color, color_sim = gradient[0]
             return color, color_sim, gradient
@@ -759,13 +424,13 @@ class ColorSchemeMatcher(object):
         if not color.startswith('#'):
             return None, None
 
-        rgba = RGBA(color.replace(" ", ""))
+        rgb = Color(color.replace(" ", ""))
         if not simple_strip:
             if bground is None:
                 bground = self.special_colors['background']['color_simulated']
-            rgba.apply_alpha(bground if bground != "" else "#FFFFFF")
+            rgb.overlay(Color(bground if bground != "" else "#FFFFFF"))
 
-        return color, rgba.get_rgb()
+        return color, rgb.to_string(**HEX)
 
     def get_special_color(self, name, simulate_transparency=False):
         """
@@ -908,9 +573,7 @@ class ColorSchemeMatcher(object):
                     color_list = []
                     try:
                         content = 'color({} {})'.format(c, fgadj)
-                        n = -1
-                        while n:
-                            content, n = COLOR_MOD_RE.subn(blend_foreground, content)
+                        content = Color(content, variables=self.variables).convert("srgb").to_string(**HEX)
                         if c != content:
                             mod, mod_sim = self.process_color(content)
                             if mod is not None:

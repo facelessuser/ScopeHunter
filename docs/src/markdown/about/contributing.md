@@ -14,6 +14,14 @@ Contribution from the community is encouraged and can be done in a variety of wa
 - Code patches via pull requests.
 - Documentation improvements via pull requests.
 
+## Become a Sponsor :octicons-heart-fill-16:{: .heart-throb}
+
+Open source projects take time and money. Help support the project by becoming a sponsor. You can add your support at
+any tier you feel comfortable with. No amount is too little. We also accept one time contributions via PayPal.
+
+[:octicons-mark-github-16: GitHub Sponsors](https://github.com/sponsors/facelessuser){: .md-button .md-button--primary }
+[:fontawesome-brands-paypal: PayPal](https://www.paypal.me/facelessuser){ .md-button}
+
 ## Bug Reports
 
 1. Please **read the documentation** and **search the issue tracker** to try to find the answer to your question
