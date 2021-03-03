@@ -35,8 +35,7 @@ Turns on debug logging.
 
 ### Scope Info
 
-For modes like `show_panel`, `console_log`, and `show_popup` you can control the info displayed.  You can keep it just
-to the scope, or you can extend it show other useful info.
+Control the info displayed.  You can keep it to just the scope, or you can extend it show other useful info.
 
 ```js
     ///////////////////////////
@@ -145,8 +144,7 @@ Auto-copies just the scope to the clipboard.
 
 #### `multiselect`
 
-Allow displaying of the scope info for multiple cursor selections (does not work for `show_statusbar` as space is very
-limited).
+Allow displaying of the scope info for multiple cursor selections.
 
 #### `highlgiht_max_size`
 
