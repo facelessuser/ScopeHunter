@@ -13,6 +13,12 @@ import traceback
 from textwrap import dedent
 from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 import mdpopups
+from coloraide import Color
+
+HEX = {"hex": True}
+HEX_NA = {"hex": True, "alpha": False}
+SRGB_SPACES = ('srgb', 'hsl', 'hwb')
+SPACER = Color("transparent", filters=SRGB_SPACES).to_string(**HEX)
 
 SCOPE_CONTEXT_BACKTRACE_SUPPORT = int(sublime.version()) >= 4087
 
@@ -55,8 +61,8 @@ SCOPE_KEY = "Scope"
 CONTEXT_BACKTRACE_KEY = "Scope Context Backtrace"
 PTS_KEY = "Scope Extents (Pts)"
 PTS_VALUE = "({:d}, {:d})"
-CHAR_LINE_KEY = "Scope Extents (Line/Char)"
-CHAR_LINE_VALUE = "(line: {:d} char: {:d}, line: {:d} char: {:d})"
+CHAR_LINE_KEY = "Scope Extents (Line:Char)"
+CHAR_LINE_VALUE = "({:d}:{:d}, {:d}:{:d})"
 FG_KEY = "Fg"
 FG_SIM_KEY = "Fg (Simulated Alpha)"
 BG_KEY = "Bg"
@@ -92,6 +98,16 @@ def debug(msg):
     """Debug."""
     if sh_settings.get('debug', False):
         log(msg)
+
+
+def scheme_scope_format(scope):
+    """Scheme scope format."""
+
+    return '\n\n{}'.format(
+        '\n'.join(
+            ['- {}'.format(x) for x in scope.split(',')]
+        )
+    )
 
 
 def extent_style(option):
@@ -164,8 +180,66 @@ class ScopeHunterEditCommand(sublime_plugin.TextCommand):
         cls.pt = None
 
 
-class GetSelectionScope(object):
+class GetSelectionScope:
     """Get the scope and the selection(s)."""
+
+    def setup(self, sh_settings):
+        """Setup."""
+
+        self.show_out_of_gamut_preview = True
+        self.setup_image_border(sh_settings)
+        self.setup_sizes()
+
+    def setup_image_border(self, sh_settings):
+        """Setup_image_border."""
+
+        border_color = sh_settings.get('image_border_color')
+        border_color = None
+        if border_color is not None:
+            try:
+                border_color = Color(border_color, filters=SRGB_SPACES)
+                border_color.fit("srgb", in_place=True)
+            except Exception:
+                border_color = None
+
+        if border_color is None:
+            # Calculate border color for images
+            border_color = Color(
+                self.view.style()['background'],
+                filters=SRGB_SPACES
+            ).convert("hsl")
+            border_color.lightness = border_color.lightness + (30 if border_color.luminance() < 0.5 else -30)
+
+        self.default_border = border_color.convert("srgb").to_string(**HEX)
+        self.out_of_gamut = Color("transparent", filters=SRGB_SPACES).to_string(**HEX)
+        self.out_of_gamut_border = Color(
+            self.view.style().get('redish', "red"),
+            filters=SRGB_SPACES
+        ).to_string(**HEX)
+
+    def setup_sizes(self):
+        """Get sizes."""
+
+        # Calculate color box height
+        self.line_height = self.view.line_height()
+        top_pad = self.view.settings().get('line_padding_top', 0)
+        bottom_pad = self.view.settings().get('line_padding_bottom', 0)
+        if top_pad is None:
+            # Sometimes we strangely get None
+            top_pad = 0
+        if bottom_pad is None:
+            bottom_pad = 0
+        box_height = self.line_height - int(top_pad + bottom_pad) - 6
+
+        self.height = self.width = box_height * 2
+
+    def check_size(self, height, scale=4):
+        """Get checkered size."""
+
+        check_size = int((height - 2) / scale)
+        if check_size < 2:
+            check_size = 2
+        return check_size
 
     def init_template_vars(self):
         """Initialize template variables."""
@@ -181,23 +255,20 @@ class GetSelectionScope(object):
     def get_color_box(self, color, key, index):
         """Display an HTML color box using the given color."""
 
-        border = '#CCCCCC'
-        border2 = '#333333'
-        padding = int(self.view.settings().get('line_padding_top', 0))
-        padding += int(self.view.settings().get('line_padding_bottom', 0))
-        box_height = int(self.view.line_height()) - padding - 2
-        check_size = int((box_height - 4) / 4)
+        border = self.default_border
+        box_height = int(self.height)
+        box_width = int(self.width)
+        check_size = int(self.check_size(box_height))
         if isinstance(color, list):
-            box_width = box_height * (len(color) if len(color) >= 1 else 1)
+            box_width = box_width * (len(color) if len(color) >= 1 else 1)
             colors = [c.upper() for c in color]
         else:
-            box_width = box_height
             colors = [color.upper()]
         if check_size < 2:
             check_size = 2
         self.template_vars['{}_preview'.format(key)] = mdpopups.color_box(
-            colors, border, border2, height=box_height,
-            width=box_width, border_size=2, check_size=check_size
+            colors, border, height=box_height,
+            width=box_width, border_size=1, check_size=check_size
         )
         self.template_vars['{}_color'.format(key)] = ', '.join(colors)
         self.template_vars['{}_index'.format(key)] = index
@@ -258,7 +329,7 @@ class GetSelectionScope(object):
 
         self.scope_bfr.append(ENTRY.format(SCOPE_KEY + ':', self.view.scope_name(pt).strip().replace(" ", spacing)))
 
-        self.template_vars['scope'] = self.view.scope_name(pt).strip()
+        self.template_vars['scope'] = '<br>'.join(self.view.scope_name(pt).strip().split(' '))
         self.template_vars['scope_index'] = self.next_index()
 
         return scope
@@ -412,40 +483,40 @@ class GetSelectionScope(object):
         self.template_vars['selectors'] = True
         self.template_vars['fg_name'] = color_selector.name
         self.template_vars['fg_name_index'] = self.next_index()
-        self.template_vars['fg_scope'] = color_selector.scope
+        self.template_vars['fg_scope'] = scheme_scope_format(color_selector.scope)
         self.template_vars['fg_scope_index'] = self.next_index()
         if color_gradient_selector:
             self.template_vars['fg_hash_name'] = color_gradient_selector.name
             self.template_vars['fg_hash_name_index'] = self.next_index()
-            self.template_vars['fg_hash_scope'] = color_gradient_selector.scope
+            self.template_vars['fg_hash_scope'] = scheme_scope_format(color_gradient_selector.scope)
             self.template_vars['fg_hash_scope_index'] = self.next_index()
         self.template_vars['bg_name'] = bg_selector.name
         self.template_vars['bg_name_index'] = self.next_index()
-        self.template_vars['bg_scope'] = bg_selector.scope
+        self.template_vars['bg_scope'] = scheme_scope_format(bg_selector.scope)
         self.template_vars['bg_scope_index'] = self.next_index()
         if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
             self.template_vars['bold'] = True
             self.template_vars['bold_name'] = style_selectors["bold"].name
             self.template_vars['bold_name_index'] = self.next_index()
-            self.template_vars['bold_scope'] = style_selectors["bold"].scope
+            self.template_vars['bold_scope'] = scheme_scope_format(style_selectors["bold"].scope)
             self.template_vars['bold_scope_index'] = self.next_index()
         if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
             self.template_vars['italic'] = True
             self.template_vars['italic_name'] = style_selectors["italic"].name
             self.template_vars['italic_name_index'] = self.next_index()
-            self.template_vars['italic_scope'] = style_selectors["italic"].scope
+            self.template_vars['italic_scope'] = scheme_scope_format(style_selectors["italic"].scope)
             self.template_vars['italic_scope_index'] = self.next_index()
         if style_selectors["underline"].name != "" or style_selectors["underline"].scope != "":
             self.template_vars['underline'] = True
             self.template_vars['underline_name'] = style_selectors["underline"].name
             self.template_vars['underline_name_index'] = self.next_index()
-            self.template_vars['underline_scope'] = style_selectors["underline"].scope
+            self.template_vars['underline_scope'] = scheme_scope_format(style_selectors["underline"].scope)
             self.template_vars['underline_scope_index'] = self.next_index()
         if style_selectors["glow"].name != "" or style_selectors["glow"].scope != "":
             self.template_vars['glow'] = True
             self.template_vars['glow_name'] = style_selectors["glow"].name
             self.template_vars['glow_name_index'] = self.next_index()
-            self.template_vars['glow_scope'] = style_selectors["glow"].scope
+            self.template_vars['glow_scope'] = scheme_scope_format(style_selectors["glow"].scope)
             self.template_vars['glow_scope_index'] = self.next_index()
 
     def get_info(self, pt):
@@ -625,6 +696,8 @@ class GetSelectionScope(object):
         """Run ScopeHunter and display in the approriate way."""
 
         self.view = v
+        self.setup(sh_settings)
+
         self.window = self.view.window()
         self.scope_bfr = []
         self.scope_bfr_tool = []

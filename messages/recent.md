@@ -1,4 +1,4 @@
-# ScopeHunter 2.14.0
+# ScopeHunter 2.15.0
 
 New release!
 

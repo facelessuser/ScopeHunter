@@ -155,4 +155,15 @@ defined limit, it will not be highlighted.  You can control that limit here.
 
 If you have the [SubNotify][subnotify] installed, this will enable or disable messages through it.
 
+#### `image_border_color`
+
+Set color preview border colors.
+
+```js
+    // By default, image border is calculated based on theme background, but if for
+    // some reason, it isn't sufficient in your popup, set it to any color using
+    // valid CSS for RGB, HSL, or HWB colors.
+    "image_border_color": null
+```
+
 --8<-- "refs.txt"

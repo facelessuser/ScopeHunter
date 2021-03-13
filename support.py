@@ -89,6 +89,12 @@ class ScopeHunterSupportInfoCommand(sublime_plugin.ApplicationCommand):
         info["plugin_version"] = __version__
         info["pc_install"] = is_installed_by_package_control()
         try:
+            import coloraide
+            info["coloraide"] = format_version(coloraide, '__version__')
+        except Exception:
+            info["coloraide"] = 'Version could not be acquired!'
+
+        try:
             import mdpopups
             info["mdpopups_version"] = format_version(mdpopups, 'version', call=True)
         except Exception:
@@ -114,16 +120,17 @@ class ScopeHunterSupportInfoCommand(sublime_plugin.ApplicationCommand):
 
         msg = textwrap.dedent(
             """\
-            - ST ver.: %(version)s
-            - Platform: %(platform)s
-            - Arch: %(arch)s
-            - Plugin ver.: %(plugin_version)s
-            - Install via PC: %(pc_install)s
-            - mdpopups ver.: %(mdpopups_version)s
-            - markdown ver.: %(markdown_version)s
-            - pygments ver.: %(pygments_version)s
-            - jinja2 ver.: %(jinja_version)s
-            """ % info
+            - ST ver.: {version}
+            - Platform: {platform}
+            - Arch: {arch}
+            - Plugin ver.: {plugin_version}
+            - Install via PC: {pc_install}
+            - coloraide ver.: {coloraide}
+            - mdpopups ver.: {mdpopups_version}
+            - markdown ver.: {markdown_version}
+            - pygments ver.: {pygments_version}
+            - jinja2 ver.: {jinja_version}
+            """.format(**info)
         )
 
         sublime.message_dialog(msg + '\nInfo has been copied to the clipboard.')
@@ -157,9 +164,8 @@ class ScopeHunterDocCommand(sublime_plugin.WindowCommand):
 
         try:
             import mdpopups
-            import pymdownx
             has_phantom_support = (mdpopups.version() >= (1, 10, 0)) and (int(sublime.version()) >= 3124)
-            fmatter = mdpopups.format_frontmatter(frontmatter) if pymdownx.version_info[:3] >= (4, 3, 0) else ''
+            fmatter = mdpopups.format_frontmatter(frontmatter)
         except Exception:
             fmatter = ''
             has_phantom_support = False

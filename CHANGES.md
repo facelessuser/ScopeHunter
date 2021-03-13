@@ -2,11 +2,15 @@
 
 ## 2.15.0
 
-- **NEW**: Require new `coloraide` dependency.
+- **NEW**: Format dialog a little more compact.
+- **NEW**: Require new `coloraide` dependency. With this dependency, schemes that use `min-contrast` should work now.
 - **NEW**: ScopeHunter now only shows information in tooltip. Showing info in separate panel and console has been
   dropped as tooltip functionality is available on all latest Sublime versions.
 - **NEW**: Backtrace info available in Sublime Text build 4087.
+- **NEW**: Add `image_border_color` option.
 - **FIX**: Fix bug with copying color scheme name.
+- **FIX**: Fix some issues related to schemes (Celeste theme) using invalid colors, such as `"none"` to reset background
+  colors etc.
 
 ## 2.14.0
 
@@ -36,7 +40,8 @@
 
 ## 2.11.1
 
-- **FIX**: Allow `-` in variables names. Write color translations to main scheme object and ensure filtering is done after color translations.
+- **FIX**: Allow `-` in variables names. Write color translations to main scheme object and ensure filtering is done
+  after color translations.
 
 ## 2.11.0
 
