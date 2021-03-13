@@ -1,5 +1,9 @@
 # ScopeHunter
 
+## 2.15.1
+
+- **FIX**: Fix issue with support commands.
+
 ## 2.15.0
 
 - **NEW**: Format dialog a little more compact.
