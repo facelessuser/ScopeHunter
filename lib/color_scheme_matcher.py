@@ -540,10 +540,12 @@ class ColorSchemeMatcher(object):
                         color_sim = self.special_colors['foreground']['color_simulated']
                     else:
                         color_sim = self.colors[key]["color_simulated"]
+                    color_gradient = None
+                    color_gradient_selector = None
                     color_selector = SchemeSelectors(self.colors[key]["name"], self.colors[key]["scope"])
                 elif (
                     self.colors[key]["color_gradient"] is not None and
-                    match > best_match_fg_gradient
+                    match > best_match_fg_gradient and match > best_match_fg
                 ):
                     best_match_fg_gradient = match
                     color_gradient = self.colors[key]["color_gradient"]
