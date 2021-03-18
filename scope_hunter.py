@@ -30,28 +30,44 @@ sh_settings = {}
 
 ADD_CSS = dedent(
     '''
-    {%- if var.mdpopups_version >= (2, 0, 0) %}
+    html.light {
+      --sh-button-color: color(var(--mdpopups-bg) blend(black 85%));
+    }
+    html.dark {
+      --sh-button-color: color(var(--mdpopups-bg) blend(white 85%));
+    }
     div.scope-hunter { margin: 0; padding: 0.5rem; }
-    {%- else %}
-    div.scope-hunter { margin: 0; padding: 0; }
-    {%- endif %}
     .scope-hunter .small { font-size: 0.8rem; }
     .scope-hunter .header { {{'.string'|css('color')}} }
     ins { text-decoration: underline; }
     span.glow { background-color: color(var(--foreground) a(0.2)); }
+    div.color-helper { margin: 0; padding: 0rem; }
+    .scope-hunter a.button {
+        display: inline-block;
+        padding: 0.25rem;
+        color:  var(--foreground);
+        background-color: var(--sh-button-color);
+        border-radius: 0.25rem;
+        text-decoration: none;
+        font-style: none;
+        font-weight: normal;
+    }
+    .scope-hunter hr {
+        border-color: var(--sh-button-color);
+    }
     '''
 )
 
 COPY_ALL = '''
 ---
 
-[(copy all)](copy-all){: .small} [(reload scheme)](reload){: .small}
+[Copy All](copy-all){: .small .button} [Reload Scheme](reload){: .small .button}
 '''
 
 RELOAD = '''
 ---
 
-[(reload scheme)](reload){: .small}
+[Reload Scheme](reload){: .small .button}
 '''
 
 

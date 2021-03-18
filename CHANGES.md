@@ -2,6 +2,7 @@
 
 ## 2.15.2
 
+- **FIX**: Better styling for popups.
 - **FIX**: `tmTheme` support compressed hex; therefore, ScopeHunter must account for these colors.
 - **FIX**: Fix false positive on hashed foreground colors.
 
