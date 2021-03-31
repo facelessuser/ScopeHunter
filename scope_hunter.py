@@ -8,24 +8,24 @@ import sublime
 import sublime_plugin
 from time import time, sleep
 import threading
-from ScopeHunter.scope_hunter_notify import notify, error
-import traceback
+from ScopeHunter.scope_hunter_notify import notify
 from textwrap import dedent
-from ScopeHunter.lib.color_scheme_matcher import ColorSchemeMatcher
 import mdpopups
-from coloraide import Color
+from collections import namedtuple
+from mdpopups.coloraide import Color
+import os
+
+AUTO = int(sublime.version()) >= 4095
 
 HEX = {"hex": True}
 HEX_NA = {"hex": True, "alpha": False}
 SRGB_SPACES = ('srgb', 'hsl', 'hwb')
-SPACER = Color("transparent", filters=SRGB_SPACES).to_string(**HEX)
 
 SCOPE_CONTEXT_BACKTRACE_SUPPORT = int(sublime.version()) >= 4087
 
 if 'sh_thread' not in globals():
     sh_thread = None
 
-scheme_matcher = None
 sh_settings = {}
 
 ADD_CSS = dedent(
@@ -61,15 +61,8 @@ ADD_CSS = dedent(
 COPY_ALL = '''
 ---
 
-[Copy All](copy-all){: .small .button} [Reload Scheme](reload){: .small .button}
+[Copy All](copy-all){: .small .button}
 '''
-
-RELOAD = '''
----
-
-[Reload Scheme](reload){: .small .button}
-'''
-
 
 # Text Entry
 ENTRY = "{:30} {}"
@@ -80,9 +73,7 @@ PTS_VALUE = "({:d}, {:d})"
 CHAR_LINE_KEY = "Scope Extents (Line:Char)"
 CHAR_LINE_VALUE = "({:d}:{:d}, {:d}:{:d})"
 FG_KEY = "Fg"
-FG_SIM_KEY = "Fg (Simulated Alpha)"
 BG_KEY = "Bg"
-BG_SIM_KEY = "Bg (Simulated Alpha)"
 STYLE_KEY = "Style"
 FG_NAME_KEY = "Fg Name"
 FG_SCOPE_KEY = "Fg Scope"
@@ -96,13 +87,20 @@ UNDERLINE_NAME_KEY = "Underline Name"
 UNDERLINE_SCOPE_KEY = "Underline Scope"
 GLOW_NAME_KEY = "Glow Name"
 GLOW_SCOPE_KEY = "Glow Scope"
-SCHEME_KEY = "tmTheme File"
+SCHEME_KEY = "Scheme File"
 SYNTAX_KEY = "Syntax File"
 OVERRIDE_SCHEME_KEY = "Scheme"
-HASHED_FG_KEY = "Hashed Fg"
-HASHED_FG_SIM_KEY = "Hashed Fg (Simulated Alpha)"
-HASHED_FG_NAME_KEY = "Hashed Fg Name"
-HASHED_FG_SCOPE_KEY = "Hashed Fg Scope"
+
+
+class SchemeColors(
+    namedtuple(
+        'SchemeColors',
+        [
+            'fg', "bg", "style", "source", "line", "col"
+        ]
+    )
+):
+    """Scheme colors."""
 
 
 def log(msg):
@@ -282,9 +280,11 @@ class GetSelectionScope:
             colors = [color.upper()]
         if check_size < 2:
             check_size = 2
-        self.template_vars['{}_preview'.format(key)] = mdpopups.color_box(
-            colors, border, height=box_height,
-            width=box_width, border_size=1, check_size=check_size
+        self.template_vars['{}_preview'.format(key)] = '{}'.format(
+            mdpopups.color_box(
+                colors, border, height=box_height,
+                width=box_width, border_size=1, check_size=check_size
+            )
         )
         self.template_vars['{}_color'.format(key)] = ', '.join(colors)
         self.template_vars['{}_index'.format(key)] = index
@@ -373,47 +373,20 @@ class GetSelectionScope:
 
         return backtrace
 
-    def get_appearance(self, color, color_sim, bgcolor, bgcolor_sim, style, color_gradient):
-        """Get colors of foreground, background, and simulated transparency colors."""
+    def get_appearance(self, color, bgcolor, style, source, line, col):
+        """Get colors of foreground, background, and font styles."""
+
+        self.source = source
+        self.line = line
+        self.column = col
 
         self.scope_bfr.append(ENTRY.format(FG_KEY + ":", color))
-        if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
-            self.scope_bfr.append(ENTRY.format(FG_SIM_KEY + ":", color_sim))
-
-        colors = []
-        colors_sim = []
-        show_sim = False
-        if color_gradient:
-            for c, cs in color_gradient:
-                colors.append(c)
-                if len(cs) == 9 and not cs.lower().endswith('ff'):
-                    show_sim = True
-                colors_sim.append(cs)
-            self.scope_bfr.append(ENTRY.format(HASHED_FG_KEY + ":", ', '.join(colors)))
-            if self.show_simulated and show_sim:
-                self.scope_bfr.append(ENTRY.format(HASHED_FG_SIM_KEY + ":", ', '.join(colors_sim)))
-
         self.scope_bfr.append(ENTRY.format(BG_KEY + ":", bgcolor))
-        if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
-            self.scope_bfr.append(ENTRY.format(BG_SIM_KEY + ":", bgcolor_sim))
-
         self.scope_bfr.append(ENTRY.format(STYLE_KEY + ":", "normal" if not style else style))
 
         self.template_vars['appearance'] = True
         self.get_color_box(color, 'fg', self.next_index())
-        if self.show_simulated and len(color) == 9 and not color.lower().endswith('ff'):
-            self.template_vars['fg_sim'] = True
-            self.get_color_box(color_sim, 'fg_sim', self.next_index())
-        if color_gradient:
-            self.template_vars['fg_hash'] = True
-            self.get_color_box(colors, 'fg_hash', self.next_index())
-            if self.show_simulated and show_sim:
-                self.template_vars['fg_hash_sim'] = True
-                self.get_color_box(colors_sim, 'fg_hash_sim', self.next_index())
         self.get_color_box(bgcolor, 'bg', self.next_index())
-        if self.show_simulated and len(bgcolor) == 9 and not bgcolor.lower().endswith('ff'):
-            self.template_vars['bg_sim'] = True
-            self.get_color_box(bgcolor_sim, 'bg_sim', self.next_index())
 
         style_label = set()
         style_open = []
@@ -445,17 +418,46 @@ class GetSelectionScope:
         self.template_vars["style"] = ' '.join(list(style_label))
         self.template_vars["style_index"] = self.next_index()
 
+    def find_schemes(self):
+        """Finc the syntax files."""
+
+        # Attempt syntax specific from view
+        scheme_file = self.view.settings().get('color_scheme', None)
+
+        # Get global scheme
+        if scheme_file is None:
+            pref_settings = sublime.load_settings('Preferences.sublime-settings')
+            scheme_file = pref_settings.get('color_scheme')
+
+        if scheme_file == 'auto' and AUTO:
+            info = sublime.ui_info()
+            scheme_file = info['color_scheme']['resolved_value']
+
+        scheme_file = scheme_file.replace('\\', '/')
+
+        package_overrides = []
+        user_overrides = []
+        if scheme_file.endswith('.hidden-color-scheme'):
+            pattern = '%s.hidden-color-scheme'
+        else:
+            pattern = '%s.sublime-color-scheme'
+
+        for override in sublime.find_resources(pattern % os.path.basename(os.path.splitext(scheme_file)[0])):
+            if override == scheme_file:
+                continue
+            if override.startswith('Packages/User/'):
+                user_overrides.append(override)
+            else:
+                package_overrides.append(override)
+        return scheme_file, package_overrides + user_overrides
+
     def get_scheme_syntax(self):
         """Get color scheme and syntax file path."""
 
-        self.overrides = scheme_matcher.overrides
-
-        self.scheme_file = scheme_matcher.color_scheme.replace('\\', '/')
-        is_tmtheme = not self.scheme_file.endswith(('.sublime-color-scheme', '.hidden-color-scheme'))
+        self.scheme_file, self.overrides = self.find_schemes()
         self.syntax_file = self.view.settings().get('syntax')
         self.scope_bfr.append(ENTRY.format(SYNTAX_KEY + ":", self.syntax_file))
-        if is_tmtheme:
-            self.scope_bfr.append(ENTRY.format(SCHEME_KEY + ":", self.scheme_file))
+        self.scope_bfr.append(ENTRY.format(SCHEME_KEY + ":", self.scheme_file))
         text = []
         for idx, override in enumerate(self.overrides, 1):
             text.append(ENTRY.format(OVERRIDE_SCHEME_KEY + (" {}:".format(idx)), override))
@@ -464,76 +466,50 @@ class GetSelectionScope:
         self.template_vars['files'] = True
         self.template_vars["syntax"] = self.syntax_file
         self.template_vars["syntax_index"] = self.next_index()
-        if is_tmtheme:
-            self.template_vars["scheme"] = self.scheme_file
-            self.template_vars["scheme_index"] = self.next_index()
+        self.template_vars["scheme"] = self.scheme_file
+        self.template_vars["scheme_index"] = self.next_index()
         self.template_vars["overrides"] = self.overrides
         self.template_vars["overrides_index"] = self.next_index()
 
-    def get_selectors(self, color_selector, bg_selector, style_selectors, color_gradient_selector):
-        """Get the selectors used to determine color and/or style."""
+    def guess_style(self, scope, selected=False, no_bold=False, no_italic=False, explicit_background=False):
+        """Guess color."""
 
-        self.scope_bfr.append(ENTRY.format(FG_NAME_KEY + ":", color_selector.name))
-        self.scope_bfr.append(ENTRY.format(FG_SCOPE_KEY + ":", color_selector.scope))
-        if color_gradient_selector:
-            self.scope_bfr.append(ENTRY.format(HASHED_FG_NAME_KEY + ":", color_gradient_selector.name))
-            self.scope_bfr.append(ENTRY.format(HASHED_FG_SCOPE_KEY + ":", color_gradient_selector.scope))
-        self.scope_bfr.append(ENTRY.format(BG_NAME_KEY + ":", bg_selector.name))
-        self.scope_bfr.append(ENTRY.format(BG_SCOPE_KEY + ":", bg_selector.scope))
-        if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
-            self.scope_bfr.append(ENTRY.format(BOLD_NAME_KEY + ":", style_selectors["bold"].name))
-            self.scope_bfr.append(ENTRY.format(BOLD_SCOPE_KEY + ":", style_selectors["bold"].scope))
+        # Remove leading '.' to account for old style CSS
+        scope_style = self.view.style_for_scope(scope.lstrip('.'))
+        style = {}
+        style['foreground'] = scope_style['foreground']
+        style['background'] = scope_style.get('background')
+        style['bold'] = scope_style.get('bold', False) and not no_bold
+        style['italic'] = scope_style.get('italic', False) and not no_italic
+        style['underline'] = scope_style.get('underline', False)
+        style['glow'] = scope_style.get('glow', False)
 
-        if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
-            self.scope_bfr.append(ENTRY.format(ITALIC_NAME_KEY + ":", style_selectors["italic"].name))
-            self.scope_bfr.append(ENTRY.format(ITALIC_SCOPE_KEY + ":", style_selectors["italic"].scope))
+        font_styles = []
+        for k, v in style.items():
+            if k in ('bold', 'italic', 'underline', 'glow'):
+                if v is True:
+                    font_styles.append(k)
+        font_styles = ' '.join(font_styles)
 
-        if style_selectors["underline"].name != "" or style_selectors["underline"].scope != "":
-            self.scope_bfr.append(ENTRY.format(UNDERLINE_NAME_KEY + ":", style_selectors["underline"].name))
-            self.scope_bfr.append(ENTRY.format(UNDERLINE_SCOPE_KEY + ":", style_selectors["underline"].scope))
+        defaults = self.view.style()
+        if not explicit_background and not style.get('background'):
+            style['background'] = defaults.get('background', '#FFFFFF')
+        if selected:
+            sfg = scope_style.get('selection_foreground', defaults.get('selection_foreground'))
+            if sfg != '#00000000':
+                style['foreground'] = sfg
+            style['background'] = defaults.get('selection', '#0000FF')
 
-        if style_selectors["glow"].name != "" or style_selectors["glow"].scope != "":
-            self.scope_bfr.append(ENTRY.format(GLOW_NAME_KEY + ":", style_selectors["glow"].name))
-            self.scope_bfr.append(ENTRY.format(GLOW_SCOPE_KEY + ":", style_selectors["glow"].scope))
+        source = scope_style.get('source_file', '')
+        line = ''
+        col = ''
+        if source:
+            line = scope_style.get('source_line', '')
+            col = scope_style.get('source_column', '')
 
-        self.template_vars['selectors'] = True
-        self.template_vars['fg_name'] = color_selector.name
-        self.template_vars['fg_name_index'] = self.next_index()
-        self.template_vars['fg_scope'] = scheme_scope_format(color_selector.scope)
-        self.template_vars['fg_scope_index'] = self.next_index()
-        if color_gradient_selector:
-            self.template_vars['fg_hash_name'] = color_gradient_selector.name
-            self.template_vars['fg_hash_name_index'] = self.next_index()
-            self.template_vars['fg_hash_scope'] = scheme_scope_format(color_gradient_selector.scope)
-            self.template_vars['fg_hash_scope_index'] = self.next_index()
-        self.template_vars['bg_name'] = bg_selector.name
-        self.template_vars['bg_name_index'] = self.next_index()
-        self.template_vars['bg_scope'] = scheme_scope_format(bg_selector.scope)
-        self.template_vars['bg_scope_index'] = self.next_index()
-        if style_selectors["bold"].name != "" or style_selectors["bold"].scope != "":
-            self.template_vars['bold'] = True
-            self.template_vars['bold_name'] = style_selectors["bold"].name
-            self.template_vars['bold_name_index'] = self.next_index()
-            self.template_vars['bold_scope'] = scheme_scope_format(style_selectors["bold"].scope)
-            self.template_vars['bold_scope_index'] = self.next_index()
-        if style_selectors["italic"].name != "" or style_selectors["italic"].scope != "":
-            self.template_vars['italic'] = True
-            self.template_vars['italic_name'] = style_selectors["italic"].name
-            self.template_vars['italic_name_index'] = self.next_index()
-            self.template_vars['italic_scope'] = scheme_scope_format(style_selectors["italic"].scope)
-            self.template_vars['italic_scope_index'] = self.next_index()
-        if style_selectors["underline"].name != "" or style_selectors["underline"].scope != "":
-            self.template_vars['underline'] = True
-            self.template_vars['underline_name'] = style_selectors["underline"].name
-            self.template_vars['underline_name_index'] = self.next_index()
-            self.template_vars['underline_scope'] = scheme_scope_format(style_selectors["underline"].scope)
-            self.template_vars['underline_scope_index'] = self.next_index()
-        if style_selectors["glow"].name != "" or style_selectors["glow"].scope != "":
-            self.template_vars['glow'] = True
-            self.template_vars['glow_name'] = style_selectors["glow"].name
-            self.template_vars['glow_name_index'] = self.next_index()
-            self.template_vars['glow_scope'] = scheme_scope_format(style_selectors["glow"].scope)
-            self.template_vars['glow_scope_index'] = self.next_index()
+        print("{}:{}:{}".format(source, line, col))
+
+        return SchemeColors(style['foreground'], style['background'], font_styles, source, line, col)
 
     def get_info(self, pt):
         """Get scope related info."""
@@ -545,36 +521,15 @@ class GetSelectionScope:
         if self.rowcol_info or self.points_info or self.highlight_extent:
             self.get_extents(pt)
 
-        if (self.appearance_info or self.selector_info) and scheme_matcher is not None:
-            try:
-                match = scheme_matcher.guess_color(scope)
-                color = match.fg
-                bgcolor = match.bg
-                color_sim = match.fg_simulated
-                bgcolor_sim = match.bg_simulated
-                style = match.style
-                bg_selector = match.bg_selector
-                color_selector = match.fg_selector
-                style_selectors = match.style_selectors
-                color_gradient = match.color_gradient
-                color_gradient_selector = match.color_gradient_selector
+        if (self.appearance_info):
+            match = self.guess_style(scope)
+            color = match.fg
+            bgcolor = match.bg
+            style = match.style
+            if self.appearance_info:
+                self.get_appearance(color, bgcolor, style, match.source, match.line, match.col)
 
-                # if match.color_gradient is not None:
-                #     color = self.view.style_for_scope(scope)["foreground"]
-                #     color_sim = color
-
-                if self.appearance_info:
-                    self.get_appearance(color, color_sim, bgcolor, bgcolor_sim, style, color_gradient)
-
-                if self.selector_info:
-                    self.get_selectors(color_selector, bg_selector, style_selectors, color_gradient_selector)
-            except Exception:
-                log("Evaluating theme failed!  Ignoring theme related info.")
-                debug(str(traceback.format_exc()))
-                error("Evaluating theme failed!")
-                self.scheme_info = False
-
-        if self.file_path_info and scheme_matcher:
+        if self.file_path_info:
             self.get_scheme_syntax()
 
         self.scope_bfr_tool.append(
@@ -595,10 +550,6 @@ class GetSelectionScope:
         params = href.split(':')
         key = params[0]
         index = int(params[1]) if len(params) > 1 else None
-        if key == 'reload':
-            mdpopups.hide_popup(self.view)
-            reinit_plugin()
-            self.view.run_command('get_selection_scope')
         if key == 'copy-all':
             sublime.set_clipboard('\n'.join(self.scope_bfr))
             notify('Copied: All')
@@ -622,46 +573,10 @@ class GetSelectionScope:
             copy_data(self.scope_bfr, CHAR_LINE_KEY, index)
         elif key == 'copy-fg':
             copy_data(self.scope_bfr, FG_KEY, index)
-        elif key == 'copy-fg-sim':
-            copy_data(self.scope_bfr, FG_SIM_KEY, index)
-        elif key == 'copy-fg-hash':
-            copy_data(self.scope_bfr, HASHED_FG_KEY, index)
-        elif key == 'copy-fg-hash-sim':
-            copy_data(self.scope_bfr, HASHED_FG_SIM_KEY, index)
         elif key == 'copy-bg':
             copy_data(self.scope_bfr, BG_KEY, index)
-        elif key == 'copy-bg-sim':
-            copy_data(self.scope_bfr, BG_SIM_KEY, index)
         elif key == 'copy-style':
             copy_data(self.scope_bfr, STYLE_KEY, index)
-        elif key == 'copy-fg-sel-name':
-            copy_data(self.scope_bfr, FG_NAME_KEY, index)
-        elif key == 'copy-fg-sel-scope':
-            copy_data(self.scope_bfr, FG_SCOPE_KEY, index)
-        elif key == 'copy-fg-hash-sel-name':
-            copy_data(self.scope_bfr, HASHED_FG_NAME_KEY, index)
-        elif key == 'copy-fg-hash-sel-scope':
-            copy_data(self.scope_bfr, HASHED_FG_SCOPE_KEY, index)
-        elif key == 'copy-bg-sel-name':
-            copy_data(self.scope_bfr, BG_NAME_KEY, index)
-        elif key == 'copy-bg-sel-scope':
-            copy_data(self.scope_bfr, BG_SCOPE_KEY, index)
-        elif key == 'copy-bold-sel-name':
-            copy_data(self.scope_bfr, BOLD_NAME_KEY, index)
-        elif key == 'copy-bold-sel-scope':
-            copy_data(self.scope_bfr, BOLD_SCOPE_KEY, index)
-        elif key == 'copy-italic-sel-name':
-            copy_data(self.scope_bfr, ITALIC_NAME_KEY, index)
-        elif key == 'copy-italic-sel-scope':
-            copy_data(self.scope_bfr, ITALIC_SCOPE_KEY, index)
-        elif key == 'copy-underline-sel-name':
-            copy_data(self.scope_bfr, UNDERLINE_NAME_KEY, index)
-        elif key == 'copy-underline-sel-scope':
-            copy_data(self.scope_bfr, UNDERLINE_SCOPE_KEY, index)
-        elif key == 'copy-glow-sel-name':
-            copy_data(self.scope_bfr, GLOW_NAME_KEY, index)
-        elif key == 'copy-glow-sel-scope':
-            copy_data(self.scope_bfr, GLOW_SCOPE_KEY, index)
         elif key == 'copy-scheme':
             copy_data(self.scope_bfr, SCHEME_KEY, index)
         elif key == 'copy-syntax':
@@ -684,6 +599,22 @@ class GetSelectionScope:
                         ).replace('Packages/', '', 1)
                     )
                 }
+            )
+        elif key == 'source' and self.source is not None:
+            window = self.view.window()
+            file = sublime.expand_variables(
+                "${{packages}}/{}:{}:{}".format(
+                    self.source.replace(
+                        '\\', '/'
+                    ).replace('Packages/', '', 1),
+                    self.line,
+                    self.column
+                ),
+                window.extract_variables()
+            )
+            window.open_file(
+                file,
+                sublime.ENCODED_POSITION
             )
         elif key == 'syntax' and self.syntax_file is not None:
             window = self.view.window()
@@ -732,10 +663,8 @@ class GetSelectionScope:
         self.rowcol_info = bool(sh_settings.get("extent_line_char", False))
         self.points_info = bool(sh_settings.get("extent_points", False))
         self.appearance_info = bool(sh_settings.get("styling", False))
-        self.show_simulated = bool(sh_settings.get("show_simulated_alpha_colors", False))
         self.file_path_info = bool(sh_settings.get("file_paths", False))
-        self.selector_info = bool(sh_settings.get("selectors", False))
-        self.scheme_info = self.appearance_info or self.selector_info
+        self.scheme_info = self.appearance_info
         self.extents = []
 
         # Get scope info for each selection wanted
@@ -771,8 +700,6 @@ class GetSelectionScope:
 
         if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
             tail = mdpopups.md2html(self.view, COPY_ALL)
-        else:
-            tail = mdpopups.md2html(self.view, RELOAD)
 
         mdpopups.show_popup(
             self.view,
@@ -863,22 +790,6 @@ class SelectionScopeListener(sublime_plugin.EventListener):
             sh_thread.modified = True
             sh_thread.time = time()
 
-    def on_activated(self, view):
-        """Check color scheme on activated and update if needed."""
-
-        if sh_thread is None:
-            return
-
-        if not view.settings().get('is_widget', False):
-            scheme = view.settings().get("color_scheme")
-            if scheme is None:
-                pref_settings = sublime.load_settings('Preferences.sublime-settings')
-                scheme = pref_settings.get('color_scheme')
-
-            if scheme_matcher is not None and scheme is not None:
-                if scheme != scheme_matcher.scheme_file:
-                    reinit_plugin()
-
 
 class ShThread(threading.Thread):
     """Load up defaults."""
@@ -932,42 +843,11 @@ class ShThread(threading.Thread):
             sleep(0.5)
 
 
-def init_color_scheme():
-    """Setup color scheme match object with current scheme."""
-
-    global scheme_matcher
-    scheme_file = None
-
-    # Attempt syntax specific from view
-    window = sublime.active_window()
-    if window is not None:
-        view = window.active_view()
-        if view is not None:
-            scheme_file = view.settings().get('color_scheme', None)
-
-    # Get global scheme
-    if scheme_file is None:
-        pref_settings = sublime.load_settings('Preferences.sublime-settings')
-        scheme_file = pref_settings.get('color_scheme')
-
-    try:
-        scheme_matcher = ColorSchemeMatcher(scheme_file)
-    except Exception:
-        scheme_matcher = None
-        log("Theme parsing failed!  Ignoring theme related info.")
-        debug(str(traceback.format_exc()))
-
-
-def reinit_plugin():
-    """Reload scheme object and tooltip theme."""
-
-    init_color_scheme()
-
-
 def init_plugin():
     """Setup plugin variables and objects."""
 
     global sh_thread
+    global pref_settings
     global sh_settings
 
     # Preferences Settings
@@ -975,14 +855,6 @@ def init_plugin():
 
     # Setup settings
     sh_settings = sublime.load_settings('scope_hunter.sublime-settings')
-
-    # Setup color scheme
-    init_color_scheme()
-
-    pref_settings.clear_on_change('scopehunter_reload')
-    pref_settings.add_on_change('scopehunter_reload', reinit_plugin)
-
-    sh_settings.clear_on_change('reload')
 
     # Setup thread
     if sh_thread is not None:
@@ -1000,8 +872,5 @@ def plugin_loaded():
 
 def plugin_unloaded():
     """Kill the thread."""
-
-    pref_settings = sublime.load_settings('Preferences.sublime-settings')
-    pref_settings.clear_on_change('scopehunter_reload')
 
     sh_thread.kill()

@@ -51,15 +51,6 @@ Control the info displayed.  You can keep it to just the scope, or you can exten
     // Show color and style at the given point
     "styling": true,
 
-    // When showing a color with alpha transparency,
-    // Simulate what the color would look like in sublime
-    // by mixing the relevant background color,
-    "show_simulated_alpha_colors": true,
-
-    // Show the selector names and scopes
-    // responsible for the color and styles
-    "selectors": true,
-
     // Show current syntax and color scheme paths
     // (click to open if using tooltips)
     "file_paths": true,
@@ -82,16 +73,7 @@ Highlight the scope extent.
 
 #### `styling`
 
-Show not only the color value, but also the scope and text styling.
-
-#### `show_simulated_alpha_colors`
-
-When showing color values, ScopeHunter can show the perceived color value of transparent colors.  It mixes the
-transparent foreground with the background giving the color value you are actually seeing.
-
-#### `selectors`
-
-This shows the color scheme selectors that are responsible for applying the visible color and styles.
+Show not only the color value, the text styling.
 
 #### `file_paths`
 
@@ -136,6 +118,15 @@ Lastly, there are a couple of other options:
 
     // Use SubNotify plugin messages if installed
     "use_sub_notify": true
+
+    ///////////////////////////
+    // Graphics
+    ///////////////////////////
+
+    // By default, image border is calculated based on theme background, but if for
+    // some reason, it isn't sufficient in your popup, set it to any color using
+    // valid CSS for RGB, HSL, or HWB colors.
+    "image_border_color": null
 ```
 
 #### `clipboard`
@@ -157,13 +148,7 @@ If you have the [SubNotify][subnotify] installed, this will enable or disable me
 
 #### `image_border_color`
 
-Set color preview border colors.
-
-```js
-    // By default, image border is calculated based on theme background, but if for
-    // some reason, it isn't sufficient in your popup, set it to any color using
-    // valid CSS for RGB, HSL, or HWB colors.
-    "image_border_color": null
-```
+Image border color is calculated from the current color scheme, but if a more visible or different border is desired
+on the color previews, you can change it with this option.
 
 --8<-- "refs.txt"

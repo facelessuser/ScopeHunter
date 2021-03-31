@@ -5,7 +5,7 @@ import textwrap
 import webbrowser
 import re
 
-__version__ = "2.15.2"
+__version__ = "2.16.0"
 __pc_name__ = 'ScopeHunter'
 
 
@@ -88,12 +88,6 @@ class ScopeHunterSupportInfoCommand(sublime_plugin.ApplicationCommand):
         info["plugin_version"] = __version__
         info["pc_install"] = is_installed_by_package_control()
         try:
-            import coloraide
-            info["coloraide"] = format_version(coloraide, '__version__')
-        except Exception:
-            info["coloraide"] = 'Version could not be acquired!'
-
-        try:
             import mdpopups
             info["mdpopups_version"] = format_version(mdpopups, 'version', call=True)
         except Exception:
@@ -124,7 +118,6 @@ class ScopeHunterSupportInfoCommand(sublime_plugin.ApplicationCommand):
             - Arch: {arch}
             - Plugin ver.: {plugin_version}
             - Install via PC: {pc_install}
-            - coloraide ver.: {coloraide}
             - mdpopups ver.: {mdpopups_version}
             - markdown ver.: {markdown_version}
             - pygments ver.: {pygments_version}
