@@ -24,12 +24,12 @@
     // (click to open if using tooltips)
     "file_paths": false,
 
-    // Highlight scope extent in view
-    "highlight_extent": true,
-
     ///////////////////////////
     // Highlight Configuration
     ///////////////////////////
+
+    // Highlight scope extent in view
+    "highlight_extent": true,
 
     // Scope to use for the color
     "highlight_scope": "invalid",

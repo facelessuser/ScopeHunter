@@ -1,6 +1,7 @@
 API
 CSS
 Control's
+Customizable
 MERCHANTABILITY
 MkDocs
 Multi
@@ -13,6 +14,7 @@ SubNotify
 Tooltip
 Twemoji
 URL
+backtrace
 builtins
 cmd
 ctrl

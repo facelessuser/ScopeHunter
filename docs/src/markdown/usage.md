@@ -54,9 +54,6 @@ Control the info displayed.  You can keep it to just the scope, or you can exten
     // Show current syntax and color scheme paths
     // (click to open if using tooltips)
     "file_paths": true,
-
-    // Highlight scope extent in view
-    "highlight_extent": true,
 ```
 
 #### `extent_points`
@@ -66,10 +63,6 @@ Show the extent of the scope as view points.
 #### `extent_line_char`
 
 Show the extent of the scope as line/char or row/col format.
-
-#### `highlight_extent`
-
-Highlight the scope extent.
 
 #### `styling`
 
@@ -90,6 +83,9 @@ the scope to use and the supported style as shown below.
     ///////////////////////////
     // Highlight Configuration
     ///////////////////////////
+
+    // Highlight scope extent in view
+    "highlight_extent": true,
 
     // Scope to use for the color
     "highlight_scope": "invalid",
