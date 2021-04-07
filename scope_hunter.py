@@ -700,6 +700,8 @@ class GetSelectionScope:
 
         if self.scheme_info or self.rowcol_info or self.points_info or self.file_path_info:
             tail = mdpopups.md2html(self.view, COPY_ALL)
+        else:
+            tail = ''
 
         mdpopups.show_popup(
             self.view,

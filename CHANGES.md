@@ -1,5 +1,9 @@
 # ScopeHunter
 
+## 2.16.1
+
+- **FIX**: Fix issue with latest refactor where a variable was not always defined.
+
 ## 2.16
 
 - **NEW**: Due to Sublime schemes ever evolving, there were a few things (like "forward fill" scopes) that we didn't
