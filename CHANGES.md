@@ -1,5 +1,9 @@
 # ScopeHunter
 
+## 2.16.2
+
+- **FIX**: Ensure ready for Package Control 4.0 (compatibility issues with latest `mdpopups`).
+
 ## 2.16.1
 
 - **FIX**: Fix issue with latest refactor where a variable was not always defined.
