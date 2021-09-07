@@ -5,7 +5,7 @@ import textwrap
 import webbrowser
 import re
 
-__version__ = "2.16.2"
+__version__ = "2.16.3"
 __pc_name__ = 'ScopeHunter'
 
 
@@ -93,24 +93,6 @@ class ScopeHunterSupportInfoCommand(sublime_plugin.ApplicationCommand):
         except Exception:
             info["mdpopups_version"] = 'Version could not be acquired!'
 
-        try:
-            import markdown
-            info["markdown_version"] = format_version(markdown, 'version')
-        except Exception:
-            info["markdown_version"] = 'Version could not be acquired!'
-
-        try:
-            import jinja2
-            info["jinja_version"] = format_version(jinja2, '__version__')
-        except Exception:
-            info["jinja_version"] = 'Version could not be acquired!'
-
-        try:
-            import pygments
-            info["pygments_version"] = format_version(pygments, '__version__')
-        except Exception:
-            info["pygments_version"] = 'Version could not be acquired!'
-
         msg = textwrap.dedent(
             """\
             - ST ver.: {version}
@@ -119,9 +101,6 @@ class ScopeHunterSupportInfoCommand(sublime_plugin.ApplicationCommand):
             - Plugin ver.: {plugin_version}
             - Install via PC: {pc_install}
             - mdpopups ver.: {mdpopups_version}
-            - markdown ver.: {markdown_version}
-            - pygments ver.: {pygments_version}
-            - jinja2 ver.: {jinja_version}
             """.format(**info)
         )
 

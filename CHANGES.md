@@ -1,5 +1,9 @@
 # ScopeHunter
 
+## 2.16.3
+
+- **FIX**: Remove unnecessary dependencies.
+
 ## 2.16.2
 
 - **FIX**: Ensure ready for Package Control 4.0 (compatibility issues with latest `mdpopups`).
