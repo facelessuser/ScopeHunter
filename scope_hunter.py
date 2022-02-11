@@ -366,7 +366,7 @@ class GetSelectionScope:
         backtraces_html = []
         for i, ctx in enumerate(stack):
             if SCOPE_CONTEXT_BACKTRACE_SUPPORT_v4127:
-                source_file = ctx.source_file + ':' + ':'.join(map(str,ctx.source_location))
+                source_file = ctx.source_file + ':' + ':'.join(map(str, ctx.source_location))
                 backtraces.append("{}. {} ({})".format(i + 1, ctx.context_name, source_file))
                 backtraces_html.append("{} (<a href='{}'>{}</a>)".format(
                     ctx.context_name,
