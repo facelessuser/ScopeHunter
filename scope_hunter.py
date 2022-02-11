@@ -362,12 +362,12 @@ class GetSelectionScope:
         else:
             stack = []
 
-        backtraces = []
+        backtraces_text = []
         backtraces_html = []
         for i, ctx in enumerate(stack):
             if SCOPE_CONTEXT_BACKTRACE_SUPPORT_v4127:
                 source_file = ctx.source_file + ':' + ':'.join(map(str, ctx.source_location))
-                backtraces.append("{}. {} ({})".format(i + 1, ctx.context_name, source_file))
+                backtraces_text.append("{}. {} ({})".format(i + 1, ctx.context_name, source_file))
                 backtraces_html.append("{} (<a href='{}'>{}</a>)".format(
                     ctx.context_name,
                     sublime.command_url(
@@ -377,11 +377,11 @@ class GetSelectionScope:
                     source_file,
                 ))
             elif SCOPE_CONTEXT_BACKTRACE_SUPPORT_v4087:
-                backtraces.append(ctx)
+                backtraces_text.append(ctx)
                 backtraces_html.append(ctx)
 
         if SCOPE_CONTEXT_BACKTRACE_SUPPORT and self.context_backtrace_info:
-            self.scope_bfr.append(ENTRY.format(CONTEXT_BACKTRACE_KEY + ':', spacing.join(backtraces)))
+            self.scope_bfr.append(ENTRY.format(CONTEXT_BACKTRACE_KEY + ':', spacing.join(backtraces_text)))
 
             self.template_vars['context_backtrace'] = True
             self.template_vars["context_backtrace_stack"] = backtraces_html
