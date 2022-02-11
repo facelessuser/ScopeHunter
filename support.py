@@ -5,7 +5,7 @@ import textwrap
 import webbrowser
 import re
 
-__version__ = "2.16.3"
+__version__ = "2.17.0"
 __pc_name__ = 'ScopeHunter'
 
 

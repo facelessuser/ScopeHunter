@@ -1,5 +1,9 @@
 # ScopeHunter
 
+## 2.17.0
+
+- **NEW**: Update context backtrace to support changes to API in 4127.
+
 ## 2.16.3
 
 - **FIX**: Remove unnecessary dependencies.
