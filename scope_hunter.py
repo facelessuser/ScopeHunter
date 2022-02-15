@@ -366,15 +366,14 @@ class GetSelectionScope:
         backtraces_html = []
         for i, ctx in enumerate(stack):
             if SCOPE_CONTEXT_BACKTRACE_SUPPORT_v4127:
-                source_file = ctx.source_file + ':' + ':'.join(map(str, ctx.source_location))
-                backtraces_text.append("{}. {} ({})".format(i + 1, ctx.context_name, source_file))
-                backtraces_html.append("{} (<a href='{}'>{}</a>)".format(
+                source_path = display_path = '{}:{}:{}'.format(ctx.source_file, *ctx.source_location)
+                if source_path.startswith('Packages/'):
+                    source_path = '${packages}/' + source_path[9:]
+                backtraces_text.append('{}. {} ({})'.format(i + 1, ctx.context_name, display_path))
+                backtraces_html.append('{} (<a href="{}">{}</a>)'.format(
                     ctx.context_name,
-                    sublime.command_url(
-                        'open_file',
-                        {"file": '${packages}' + source_file[len('Packages'):], "encoded_position": True},
-                    ),
-                    source_file,
+                    sublime.command_url('open_file', {'file': source_path, 'encoded_position': True}),
+                    display_path,
                 ))
             elif SCOPE_CONTEXT_BACKTRACE_SUPPORT_v4087:
                 backtraces_text.append(ctx)
