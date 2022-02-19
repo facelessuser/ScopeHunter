@@ -1,5 +1,9 @@
 # ScopeHunter
 
+## 2.18.0
+
+- **NEW**: Refactor scope backtrace to be in the same way with Sublime's default implementation.
+
 ## 2.17.0
 
 - **NEW**: Update context backtrace to support changes to API in 4127.

@@ -1,9 +1,9 @@
-# ScopeHunter 2.17.0
+# ScopeHunter 2.18.0
 
 New release!
 
 See `Preferences->Package Settings->ScopeHunter->Changelog` for more info on previous releases.
 
-## 2.17.0
+## 2.18.0
 
-- **NEW**: Update context backtrace to support changes to API in 4127.
+- **NEW**: Refactor scope backtrace to be in the same way with Sublime's default implementation.
