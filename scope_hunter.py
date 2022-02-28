@@ -364,14 +364,16 @@ class GetSelectionScope:
 
         backtraces_text = []
         backtraces_html = []
-        for i, ctx in enumerate(stack):
+        for i, ctx in enumerate(reversed(stack)):
             if SCOPE_CONTEXT_BACKTRACE_SUPPORT_v4127:
-                source_path = display_path = '{}:{}:{}'.format(ctx.source_file, *ctx.source_location)
+                source_path = '{}:{}:{}'.format(ctx.source_file, *ctx.source_location)
+                display_path = '{}:{}:{}'.format(os.path.splitext(ctx.source_file)[0], *ctx.source_location)
                 if source_path.startswith('Packages/'):
                     source_path = '${packages}/' + source_path[9:]
+                    display_path = display_path[9:]
                 backtraces_text.append('{}. {} ({})'.format(i + 1, ctx.context_name, display_path))
-                backtraces_html.append('{} (<a href="{}">{}</a>)'.format(
-                    ctx.context_name,
+                backtraces_html.append("{} (<a href='{}'>{}</a>)".format(
+                    '<em>%s</em>' % ctx.context_name if ctx.context_name.startswith("anonymous ") else ctx.context_name,
                     sublime.command_url('open_file', {'file': source_path, 'encoded_position': True}),
                     display_path,
                 ))
