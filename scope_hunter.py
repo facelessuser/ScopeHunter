@@ -370,7 +370,7 @@ class GetSelectionScope:
                 if source_path.startswith('Packages/'):
                     source_path = '${packages}/' + source_path[9:]
                 backtraces_text.append('{}. {} ({})'.format(i + 1, ctx.context_name, display_path))
-                backtraces_html.append('{} (<a href="{}">{}</a>)'.format(
+                backtraces_html.append("{} (<a href='{}'>{}</a>)".format(
                     ctx.context_name,
                     sublime.command_url('open_file', {'file': source_path, 'encoded_position': True}),
                     display_path,
