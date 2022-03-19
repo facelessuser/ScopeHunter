@@ -1,5 +1,9 @@
 # ScopeHunter
 
+## 2.18.1
+
+- **FIX**: Scope backtrace fixes.
+
 ## 2.18.0
 
 - **NEW**: Refactor scope backtrace to be in the same way with Sublime's default implementation.
