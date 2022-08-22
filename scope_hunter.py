@@ -213,8 +213,10 @@ class GetSelectionScope:
         border_color = None
         if border_color is not None:
             try:
-                border_color = Color(border_color, filters=SRGB_SPACES)
-                border_color.fit("srgb", in_place=True)
+                border_color = Color(border_color)
+                if border_color.space() not in SRGB_SPACES:
+                    raise ValueError('Not an accepted color space')
+                border_color.fit("srgb")
             except Exception:
                 border_color = None
 
@@ -222,15 +224,13 @@ class GetSelectionScope:
             # Calculate border color for images
             border_color = Color(
                 self.view.style()['background'],
-                filters=SRGB_SPACES
             ).convert("hsl")
-            border_color.lightness = border_color.lightness + (30 if border_color.luminance() < 0.5 else -30)
+            border_color['l'] = border_color['l'] + (30 if border_color.luminance() < 0.5 else -30)
 
         self.default_border = border_color.convert("srgb").to_string(**HEX)
-        self.out_of_gamut = Color("transparent", filters=SRGB_SPACES).to_string(**HEX)
+        self.out_of_gamut = Color("transparent").to_string(**HEX)
         self.out_of_gamut_border = Color(
             self.view.style().get('redish', "red"),
-            filters=SRGB_SPACES
         ).to_string(**HEX)
 
     def setup_sizes(self):

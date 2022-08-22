@@ -1,5 +1,9 @@
 # ScopeHunter
 
+## 2.19.0
+
+- **NEW**: Update to support latest `coloraide`.
+
 ## 2.18.1
 
 - **FIX**: Scope backtrace fixes.
