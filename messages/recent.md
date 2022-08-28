@@ -1,9 +1,11 @@
-# ScopeHunter 2.18.0
+# ScopeHunter 2.19.0
 
 New release!
 
 See `Preferences->Package Settings->ScopeHunter->Changelog` for more info on previous releases.
 
-## 2.18.0
+A restart of Sublime Text is most likely required.
 
-- **NEW**: Refactor scope backtrace to be in the same way with Sublime's default implementation.
+## 2.19.0
+
+- **NEW**: Update to support latest `coloraide`.
