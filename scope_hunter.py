@@ -224,7 +224,7 @@ class GetSelectionScope:
                 self.view.style()['background'],
                 filters=SRGB_SPACES
             ).convert("hsl")
-            border_color.lightness = border_color.lightness + (30 if border_color.luminance() < 0.5 else -30)
+            border_color['l'] = border_color['l'] + (30 if border_color.luminance() < 0.5 else -30)
 
         self.default_border = border_color.convert("srgb").to_string(**HEX)
         self.out_of_gamut = Color("transparent", filters=SRGB_SPACES).to_string(**HEX)

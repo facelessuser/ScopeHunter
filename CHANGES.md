@@ -1,5 +1,9 @@
 # ScopeHunter
 
+## 2.18.2
+
+- **FIX**: Fix color API access failures.
+
 ## 2.18.1
 
 - **FIX**: Scope backtrace fixes.
