@@ -1,5 +1,9 @@
 # ScopeHunter
 
+## 2.18.3
+
+-   **FIX**: Add typing dependency.
+
 ## 2.18.2
 
 -   **FIX**: Fix color API access failures.
