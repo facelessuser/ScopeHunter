@@ -4,6 +4,6 @@ New release!
 
 See `Preferences->Package Settings->ScopeHunter->Changelog` for more info on previous releases.
 
-## 2.18.0
+## 2.19.0
 
-- **NEW**: Refactor scope backtrace to be in the same way with Sublime's default implementation.
+-   **NEW**: Changes for Python 3.13 on ST 4201+.

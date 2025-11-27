@@ -1,5 +1,9 @@
 # ScopeHunter
 
+## 2.19.0
+
+-   **NEW**: Changes for Python 3.13 on ST 4201+.
+
 ## 2.18.3
 
 -   **FIX**: Add typing dependency.
